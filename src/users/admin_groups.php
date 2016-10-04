@@ -104,7 +104,7 @@ $count = 0;
 				  ?>
 				  <tr>
 					<td><input type='checkbox' name='delete[<?=$permissionData[$count]->id?>]' id='delete[<?=$permissionData[$count]->id?>]' value='<?=$permissionData[$count]->id?>'></td>
-					<td><a href='admin_permission.php?id=<?=$permissionData[$count]->id?>'><?=$permissionData[$count]->name?></a></td>
+					<td><a href='admin_group.php?id=<?=$permissionData[$count]->id?>'><?=$permissionData[$count]->name?></a></td>
 				  </tr>
 				  <?php
 				  $count++;

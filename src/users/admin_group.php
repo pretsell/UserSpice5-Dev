@@ -28,10 +28,10 @@ $validation = new Validate();
 $permissionId = $_GET['id'];
 
 /*
-If requested permission level does not exist, redirect to admin_permissions.php
+If requested permission level does not exist, redirect to admin_groups.php
 */
 if(!permissionIdExists($permissionId)){
-Redirect::to("admin_permissions.php"); die();
+Redirect::to("admin_groups.php"); die();
 }
 
 //Fetch information specific to permission level
@@ -43,7 +43,7 @@ if(Input::exists()){
     $deletions = Input::get('delete');
     if ($deletion_count = deletePermission($deletions)){
       $successes[] = "Permission deletion successful";
-      Redirect::to('admin_permissions.php');
+      Redirect::to('admin_groups.php');
     }
     else {
       $errors[] = "SQL Error";
@@ -155,12 +155,12 @@ $pageData = fetchAllPages();
 		echo display_successes($successes);
 		
 		?>
-          <h1>Configure Details for this Permission Level</h1>
+          <h1>Configure Details for this Group</h1>
 
-			<form name='adminPermission' action='admin_permission.php?id=<?=$permissionId?>' method='post'>
+			<form name='adminPermission' action='admin_group.php?id=<?=$permissionId?>' method='post'>
 			<table class='table'>
 			<tr><td>
-			<h3>Permission Information</h3>
+			<h3>Group Information</h3>
 			<div id='regbox'>
 			<p>
 			<label>ID:</label>
@@ -175,7 +175,7 @@ $pageData = fetchAllPages();
 			<input type='checkbox' name='delete[<?=$permissionDetails['id']?>]' id='delete[<?=$permissionDetails['id']?>]' value='<?=$permissionDetails['id']?>'>
 			</p>
 			</div></td><td>
-			<h3>Permission Membership</h3>
+			<h3>Group Membership</h3>
 			<div id='regbox'>
 			<p><strong>
 			Remove Members:</strong>
@@ -211,7 +211,7 @@ $pageData = fetchAllPages();
 			</div>
 			</td>
 			<td>
-			<h3>Permission Access</h3>
+			<h3>Group Access</h3>
 			<div id='regbox'>
 			<p><br><strong>
 			Public Pages:</strong>

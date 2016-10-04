@@ -24,18 +24,10 @@ if(!empty($_POST['submit'])){
 }
 
 if(Input::exists('get')){
-	$latestVersion = file_get_contents('https://usupdates.raysee.net/latest.txt');
+	
 }else{
-	$latestVersion = "0.0.0";
+	
 }
-
-$currentVersion=$site_settings->version;
-$currentVersionArray=explode('.',$currentVersion);
-$latestVersionArray=explode('.',$latestVersion);
-
-
-
-
 
 ?>
 <div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
@@ -48,8 +40,7 @@ $latestVersionArray=explode('.',$latestVersion);
 <div class="row"> <!-- rows for Main Settings -->
 	<div class="col-xs-12"> <!-- Site Settings Column -->
 		<h2>Updates</h2>
-		Current Version: <?=$currentVersion ?><br/>
-		Latest Version: <?=$latestVersion ?><br/>
+
 		<form class="" action="admin_updates.php" name="settings" method="post">
 		
 		

@@ -79,7 +79,7 @@ if(!empty($_POST['settings'])){
 		
 		<!-- gredirect -->
 		<div class="form-group">
-			<label for="gcallback">Google Callback</label>
+			<label for="gcallback">Callback</label>
 			<input type="text" class="form-control" name="gcallback" id="gcallback" value="<?=$site_settings->gcallback?>">
 		</div>
 
