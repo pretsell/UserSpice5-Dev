@@ -1,2 +1,2 @@
-users/db_cred.php
-.htaccess
+src/users/db_cred.php
+src/.htaccess
