@@ -99,6 +99,7 @@ $monthCount = $usersMonthQ->count();
 
 	<?php foreach($recentUsers as $v1){
 		$user_id=$v1->user_id;
+		
 		if($user_id!=null){
 			$username=name_from_id($user_id);
 		}else{

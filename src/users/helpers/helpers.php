@@ -73,8 +73,6 @@ function name_from_id($id){
 	}else{
 		return "Guest";
 	}
-	
-	
 }
 
 function display_errors($errors = array()){
