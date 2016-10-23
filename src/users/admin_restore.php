@@ -23,7 +23,8 @@ if (!securePage($_SERVER['PHP_SELF'])){die();}
 
 if(Input::exists()){
 	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
+		$tokenError = lang('TOKEN');
+die($tokenError);
 	}
 }
 if(!empty($_POST['restore'])){

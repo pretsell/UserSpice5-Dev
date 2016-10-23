@@ -20,7 +20,8 @@ $successes = [];
 
 if(Input::exists('post')){
 	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
+		$tokenError = lang('TOKEN');
+die($tokenError);
 	}
 }
 

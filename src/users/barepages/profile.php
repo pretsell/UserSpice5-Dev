@@ -27,7 +27,8 @@ If $_POST data exists, then check CSRF token, and kill page if not correct...no 
 */
 if (Input::exists()) {
 	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
+		$tokenError = lang('TOKEN');
+die($tokenError);
 	}
 }
 

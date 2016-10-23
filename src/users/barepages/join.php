@@ -33,7 +33,8 @@ If $_POST data exists, then check CSRF token, and kill page if not correct...no 
 */
 if (Input::exists()) {
 	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
+		$tokenError = lang('TOKEN');
+		die($tokenError);
 	}
 }
 
@@ -41,14 +42,14 @@ $reCaptchaValid=FALSE;
 $createSuccess=FALSE;
 
 if(Input::exists()){
-	
+
 	$username = Input::get('username');
 	$fname = Input::get('fname');
 	$lname = Input::get('lname');
 	$email = Input::get('email');
-	$agreement_checkbox = Input::get('agreement_checkbox');	
-	
-	
+	$agreement_checkbox = Input::get('agreement_checkbox');
+
+
 	/*
 	If recaptcha is enabled, then process recaptcha and response
 	*/
@@ -56,7 +57,7 @@ if(Input::exists()){
 		$remoteIp=$_SERVER["REMOTE_ADDR"];
 		$gRecaptchaResponse=Input::get('g-recaptcha-response');
 		$response = null;
-		
+
 		require_once 'includes/recaptcha.config.php';
 
 		// check secret key
@@ -70,7 +71,7 @@ if(Input::exists()){
 			$reCaptchaValid=TRUE;
 		}else{
 			$reCaptchaValid=FALSE;
-			$errors[]='Please check the reCaptcha';
+			$errors[]=lang('CAPTCHA_FAIL');
 		}
 	}else{
 		/*
@@ -78,10 +79,10 @@ if(Input::exists()){
 		*/
 		$reCaptchaValid=TRUE;
 	}
-	
+
 	/*
 	If agreement checkbox not checked, then add the error
-	*/	
+	*/
 	if ($agreement_checkbox=='on'){
 		$agreement_checkbox=TRUE;
 	}else{
@@ -89,7 +90,7 @@ if(Input::exists()){
 	}
 
 	if (!$agreement_checkbox){
-		$errors[]='Please read and accept terms and conditions';
+		$errors[]=lang('CHECK_AGREE');
 	}
 
 	if($reCaptchaValid || $site_settings->recaptcha == 0){ //if recaptcha valid or recaptcha disabled
@@ -97,7 +98,7 @@ if(Input::exists()){
 		/*
 		Perform input validation prior to creating account
 		*/
-		
+
 		$validation = new Validate();
 		$validation->check($_POST,array(
 		  'username' => array('display' => 'Username','required' => true,'min' => 5,'max' => 35,'unique' => 'users',),
@@ -106,14 +107,14 @@ if(Input::exists()){
 		  'email' => array('display' => 'Email','required' => true,'valid_email' => true,'unique' => 'users',),
 		  'password' => array('display' => 'Password','required' => true,'min' => 6,'max' => 25,),
 		  'confirm' => array('display' => 'Confirm Password','required' => true,'matches' => 'password',),
-		));		
+		));
 
 		if ($validation->passed() && $agreement_checkbox) {
 			/*
 			If validation passes then create user
 			*/
 			$vericode = rand(100000,999999);
-			
+
 			$user = new User();
 			$join_date = date("Y-m-d H:i:s");
 
@@ -127,7 +128,7 @@ if(Input::exists()){
 				*/
 				$url='<a href="'.$site_settings->site_url.'/users/verify.php?email='.rawurlencode($email).'&vericode='.$vericode.'">Verify your email</a>';
 				$options = array('fname' => $fname,'url' => $url,'sitename' => $site_settings->site_name,);
-				
+
 				$email_verified=0;
 				$subject = 'Welcome to '.$site_settings->site_name.'!';
 				$body = email_body($site_settings->email_verify_template,$options);
@@ -158,8 +159,8 @@ if(Input::exists()){
 			} catch (Exception $e) {
 				die($e->getMessage());
 			}
-			$createSuccess=TRUE;			
-			
+			$createSuccess=TRUE;
+
 		}else{
 			/*
 			Append validation errors to error array
@@ -179,42 +180,42 @@ if(Input::exists()){
 <?php
 if (!$createSuccess){
 ?>
-	<h2>Sign Up</h2>
+	<h2><?=lang('SIGN_UP')?></h2>
 	<?=display_errors($errors);?>
 	<form class="form-signup" action="join.php" method="post">
-		
+
 	<div class="form-group">
-		<label for="username">Choose a Username</label>
-		<input  class="form-control" type="text" name="username" id="username" placeholder="Username" value="<?=$username;?>" required autofocus>
-		<p class="help-block">No Spaces or Special Characters - Min 5 characters</p>
+		<label for="username"><?=lang('CHOOSE_USERNAME')?></label>
+		<input  class="form-control" type="text" name="username" id="username" placeholder="<?=lang('CHOOSE_USERNAME')?>" value="<?=$username;?>" required autofocus>
+		<p class="help-block"><?=lang('CHOOSE_USERNAME_REQUIREMENTS')?></p>
 	</div>
 	<div class="form-group">
-		<label for="fname">First Name</label>
-		<input type="text" class="form-control" id="fname" name="fname" placeholder="First Name" value="<?=$fname;?>" required>
+		<label for="fname"><?=lang('FNAME')?></label>
+		<input type="text" class="form-control" id="fname" name="fname" placeholder="<?=lang('FNAME')?>" value="<?=$fname;?>" required>
 	</div>
 	<div class="form-group">
-		<label for="lname">Last Name</label>
-		<input type="text" class="form-control" id="lname" name="lname" placeholder="Last Name" value="<?=$lname;?>" required>
+		<label for="lname"><?=lang('LNAME')?></label>
+		<input type="text" class="form-control" id="lname" name="lname" placeholder="<?=lang('LNAME')?>" value="<?=$lname;?>" required>
 	</div>
 	<div class="form-group">
-		<label for="email">Email Address</label>
-		<input  class="form-control" type="text" name="email" id="email" placeholder="Email Address" value="<?=$email;?>" required >
+		<label for="email"><?=lang('EMAIL')?></label>
+		<input  class="form-control" type="text" name="email" id="email" placeholder="<?=lang('EMAIL')?>" value="<?=$email;?>" required >
 	</div>
 	<div class="form-group">
-		<label for="password">Choose a Password</label>
-		<input  class="form-control" type="password" name="password" id="password" placeholder="Password" required aria-describedby="passwordhelp">
-		<span class="help-block" id="passwordhelp">Must be at least 6 characters</span>
+		<label for="password"><?=lang('PW')?></label>
+		<input  class="form-control" type="password" name="password" id="password" placeholder="<?=lang('PW')?>" required aria-describedby="passwordhelp">
+		<span class="help-block" id="passwordhelp"><?=lang('PWR')?></span>
 	</div>
 	<div class="form-group">
-		<label for="confirm">Confirm Password</label>
-		<input  type="password" id="confirm" name="confirm" class="form-control" placeholder="Confirm Password" required >
+		<label for="confirm"><?=lang('PWC')?></label>
+		<input  type="password" id="confirm" name="confirm" class="form-control" placeholder="<?=lang('PWC')?>" required >
 	</div>
 	<div class="form-group">
-		<label for="agreement">Registration User Terms and Conditions</label>
+		<label for="agreement"><?=lang('TNC')?></label>
 		<textarea id="agreement" name="agreement" rows="5" class="form-control" disabled ><?=$site_settings->agreement?></textarea>
 	</div>
 	<div class="form-group">
-		<label for="agreement_checkbox">Check box to agree to terms</label>
+		<label for="agreement_checkbox"><?=lang('CHECK_AGREE')?></label>
 		<input type="checkbox" id="agreement_checkbox" name="agreement_checkbox" >
 	</div>
 	<?php if($site_settings->recaptcha == 1){ ?>
@@ -224,7 +225,7 @@ if (!$createSuccess){
 	<?php } ?>
 	<input type="hidden" value="<?=Token::generate();?>" name="csrf">
 	<div class="text-center">
-	<button class="submit btn btn-primary" type="submit" id="next_button"><span class="fa fa-plus-square"></span> Sign Up</button>
+	<button class="submit btn btn-primary" type="submit" id="next_button"><span class="fa fa-plus-square"></span> <?=lang('SIGN_UP')?></button>
 	<?php	if($site_settings->glogin){?><a href="<?=$gAuthUrl?>" class="" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
 	<?php if($site_settings->fblogin){?><a href="<?=$fbAuthUrl?>" class="" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
 	</div>
@@ -234,19 +235,19 @@ if (!$createSuccess){
 	if($site_settings->email_act==0){
 ?>
 		<div class="jumbotron text-center">
-		<h2>Welcome To <?=$site_settings->site_name?>!</h2>
-		<p>Thanks for registering!</p>
-		<a href="login.php" class="btn btn-primary">Login</a>
+		<h2><?=lang('WELCOME')?> <?=$site_settings->site_name?>!</h2>
+		<p><?=lang('THANKS')?></p>
+		<a href="login.php" class="btn btn-primary"><?=lang('SIGN_IN')?></a>
 		</div>
 <?php
 	}else{
-?>	
+?>
 		<div class="jumbotron text-center">
-		<h2>Welcome To <?=$site_settings->site_name?>!</h2>
-		<p>Thanks for registering! Please check your email to verify your account.</p>
+		<h2><?=lang('WELCOME')?> <?=$site_settings->site_name?>!</h2>
+		<p><?=lang('THANKS_VERIFY')?></p>
 		</div>
 <?php
-	}	
+	}
 }
 ?>
 

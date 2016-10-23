@@ -27,7 +27,8 @@ If $_POST data exists, then check CSRF token, and kill page if not correct...no 
 */
 if (Input::exists()) {
 	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
+		$tokenError = lang('TOKEN');
+die($tokenError);
 	}
 }
 
@@ -40,7 +41,7 @@ if (Input::exists()) {
 		$remoteIp=$_SERVER["REMOTE_ADDR"];
 		$gRecaptchaResponse=Input::get('g-recaptcha-response');
 		$response = null;
-		
+
 		require_once 'includes/recaptcha.config.php';
 
 		// check secret key
@@ -54,7 +55,7 @@ if (Input::exists()) {
 			$reCaptchaValid=TRUE;
 		}else{
 			$reCaptchaValid=FALSE;
-			$errors[]='Please check the reCaptcha';
+			$errors[]=lang('CAPTCHA_FAIL');
 		}
 	}else{
 		/*
@@ -87,7 +88,7 @@ if (Input::exists()) {
 					Redirect::to(US_URL_ROOT.$site_settings->redirect_login);
 				}
 			} else {
-				$errors[]= 'Log in failed. Please check your username and password and try again';
+				$errors[]= lang('LOGIN_FAILED');
 			}
 		}else{
 			/*
@@ -106,25 +107,25 @@ if (Input::exists()) {
 	<div class="col-xs-12">
 	<?=display_errors($errors)?>
 	<?=display_successes($successes)?>
-	
+
 	<form name="login" class="form" action="login.php" method="post">
-	<h2 class="text-center"> Sign In</h2>
+	<h2 class="text-center"><?=lang('SIGN_IN')?></h2>
 
 	<div class="form-group">
-		<label class="control-label" for="username">Username OR Email</label>
-		<div><input  class="form-control" type="text" name="username" id="username" placeholder="Username/Email" required autofocus></div>
+		<label class="control-label" for="username"><?=lang('UN_OR_EMAIL')?></label>
+		<div><input  class="form-control" type="text" name="username" id="username" placeholder="<?=lang('UN_OR_EMAIL')?>" required autofocus></div>
 	</div>
 
 	<div class="form-group">
-		<label class="control-label" for="password">Password</label>
-		<div><input type="password" class="form-control"  name="password" id="password"  placeholder="Password" required autocomplete="off"></div>
+		<label class="control-label" for="password"><?=lang('PW')?></label>
+		<div><input type="password" class="form-control"  name="password" id="password"  placeholder="<?=lang('PW')?>" required autocomplete="off"></div>
 	</div>
 
 	<?php
 	if($site_settings->recaptcha == 1){
 	?>
 	<div class="form-group">
-		<label>Please check the box below to continue</label>
+		<label><?=lang('RECAP')?></label>
 		<div class="g-recaptcha" data-sitekey="<?=$site_settings->recaptcha_public; ?>"></div>
 	</div>
 	<?php } ?>
@@ -133,20 +134,20 @@ if (Input::exists()) {
 	if($site_settings->allow_remember_me == 1){
 	?>
 	<div class="form-group">
-		<label class="control-label" for="remember">Remember Me</label>
+		<label class="control-label" for="remember"><?=lang('REMEMBER')?></label>
 		<div><input type="checkbox" name="remember" id="remember" ></div>
 	</div>
 	<?php
 	}
 	?>
 	<input type="hidden" name="csrf" value="<?=Token::generate(); ?>">
-		
+
 	<div class="text-center">
 		<button class="btn btn-primary" type="submit"><span class="fa fa-sign-in"></span> Sign In</button>
 		<?php	if($site_settings->glogin){?><a href="<?=$gAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
 		<?php if($site_settings->fblogin){?><a href="<?=$fbAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
-		<a href="forgot_password.php" class="btn btn-primary" type="button"><span class="fa fa-wrench"></span> Forgot Password</a>
-		<a href="join.php" class="btn btn-primary" type="button"><span class="fa fa-plus-square"></span> Register</a>
+		<a href="forgot_password.php" class="btn btn-primary" type="button"><span class="fa fa-wrench"></span> <?=lang('REMEMBER')?></a>
+		<a href="join.php" class="btn btn-primary" type="button"><span class="fa fa-plus-square"></span><?=lang('SIGN_UP')?></a>
 	</div>
 	</form>
 	</div>

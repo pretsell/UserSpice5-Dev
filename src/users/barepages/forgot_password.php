@@ -15,7 +15,8 @@ $email_sent=FALSE;
 
 if(Input::exists()){
 	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
+		$tokenError = lang('TOKEN');
+die($tokenError);
 	}
 }
 
