@@ -22,7 +22,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %m1% - Dymamic markers which are replaced at run time by the relevant index.
 */
 
+//join.php,login.php
+
 $lang = array();
+
+//Login/Logout/Join
+$lang = array_merge($lang,array(
+	"CHOOSE_USERNAME"											=> "Choose a Username",
+	"CHOOSE_USERNAME_REQUIREMENTS"				=> "No Spaces or Special Characters",
+	"FNAME"																=> "First Name",
+	"LNAME"																=> "Last Name",
+	"PW"																	=> "Password",
+	"PWC"																	=> "Confirm Password",
+	"PWR"																	=> "Must be at least 6 characters",	"EMAIL"																=> "Email Address",
+	"TNC"																  => "Terms and Conditions",
+	"CHECK_AGREE"													=> "Check box to agree to terms",
+	"SIGN_UP"															=> "Sign up",
+	"SIGN_IN"															=> "Sign in",
+	"SIGN_OUT"														=> "Sign out",
+	"SIGNED_OUT"													=> "Not Logged In",
+	"UN_OR_EMAIL"													=> "Username OR Email",
+	"LOGIN_FAILED"												=> "Log in failed. Please check your username and password and try again",
+	"RECAP"																=> "Please complete the recaptcha below",
+	"REMEMBER"														=> "Remember Me",
+	"FORGOT"															=> "Forgot Password",
+	"WELCOME"															=> "Welcome to ",
+	"THANKS"															=> "Thanks for registering!",
+	"THANKS_VERIFY"												=> "Thanks for registering! Please check your email to verify your account.",
+	));
+
 
 //Account
 $lang = array_merge($lang,array(
@@ -118,6 +146,7 @@ $lang = array_merge($lang,array(
 	"PAGE_PRIVATE_TOGGLED"			=> "This page is now %m1%",
 	"PAGE_ACCESS_REMOVED"			=> "Page access removed for %m1% permission level(s)",
 	"PAGE_ACCESS_ADDED"			=> "Page access added for %m1% permission level(s)",
+	"TOKEN"	=> "Token does not match!",
 	));
 
 //Permissions
