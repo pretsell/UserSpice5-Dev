@@ -42,7 +42,7 @@ if(!empty($_POST['backup'])){
 	}else{
 		$successes[]='Destination path already existed. Using the existing folder.';
 	}
-	
+
 	/*
 	Generate backup path
 	*/
@@ -56,7 +56,7 @@ if(!empty($_POST['backup'])){
 			$backupPathSuccess=false;
 		}
 	}
-	
+
 	if($backupPathSuccess){
 		/*
 		Since the backup path is just created with a timestamp, no need to check if these subfolders exist or if they are writable
@@ -84,7 +84,7 @@ if(!empty($_POST['backup'])){
 		}else{
 			$errors[]='Backup failed.';
 		}
-		
+
 		if(backupUsTables($us_tables,$backupPath.'sql/')){
 			$successes[]='SQL dumps were successful.';
 		}else{
@@ -103,7 +103,7 @@ if(!empty($_POST['backup'])){
 		}else{
 			$errors[]='Error creating zip file';
 		}
-		
+
 	}elseif($backupPathSuccess && Input::get('backup_source') == 'db_us_files'){
 		/*
 		Generate list of files in ABS_US_ROOT.US_URL_ROOT including files starting with .
@@ -116,7 +116,7 @@ if(!empty($_POST['backup'])){
 			$successes[]='Backup was successful.';
 		}else{
 			$errors[]='Backup failed.';
-		}	
+		}
 		if(backupUsTables($us_tables,$backupPath.'sql/')){
 			$successes[]='SQL dumps were successful.';
 		}else{
@@ -134,13 +134,13 @@ if(!empty($_POST['backup'])){
 			}
 		}else{
 			$errors[]='Error creating zip file';
-		}		
+		}
 	}elseif($backupPathSuccess && Input::get('backup_source') == 'db_only'){
 		if(backupUsTables($us_tables,$backupPath.'sql/')){
 			$successes[]='SQL dumps were successful.';
 		}else{
 			$errors[]='SQL dumps failed.';
-		}	
+		}
 		$targetZipFile=backupZip($backupPath,true);
 		if($targetZipFile){
 			$successes[]='DB and US Files Zipped';
@@ -153,7 +153,7 @@ if(!empty($_POST['backup'])){
 			}
 		}else{
 			$errors[]='Error creating zip file';
-		}		
+		}
 	}elseif(!backupPathSuccess){
 		$errors[]='Backup path already exists or could not be created.';
 	}else{
@@ -167,16 +167,16 @@ if(!empty($_POST['backup'])){
 		$fields=array('backup_dest'=>$backup_dest);
 		$db->update('settings',1,$fields);
 	}
-	
+
 	Redirect::to('admin_backup.php');
 }else{
 	/*
 	other form?
-	*/	
+	*/
 }
 
 if(Input::exists('get')){
-	
+
 }
 
 /*
@@ -189,7 +189,7 @@ foreach($allBackupFiles as $backupFile){
 }
 
 ?>
-<div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
+<div class="row"> <!-- row for Users, Groups, Pages, Email settings panels -->
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
@@ -202,14 +202,14 @@ foreach($allBackupFiles as $backupFile){
 	<?=display_successes($successes);?>
 	<?=display_errors($errors);?>
 	<form class="" action="admin_backup.php" name="backup" method="post">
-	
+
 		<!-- backup_dest Option -->
 		<div class="form-group">
 			<label class="control-label" for="backup_dest">Backup Destination (relative to the z_us_root.php file)</label>
 			<input  class="form-control" type="text" name="backup_dest" id="backup_dest" placeholder="Backup Destination" value="<?=$site_settings->backup_dest?>">
 		</div>
 		<p><input class='btn btn-primary' type='submit' name="save" value='Save Settings' /></p>
-	
+
 		<!-- backup_source Option -->
 		<div class="form-group">
 			<label for="backup_source">Backup Source</label>
@@ -218,14 +218,14 @@ foreach($allBackupFiles as $backupFile){
 				<option value="db_all_files">Database and All Files</option>
 				<option value="db_only">Database Only</option>
 			</select>
-		</div>		
+		</div>
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 		<p>
 		<input class='btn btn-primary' type='submit' name="backup" value='Backup' />
-		
+
 		</p>
 	</form>
-	
+
 	<h2>Existing Backups (<?=sizeof($allBackupFiles)?>)</h2>
 	<div class="table-responsive">
 		<table class="table table-bordered table-hover">
@@ -243,8 +243,8 @@ foreach($allBackupFiles as $backupFile){
 			?>
 			</tbody>
 		</table>
-	</div>	
-	
+	</div>
+
 	</div>
 </div>
 

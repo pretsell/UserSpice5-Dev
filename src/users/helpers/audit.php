@@ -36,7 +36,7 @@ function fetchUserjsonPIE()
 	// Example query
 	$db = DB::getInstance();
 	$stmt = $db->query("SELECT * AS ?,?
-	FROM permission_page_matches LEFT JOIN permissions ON permission_id = permissions.id  GROUP BY permission_id",[sum1,name]);
+	FROM groups_pages LEFT JOIN groups ON group_id = groups.id  GROUP BY group_id",[sum1,name]);
 	$results = $stmt->results();
 	$count = $stmt->count();
 	return $results;

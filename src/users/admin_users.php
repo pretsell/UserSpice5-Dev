@@ -9,17 +9,15 @@ require_once 'init.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 
-/*
-Secures the page...required for page permission management
-*/
-if (!securePage($_SERVER['PHP_SELF'])){die();}
+# Secures the page...required for page permission management
+if (!securePage($_SERVER['PHP_SELF'])) { die(); }
 
 
 $errors = [];
 $successes = [];
 
-if(Input::exists('post')){
-	if(!Token::check(Input::get('csrf'))){
+if (Input::exists('post')) {
+	if (!Token::check(Input::get('csrf'))) {
 		die('Token doesn\'t match!');
 	}
 }
@@ -30,15 +28,15 @@ $fname = null;
 $lname = null;
 $email = null;
 $form_valid=FALSE;
-$permOpsQ = $db->query("SELECT * FROM permissions");
-$permOps = $permOpsQ->results();
+$groupList = fetchAllGroups();
+// dnd($groupList);
 
 //Forms posted
-if (!empty($_POST)){
+if (!empty($_POST)) {
   //Delete User Checkboxes
-  if (!empty($_POST['delete'])){
+  if (!empty($_POST['delete'])) {
     $deletions = Input::get('delete');
-    if ($deletion_count = deleteUsers($deletions)){
+    if ($deletion_count = deleteUsers($deletions)) {
       $successes[] = "Account deletion successful";
     }
     else {

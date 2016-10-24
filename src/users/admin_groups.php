@@ -12,14 +12,14 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 /*
 Secures the page...required for page permission management
 */
-if (!securePage($_SERVER['PHP_SELF'])){die();}
+if (!securePage($_SERVER['PHP_SELF'])) { die(); }
 
 
 $errors = [];
 $successes = [];
 
-if(Input::exists('post')){
-	if(!Token::check(Input::get('csrf'))){
+if(Input::exists('post')) {
+	if(!Token::check(Input::get('csrf'))) {
 		die('Token doesn\'t match!');
 	}
 }
@@ -27,48 +27,46 @@ if(Input::exists('post')){
 $validation = new Validate();
 
 //Forms posted
-if(!empty($_POST))
-{
-  //Delete permission levels
-  if(!empty($_POST['delete'])){
+if(!empty($_POST)) {
+  //Delete groups
+  if(!empty($_POST['delete'])) {
     $deletions = $_POST['delete'];
-    if ($deletion_count = deletePermission($deletions)){
-      $successes[] = "Permissions deletion was successful";
+    if ($deletion_count = deleteGroups($deletions)) {
+      $successes[] = lang("GROUP_DELETIONS_SUCCESSFUL", array($deletion_count));
     }
   }
 
-  //Create new permission level
+  //Create new group
   if(!empty($_POST['name'])) {
-    $permission = Input::get('name');
-    $fields=array('name'=>$permission);
+    $groupName = Input::get('name');
+    $fields=array('name'=>$groupName);
     //NEW Validations
-        $validation->check($_POST,array(
-          'name' => array(
-            'display' => 'Permission Name',
-            'required' => true,
-            'unique' => 'permissions',
-            'min' => 1,
-            'max' => 25
-          )
-        ));
-        if($validation->passed()){
-          $db->insert('permissions',$fields);
-          $successes[]="Permission Updated";
-
-		}else{
-			/*
-			Append validation errors to error array
-			*/
-			foreach ($validation->errors() as $error) {
-				$errors[]=$error;
-			}			
-		}
+    $validation->check($_POST,array(
+      'name' => array(
+        'display' => 'Group Name',
+        'required' => true,
+        'unique' => 'groups',
+        'min' => 1,
+        'max' => 150
+      )
+    ));
+    if($validation->passed()) {
+      $db->insert('groups',$fields);
+      $successes[]=lang("GROUP_ADD_SUCCESSFUL");
+    } else {
+      # Append validation errors to error array
+      foreach ($validation->errors() as $error) {
+        $errors[]=$error;
+      }
+    }
   }
 }
 
 
-$permissionData = fetchAllPermissions(); //Retrieve list of all permission levels
+$groupData = fetchAllGroups(); //Retrieve list of all permission levels
 $count = 0;
+// dump($groupData);
+// echo $groupData[0]->name;
 ?>
 
     <div class="row">
@@ -85,12 +83,14 @@ $count = 0;
         <!-- Main Center Column -->
 
 
-			<form name='adminPermissions' action='admin_permissions.php' method='post'>
-			  <h2>Create a new Group</h2>
-			  <p>
+			<form name='adminGroups' action='admin_permissions.php' method='post'>
+            <div>
+            <h2> Administrate Groups </h2>
+            <div class="well">
+			  <h4>Create a new Group</h4>
 				<label>Group Name:</label>
 				<input type='text' name='name' />
-			  </p>
+            </div>
 
 			  <br>
 			  <table class='table table-hover table-list-search'>
@@ -100,11 +100,11 @@ $count = 0;
 
 				<?php
 				//List each permission level
-				foreach ($permissionData as $v1) {
+				foreach ($groupData as $v1) {
 				  ?>
 				  <tr>
-					<td><input type='checkbox' name='delete[<?=$permissionData[$count]->id?>]' id='delete[<?=$permissionData[$count]->id?>]' value='<?=$permissionData[$count]->id?>'></td>
-					<td><a href='admin_group.php?id=<?=$permissionData[$count]->id?>'><?=$permissionData[$count]->name?></a></td>
+					<td><input type='checkbox' name='delete[<?=$groupData[$count]->id?>]' id='delete[<?=$groupData[$count]->id?>]' value='<?=$groupData[$count]->id?>'></td>
+					<td><a href='admin_group.php?id=<?=$groupData[$count]->id?>'><?=$groupData[$count]->name?></a></td>
 				  </tr>
 				  <?php
 				  $count++;
@@ -112,7 +112,7 @@ $count = 0;
 				?>
 			  </table>
 			  <input type="hidden" name="csrf" value="<?=Token::generate();?>" >
-			  <input class='btn btn-primary' type='submit' name='Submit' value='Add/Update/Delete' /><br><br>
+			  <input class='btn btn-primary' type='submit' name='Submit' value='Save Changes' /><br><br>
 			</form>
 
           <!-- End of main content section -->

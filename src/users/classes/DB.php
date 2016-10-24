@@ -21,7 +21,7 @@ class DB {
 	private static $_instance = null;
 	private $_pdo, $_query, $_error = false, $_results, $_resultsArray, $_count = 0, $_lastId, $_queryCount=0;
 
-	private function __construct(){
+	private function __construct() {
 		if (!$opts = Config::get('mysql/options'))
 			$opts = array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET SESSION sql_mode = ''");
 		try{
@@ -31,19 +31,19 @@ class DB {
 				Config::get('mysql/username'),
 				Config::get('mysql/password'),
 				$opts);
-		} catch(PDOException $e){
+		} catch(PDOException $e) {
 			die($e->getMessage());
 		}
 	}
 
-	public static function getInstance(){
+	public static function getInstance() {
 		if (!isset(self::$_instance)) {
 			self::$_instance = new DB();
 		}
 		return self::$_instance;
 	}
 
-	public function query($sql, $params = array()){
+	public function query($sql, $params = array()) {
 		$this->_queryCount++;
 		$this->_error = false;
 		if ($this->_query = $this->_pdo->prepare($sql)) {
@@ -62,22 +62,22 @@ class DB {
 				}
 				$this->_count = $this->_query->rowCount();
 				$this->_lastId = $this->_pdo->lastInsertId();
-			} else{
+			} else {
 				$this->_error = true;
 			}
 		}
 		return $this;
 	}
 
-	public function findAll($table){
+	public function findAll($table) {
 		return $this->action('SELECT *',$table);
 	}
 
-	public function findById($id,$table){
+	public function findById($table,$id) {
 		return $this->action('SELECT *',$table,array('id','=',$id));
 	}
 
-	public function action($action, $table, $where = array()){
+	public function action($action, $table, $where = array()) {
 		$sql = "{$action} FROM {$table}";
 		$value = '';
 		if (count($where) === 3) {
@@ -87,7 +87,7 @@ class DB {
 			$operator = $where[1];
 			$value = $where[2];
 
-			if(in_array($operator, $operators)){
+			if(in_array($operator, $operators)) {
 				$sql .= " WHERE {$field} {$operator} ?";
 			}
 		}
@@ -97,19 +97,19 @@ class DB {
 		return false;
 	}
 
-	public function get($table, $where){
+	public function get($table, $where) {
 		return $this->action('SELECT *', $table, $where);
 	}
 
-	public function delete($table, $where){
+	public function delete($table, $where) {
 		return $this->action('DELETE', $table, $where);
 	}
 
-	public function deleteById($table,$id){
+	public function deleteById($table,$id) {
 		return $this->action('DELETE',$table,array('id','=',$id));
 	}
 
-	public function insert($table, $fields = array()){
+	public function insert($table, $fields = array()) {
 		$keys = array_keys($fields);
 		$values = null;
 		$x = 1;
@@ -130,7 +130,7 @@ class DB {
 		return false;
 	}
 
-	public function update($table, $id, $fields){
+	public function update($table, $id, $fields) {
 		$set = '';
 		$x = 1;
 
@@ -150,32 +150,50 @@ class DB {
 		return false;
 	}
 
-	public function results($assoc = false){
+	public function results($assoc = false) {
 		if($assoc) return $this->_resultsArray;
 		return $this->_results;
 	}
 
-	public function first(){
+	public function first() {
 		return $this->results()[0];
 	}
 
-	public function count(){
+	public function count() {
 		return $this->_count;
 	}
 
-	public function error(){
+	public function error() {
 		return $this->_error;
 	}
 
-	public function lastId(){
+	public function lastId() {
 		return $this->_lastId;
 	}
 
-	public function getQueryCount(){
+	public function getQueryCount() {
 		return $this->_queryCount;
 	}
-	public function getAttribute($attributeValue=null){
+
+	public function getAttribute($attributeValue=null) {
 		return $this->_pdo->getAttribute(constant($attributeValue));
+	}
+
+	//Add a condition allowing either an individual value or an array
+	// arrays will result with "fieldname IN (?,?,?)"
+	// values will result with "fieldname = ?"
+	// with the $bindvals updated appropriately
+	public function calcInOrEqual($fieldnm, $val, &$bindvals) {
+		if (!$val) return '';
+		$rtn = $fieldnm.' ';
+		if (is_array($val)) {
+			$rtn .= 'IN ('.str_repeat('?,', count($val) - 1). '?)';
+			$bindvals = array_merge($bindvals, $val);
+		} else {
+			$rtn .= '= ? ';
+			$bindvals[] = $val;
+		}
+		return $rtn;
 	}
 
 }

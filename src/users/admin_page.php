@@ -9,13 +9,11 @@ require_once 'init.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 
-/*
-Secures the page...required for page permission management
-*/
-if (!securePage($_SERVER['PHP_SELF'])){die();}
+# Secures the page...required for page permission management
+if (!securePage($_SERVER['PHP_SELF'])) { die(); }
 
-if(Input::exists('post')){
-	if(!Token::check(Input::get('csrf'))){
+if(Input::exists('post')) {
+	if(!Token::check(Input::get('csrf'))) {
 		die('Token doesn\'t match!');
 	}
 }
@@ -26,65 +24,67 @@ $errors = array();
 $successes = array();
 
 //Check if selected pages exist
-if(!pageIdExists($pageId)){
+!           <h2> Administrate Groups </h2>
+!         <div class="well">
+if(!pageIdExists($pageId)) {
   Redirect::to("admin_pages.php"); die();
 }
 
 $pageDetails = fetchPageDetails($pageId); //Fetch information specific to page
 
 //Forms posted
-if(Input::exists()){
+if(Input::exists()) {
 
 	$update = 0;
 
-	if(!empty($_POST['private'])){
+	if(!empty($_POST['private'])) {
 		$private = Input::get('private');
 	}
 
 	//Toggle private page setting
-	if (isset($private) AND $private == 'Yes'){
-		if ($pageDetails->private == 0){
-			if (updatePrivate($pageId, 1)){
+	if (isset($private) AND $private == 'Yes') {
+		if ($pageDetails->private == 0) {
+			if (updatePrivate($pageId, 1)) {
 				$successes[] = "Private access has been toggled";
-			}else{
+			} else {
 				$errors[] ="SQL error";
 			}
 		}
-	}elseif ($pageDetails->private == 1){
-		if (updatePrivate($pageId, 0)){
+	} elseif ($pageDetails->private == 1) {
+		if (updatePrivate($pageId, 0)) {
 			$successes[] = "Private access has been toggled";
-		}else{
+		} else {
 			$errors[] ="SQL error";
 		}
 	}
 
-	//Remove permission level(s) access to page
-	if(!empty($_POST['removePermission'])){
-		$remove = $_POST['removePermission'];
-		if ($deletion_count = removePage($pageId, $remove)){
+	//Remove group's access to page
+	if(!empty($_POST['removeGroup'])) {
+		$remove = $_POST['removeGroup'];
+		if ($deletion_count = deleteGroupsPages($pageId, $remove)) {
 			$successes[] = "Page access removed";
-		}else{
+		} else {
 			$errors[] = "SQL error";
 		}
 	}
 
-	//Add permission level(s) access to page
-	if(!empty($_POST['addPermission'])){
-		$add = $_POST['addPermission'];
+	//give group access to page
+	if(!empty($_POST['addGroup'])) {
+		$add = $_POST['addGroup'];
 		$addition_count = 0;
-		foreach($add as $perm_id){
-			if(addPage($pageId, $perm_id)){
+		foreach($add as $groupId) {
+			if(addPage($pageId, $groupId)) {
 				$addition_count++;
 			}
 		}
-		if ($addition_count > 0 ){
+		if ($addition_count > 0 ) {
 			$successes[] = "Page access added";
 		}
 	}
 	$pageDetails = fetchPageDetails($pageId);
 }
-$pagePermissions = fetchPagePermissions($pageId);
-$permissionData = fetchAllPermissions();
+$pageGroups = fetchGroupsByPage($pageId); // groups with auth to access page
+$groupData = fetchAllGroups();
 ?>
     <!-- Page Heading -->
     <div class="row">
@@ -96,7 +96,7 @@ $permissionData = fetchAllPermissions();
         <div class="col-xs-12">
           <!-- Content Goes Here. Class width can be adjusted -->
 		  
-			<h2>Page Permissions </h2>
+			<h2>Page Authorizations </h2>
 			<?php
 			echo display_errors($errors);
 			echo display_successes($successes);
@@ -142,14 +142,14 @@ $permissionData = fetchAllPermissions();
 					<div class="panel-body">
 						<div class="form-group">
 						<?php
-						//Display list of permission levels with access
-						$perm_ids = [];
-						foreach($pagePermissions as $perm){
-							$perm_ids[] = $perm->permission_id;
+						//Display list of groups with access
+						$groupIds = [];
+						foreach($pageGroups as $group) {
+							$groupIds[] = $group->group_id;
 						}
-						foreach ($permissionData as $v1){
-							if(in_array($v1->id,$perm_ids)){ ?>
-							<input type='checkbox' name='removePermission[]' id='removePermission[]' value='<?=$v1->id;?>'> <?=$v1->name;?><br/>
+						foreach ($groupData as $v1) {
+							if (in_array($v1->id,$groupIds)) { ?>
+							<input type='checkbox' name='removeGroup[]' id='removeGroup[]' value='<?=$v1->id;?>'> <?=$v1->name;?><br/>
 							<?php }} ?>
 						</div>
 					</div>
@@ -162,10 +162,10 @@ $permissionData = fetchAllPermissions();
 					<div class="panel-body">
 						<div class="form-group">
 						<?php
-						//Display list of permission levels without access
-						foreach ($permissionData as $v1){
-						if(!in_array($v1->id,$perm_ids)){ ?>
-						<input type='checkbox' name='addPermission[]' id='addPermission[]' value='<?=$v1->id;?>'> <?=$v1->name;?><br/>
+						//Display list of groups without access
+						foreach ($groupData as $v1) {
+						if(!in_array($v1->id,$groupIds)) { ?>
+						<input type='checkbox' name='addGroup[]' id='addGroup[]' value='<?=$v1->id;?>'> <?=$v1->name;?><br/>
 						<?php }} ?>
 						</div>
 					</div>

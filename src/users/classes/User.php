@@ -45,7 +45,7 @@ class User {
 			throw new Exception('There was a problem creating an account.');
 		}else
 		$user_id = $this->_db->lastId();
-		$query = $this->_db->insert("user_permission_matches",['user_id'=>$user_id,'permission_id'=>1]);
+		$query = $this->_db->insert("groups_users",['user_id'=>$user_id,'group_id'=>1]);
 		// return $user_id;
 		$query2 = $this->_db->insert("profiles",['user_id'=>$user_id, 'bio'=>'This is your bio']);
 		return $user_id;
@@ -144,6 +144,20 @@ class User {
 
 	public function isLoggedIn(){
 		return $this->_isLoggedIn;
+	}
+
+	public function isAdmin(){
+		if (!$this->_isLoggedIn)
+			return false;
+		if ($this->_data->id === 0)
+			return true;
+		if (!$adminGroups = Config::get('userspice/admin_groups'))
+			$adminGroups = array(2); // default in UserSpice
+		foreach ((array)$adminGroups as $group) {
+			if ( $this->_db->query('SELECT * FROM groups_users WHERE user_id = ? AND group_id = ?', array($this->_data->id, $group))->count() > 0)
+				return true;
+		}
+		return false;
 	}
 
 	public function notLoggedInRedirect($location){

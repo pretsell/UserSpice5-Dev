@@ -118,6 +118,8 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 
 	if ($site_settings->mail_method=='smtp'){
 		$mail->SMTPDebug = $debug_level;                               // Enable verbose debug output
+        if ($debug_level) 
+            $mail->Debugoutput = 'html';
 		$mail->isSMTP();                                      // Set mailer to use SMTP
 		$mail->Host = $smtp_server;  // Specify main and backup SMTP servers
 		$mail->SMTPAuth = true;                               // Enable SMTP authentication

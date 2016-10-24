@@ -10,7 +10,7 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 
 /*
-Secures the page...required for page permission management
+Secures the page...required for page group/permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
 
@@ -29,8 +29,8 @@ $fname = null;
 $lname = null;
 $email = null;
 $form_valid=FALSE;
-$permOpsQ = $db->query("SELECT * FROM permissions");
-$permOps = $permOpsQ->results();
+$groupOpsQ = $db->query("SELECT * FROM groups");
+$groupOps = $groupOpsQ->results();
 
 if(isset($_POST['submit'])){
 	if (Input::get('method')=='form'){
