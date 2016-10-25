@@ -46,6 +46,7 @@ class DB {
 	public function query($sql, $params = array()) {
 		$this->_queryCount++;
 		$this->_error = false;
+		#echo "DEBUG: sql=$sql<br />\n";
 		if ($this->_query = $this->_pdo->prepare($sql)) {
 			$x = 1;
 			if (count($params)) {
@@ -156,7 +157,10 @@ class DB {
 	}
 
 	public function first() {
-		return $this->results()[0];
+		if ($this->count() > 0)
+			return $this->results()[0];
+		else
+			return false;
 	}
 
 	public function count() {

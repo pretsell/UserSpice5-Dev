@@ -19,6 +19,10 @@ if(Input::exists()){
 		die('Token doesn\'t match!');
 	}
 }
+$validate = new Validate([
+	'password',
+	'confirm'
+]);
 
 if(Input::get('reset') == 1){ //$_GET['reset'] is set when clicking the link in the password reset email.
 
@@ -28,19 +32,7 @@ if(Input::get('reset') == 1){ //$_GET['reset'] is set when clicking the link in 
 	$ruser = new User($email);
 	if (Input::get('resetPassword')) {
 
-		$validate = new Validate();
-		$validation = $validate->check($_POST,array(
-		'password' => array(
-		  'display' => 'New Password',
-		  'required' => true,
-		  'min' => 6,
-		),
-		'confirm' => array(
-		  'display' => 'Confirm Password',
-		  'required' => true,
-		  'matches' => 'password',
-		),
-		));
+		$validation = $validate->check($_POST);
 		if($validation->passed()){
 			//update password
 			$ruser->update(array(
@@ -51,12 +43,7 @@ if(Input::get('reset') == 1){ //$_GET['reset'] is set when clicking the link in 
 			$reset_password_success=TRUE;
 		}else{
 			$reset_password_success=FALSE;
-			/*
-			Validation did not pass so copy errors from validation class to $errors[]
-			*/
-			foreach ($validation->errors() as $error) {
-				$errors[] = $error;
-			}
+			$errors = $validation->stackErrorMessages($errors);
 		}
 	}
 	if ($ruser->exists() && $ruser->data()->vericode == $vericode) {
@@ -76,10 +63,10 @@ if ((Input::get('reset') == 1)){
 		<div class="jumbotron text-center">
 		<h2>Your password has been reset!</h2>
 		<p><a href="login.php" class="btn btn-primary">Login</a></p>
-		</div>	
+		</div>
 		</div><!-- /.col -->
 		</div><!-- /.row -->
-		
+
 <?php
 		}elseif((!Input::get('resetPassword') || !$reset_password_success) && $password_change_form){
 ?>
@@ -94,10 +81,12 @@ if ((Input::get('reset') == 1)){
 				<?=display_errors($errors);?>
 				<div class="form-group">
 					<label for="password">New Password:</label>
+					<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('password') ?>"></span>
 					<input type="password" name="password" value="" id="password" class="form-control">
 				</div>
 				<div class="form-group">
 					<label for="confirm">Confirm Password:</label>
+					<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('confirm') ?>"></span>
 					<input type="password" name="confirm" value="" id="confirm" class="form-control">
 				</div>
 				<input type="hidden" name="csrf" value="<?=Token::generate();?>">
@@ -105,7 +94,7 @@ if ((Input::get('reset') == 1)){
 				<input type="hidden" name="vericode" value="<?=$vericode;?>">
 				<input type="submit" name="resetPassword" value="Reset" class="btn btn-primary">
 			</form>
-		</div>	
+		</div>
 		</div><!-- /.col -->
 		</div><!-- /.row -->
 <?php
@@ -116,7 +105,7 @@ if ((Input::get('reset') == 1)){
 		<div class="jumbotron text-center">
 		<h2>Oops...something went wrong, maybe an old reset link you clicked on. Click below to try again</h2>
 		<p><a href="forgot_password.php" class="btn btn-primary">Reset Password</a></p>
-		</div>	
+		</div>
 		</div><!-- /.col -->
 		</div><!-- /.row -->
 <?php
@@ -128,11 +117,9 @@ if ((Input::get('reset') == 1)){
 		<div class="jumbotron text-center">
 		<h2>Oops...something went wrong, maybe an old reset link you clicked on. Click below to try again</h2>
 		<p><a href="forgot_password.php" class="btn btn-primary">Reset Password</a></p>
-		</div>	
+		</div>
 		</div><!-- /.col -->
 		</div><!-- /.row -->
 <?php
 }
 ?>
-
-

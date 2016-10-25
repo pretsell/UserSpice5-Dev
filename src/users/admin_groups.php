@@ -23,14 +23,17 @@ if(Input::exists('post')) {
 		die('Token doesn\'t match!');
 	}
 }
-
-$validation = new Validate();
+$validation = new Validate(
+	['groupname'=>
+			['alias'=>'name',
+			 'action'=>'add' ]]
+);
 
 //Forms posted
-if(!empty($_POST)) {
+if(Input::exists('post')) {
   //Delete groups
   if(!empty($_POST['delete'])) {
-    $deletions = $_POST['delete'];
+    $deletions = Input::get('delete', 'post');
     if ($deletion_count = deleteGroups($deletions)) {
       $successes[] = lang("GROUP_DELETIONS_SUCCESSFUL", array($deletion_count));
     }
@@ -38,30 +41,17 @@ if(!empty($_POST)) {
 
   //Create new group
   if(!empty($_POST['name'])) {
-    $groupName = Input::get('name');
+    $groupName = Input::get('name', 'post');
     $fields=array('name'=>$groupName);
-    //NEW Validations
-    $validation->check($_POST,array(
-      'name' => array(
-        'display' => 'Group Name',
-        'required' => true,
-        'unique' => 'groups',
-        'min' => 1,
-        'max' => 150
-      )
-    ));
+    $validation->check($_POST);
     if($validation->passed()) {
       $db->insert('groups',$fields);
       $successes[]=lang("GROUP_ADD_SUCCESSFUL", $groupName);
     } else {
-      # Append validation errors to error array
-      foreach ($validation->errors() as $error) {
-        $errors[]=$error;
-      }
+			$errors = $validation->stackErrorMessages($errors);
     }
   }
 }
-
 
 $groupData = fetchAllGroups(); //Retrieve list of all permission levels
 $count = 0;
@@ -90,6 +80,7 @@ $count = 0;
 			  <h4>Create a new Group</h4>
 				<label>Group Name:</label>
 				<input type='text' name='name' />
+				<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('name') ?>"></span>
             </div>
 
 			  <br>

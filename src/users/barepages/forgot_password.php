@@ -18,14 +18,13 @@ if(Input::exists()){
 		die('Token doesn\'t match!');
 	}
 }
+$validation = new Validate(array('email' => array('unique'=>'unset')));
 
 if (Input::get('forgotten_password')) {
 	$email = Input::get('email');
 	$fuser = new User($email);
-	//validate the form
-	$validate = new Validate();
-	$validation = $validate->check($_POST,array('email' => array('display' => 'Email','valid_email' => true,'required' => true,),));
-	
+
+	$validation->check($_POST);
 	if($validation->passed()){
 		if($fuser->exists()){
 			//send the email
@@ -48,12 +47,7 @@ if (Input::get('forgotten_password')) {
 			$errors[] = 'That email does not exist in our database';
 		}
 	}else{
-	  	/*
-		Validation did not pass so copy errors from validation class to $errors[]
-		*/
-		foreach ($validation->errors() as $error) {
-			$errors[] = $error;
-		}
+		$errors = stackErrorMessages($errors);
 	}
 }
 
@@ -64,7 +58,7 @@ if($email_sent){
 	<div class="jumbotron">
 	<p>Your password reset link has been sent to your email address.</p>
 	<p>Click the link in the email to Reset your password. Be sure to check your spam folder if the email isn't in your inbox.</p>
-	</div>	
+	</div>
 	</div><!-- /.col -->
 	</div><!-- /.row -->
 <?php
@@ -82,6 +76,7 @@ if($email_sent){
 	<form action="forgot_password.php" method="post" class="form ">
 		<div class="form-group">
 			<label for="email">Email</label>
+			<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('email') ?>"></span>
 			<input type="text" name="email" placeholder="Email Address" class="form-control" autofocus>
 		</div>
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>">

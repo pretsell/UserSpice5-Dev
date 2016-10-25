@@ -14,62 +14,52 @@ if (!securePage($_SERVER['PHP_SELF'])) { die(); }
 $errors = [];
 $successes = [];
 
-if(Input::exists('post')){
-	if(!Token::check(Input::get('csrf'))){
+if (Input::exists('post')) {
+	if (!Token::check(Input::get('csrf'))) {
 		die('Token doesn\'t match!');
 	}
 }
 
 # If requested group does not exist, redirect to admin_groups.php
-if(!($groupId = @$_GET['id']) || !groupIdExists($groupId)){
+if (!($groupId = @$_GET['id']) || !groupIdExists($groupId)) {
 	Redirect::to("admin_groups.php"); die();
 }
 
+$validation = new Validate(
+	['groupname'=>
+			['alias'=>'name',
+			 'action'=>'update',
+			 'update_id'=>$groupId]]
+);
 //Fetch information specific to this group
 $groupDetails = fetchGroupDetails($groupId);
 //Forms posted
-if(Input::exists()){
+if (Input::exists('post')) {
   //Delete selected group
-  if(!empty($_POST['delete'])){
-    $deletions = Input::get('delete');
-    if ($deletion_count = deleteGroups($deletions)){
+  if ($deletions = Input::get('delete', 'post')) {
+    if ($deletion_count = deleteGroups($deletions)) {
       $successes[] = lang("GROUP_DELETIONS_SUCCESSFUL", array($deletion_count));
       Redirect::to('admin_groups.php');
     }
     else {
       $errors[] = "SQL Error";
     }
-  }
-  else
-  {
+  } else {
     //Update group name
-    if($groupDetails['name'] != $_POST['name']) {
+    if ($groupDetails['name'] != $_POST['name']) {
       $group_name = Input::get('name');
       $fields=array('name'=>$group_name);
-      //NEW Validations
-			$validation = new Validate();
-      $validation->check($_POST,array(
-          'name' => array(
-            'display' => 'Group Name',
-            'required' => true,
-            'unique' => 'groups',
-            'min' => 1,
-            'max' => 150
-          )
-        ));
-      if($validation->passed()) {
+      $validation->check($_POST);
+      if ($validation->passed()) {
         $db->update('groups',$groupId,$fields);
+				$successes[] = lang('GROUP_NAME_UPDATE', $group_name);
       } else {
-        # Append validation errors to error array
-        foreach ($validation->errors() as $error) {
-          $errors[]=$error;
-        }
+				$errors = $validation->stackErrorMessages($errors);
       }
     }
 
     //Remove user(s) from group
-    if(!empty($_POST['removeUsers'])) {
-      $remove = $_POST['removeUsers'];
+    if ($remove = Input::get('removeUsers', 'post')) {
       if ($deletion_count = deleteGroupsUsers_raw($groupId, $remove)) {
         $successes[] = lang("GROUP_REMOVE_USERS", array($deletion_count));
       } else {
@@ -78,8 +68,7 @@ if(Input::exists()){
     }
 
     //Remove nested group(s) from group
-    if(!empty($_POST['removeGroupGroups'])){
-      $remove = $_POST['removeGroupGroups'];
+    if ($remove = $_POST['removeGroupGroups']) {
       if ($deletion_count = deleteGroupsUsers_raw($groupId, $remove, 1)) {
         $successes[] = lang("GROUP_REMOVE_GROUPS", array($deletion_count));
       } else {
@@ -88,8 +77,7 @@ if(Input::exists()){
     }
 
     //Add users to group
-    if(!empty($_POST['addUsers'])) {
-      $add = $_POST['addUsers'];
+    if ($add = Input::get('addUsers', 'post')) {
       if ($addition_count = addGroupsUsers_raw($groupId, $add)) {
         $successes[] = lang("GROUP_ADD_USERS", array($addition_count));
       } else {
@@ -98,8 +86,7 @@ if(Input::exists()){
     }
 
     //Add nested groups to group
-    if(!empty($_POST['addGroupGroups'])) {
-      $add = $_POST['addGroupGroups'];
+    if ($add = Input::get('addGroupGroups', 'post')) {
       if ($addition_count = addGroupsUsers_raw($groupId, $add, 1)) {
         $successes[] = lang("GROUP_ADD_GROUPS", array($addition_count));
       } else {
@@ -108,8 +95,7 @@ if(Input::exists()){
     }
 
     //Remove pages from group
-    if(!empty($_POST['removePage'])) {
-      $remove = $_POST['removePage'];
+    if ($remove = Input::get('removePage', 'post')) {
       if ($deletion_count = deleteGroupsPages($remove, $groupId)) {
         $successes[] = lang("GROUP_REMOVE_PAGES", array($deletion_count));
       } else {
@@ -118,8 +104,7 @@ if(Input::exists()){
     }
 
     //Add access to pages
-    if(!empty($_POST['addPage'])) {
-      $add = $_POST['addPage'];
+    if ($add = Input::get('addPage', 'post')) {
       if ($addition_count = addGroupsPages($add, $groupId)) {
         $successes[] = lang("GROUP_ADD_PAGES", array($addition_count));
       } else {
@@ -172,6 +157,8 @@ $pageData = fetchAllPages();
 			</p>
 			<p>
 			<label>Name:</label>
+			<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('name') ?>"></span>
+			<br />
 			<input type='text' name='name' value='<?=$groupDetails['name']?>' />
 			</p>
 			<h3>Delete this Group?</h3>
@@ -239,7 +226,7 @@ $pageData = fetchAllPages();
 			<?php
 			//List public pages
 			foreach ($pageData as $v1) {
-			  if($v1->private != 1){
+			  if ($v1->private != 1) {
 				echo "<br>".$v1->page;
 			  }
 			}
@@ -250,11 +237,11 @@ $pageData = fetchAllPages();
 			<?php
 			//Display list of pages with this group
 			$page_ids = [];
-			foreach($groupPages as $gp){
+			foreach($groupPages as $gp) {
 			  $page_ids[] = $gp->page_id;
 			}
-			foreach ($pageData as $v1){
-			  if(in_array($v1->id,$page_ids)){ ?>
+			foreach ($pageData as $v1) {
+			  if (in_array($v1->id,$page_ids)) { ?>
 				<br><input type='checkbox' name='removePage[]' id='removePage[]' value='<?=$v1->id;?>'> <?=$v1->page;?>
 			  <?php }
 			}  ?>
@@ -264,8 +251,8 @@ $pageData = fetchAllPages();
 			<?php
 			//Display list of pages with this access level
 
-			foreach ($pageData as $v1){
-			  if(!in_array($v1->id,$page_ids) && $v1->private == 1){ ?>
+			foreach ($pageData as $v1) {
+			  if (!in_array($v1->id,$page_ids) && $v1->private == 1) { ?>
 				<br><input type='checkbox' name='addPage[]' id='addPage[]' value='<?=$v1->id;?>'> <?=$v1->page;?>
 			  <?php }
 			}  ?>

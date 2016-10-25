@@ -10,14 +10,18 @@ ini_set("allow_url_fopen", 1);
 $errors=array();
 $successes=array();
 $reCaptchaValid=FALSE;
+$validation = new Validate([
+	'username' => ['unique'=>'unset'],
+	'password'
+]);
 
 /*
 If enabled, insert google and facebook auth url generators
 */
-if($site_settings->glogin){
+if ($site_settings->glogin) {
 	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/glogin.php';
 }
-if($site_settings->fblogin){
+if ($site_settings->fblogin) {
 	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/fblogin.php';
 }
 
@@ -26,7 +30,7 @@ if($site_settings->fblogin){
 If $_POST data exists, then check CSRF token, and kill page if not correct...no need to process rest of page or form data
 */
 if (Input::exists()) {
-	if(!Token::check(Input::get('csrf'))){
+	if (!Token::check(Input::get('csrf'))) {
 		die('Token doesn\'t match!');
 	}
 }
@@ -36,11 +40,11 @@ if (Input::exists()) {
 	/*
 	If recaptcha is enabled, then process recaptcha and response
 	*/
-	if($site_settings->recaptcha == 1){
+	if ($site_settings->recaptcha == 1) {
 		$remoteIp=$_SERVER["REMOTE_ADDR"];
 		$gRecaptchaResponse=Input::get('g-recaptcha-response');
 		$response = null;
-		
+
 		require_once 'includes/recaptcha.config.php';
 
 		// check secret key
@@ -52,21 +56,20 @@ if (Input::exists()) {
 		}
 		if ($response != null && $response->success) {
 			$reCaptchaValid=TRUE;
-		}else{
+		} else {
 			$reCaptchaValid=FALSE;
 			$errors[]='Please check the reCaptcha';
 		}
-	}else{
+	} else {
 		/*
 		If reCaptcha is disabled, then set true so that the following login sequence will run
 		*/
 		$reCaptchaValid=TRUE;
 	}
 
-	if($reCaptchaValid || $site_settings->recaptcha == 0){ //if recaptcha valid or recaptcha disabled
+	if ($reCaptchaValid || $site_settings->recaptcha == 0) { //if recaptcha valid or recaptcha disabled
 
-		$validate = new Validate();
-		$validation = $validate->check($_POST, array('username' => array('display' => 'Username','required' => true),'password' => array('display' => 'Password', 'required' => true)));
+		$validation->check($_POST);
 
 		if ($validation->passed()) {
 			//Log user in
@@ -78,18 +81,18 @@ if (Input::exists()) {
 				/*
 				Feel free to change where the user goes after login!
 				*/
-				if($_SESSION['securePageRequest'] && $site_settings->redirect_referrer_login){
+				if ($_SESSION['securePageRequest'] && $site_settings->redirect_referrer_login) {
 					//bold('HERE');
 					$securePageRequest=$_SESSION['securePageRequest'];
 					unset($_SESSION['securePageRequest']);
 					Redirect::to($securePageRequest);
-				}else{
+				} else {
 					Redirect::to(US_URL_ROOT.$site_settings->redirect_login);
 				}
 			} else {
 				$errors[]= 'Log in failed. Please check your username and password and try again';
 			}
-		}else{
+		} else {
 			/*
 			Append validation errors to error array
 			*/
@@ -106,22 +109,24 @@ if (Input::exists()) {
 	<div class="col-xs-12">
 	<?=display_errors($errors)?>
 	<?=display_successes($successes)?>
-	
+
 	<form name="login" class="form" action="login.php" method="post">
 	<h2 class="text-center"> Sign In</h2>
 
 	<div class="form-group">
 		<label class="control-label" for="username">Username OR Email</label>
+		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('username') ?>"></span>
 		<div><input  class="form-control" type="text" name="username" id="username" placeholder="Username/Email" required autofocus></div>
 	</div>
 
 	<div class="form-group">
 		<label class="control-label" for="password">Password</label>
+		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('password') ?>"></span>
 		<div><input type="password" class="form-control"  name="password" id="password"  placeholder="Password" required autocomplete="off"></div>
 	</div>
 
 	<?php
-	if($site_settings->recaptcha == 1){
+	if ($site_settings->recaptcha == 1) {
 	?>
 	<div class="form-group">
 		<label>Please check the box below to continue</label>
@@ -130,7 +135,7 @@ if (Input::exists()) {
 	<?php } ?>
 
 	<?php
-	if($site_settings->allow_remember_me == 1){
+	if ($site_settings->allow_remember_me == 1) {
 	?>
 	<div class="form-group">
 		<label class="control-label" for="remember">Remember Me</label>
@@ -140,11 +145,11 @@ if (Input::exists()) {
 	}
 	?>
 	<input type="hidden" name="csrf" value="<?=Token::generate(); ?>">
-		
+
 	<div class="text-center">
 		<button class="btn btn-primary" type="submit"><span class="fa fa-sign-in"></span> Sign In</button>
-		<?php	if($site_settings->glogin){?><a href="<?=$gAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
-		<?php if($site_settings->fblogin){?><a href="<?=$fbAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
+		<?php	if ($site_settings->glogin) {?><a href="<?=$gAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
+		<?php if ($site_settings->fblogin) {?><a href="<?=$fbAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
 		<a href="forgot_password.php" class="btn btn-primary" type="button"><span class="fa fa-wrench"></span> Forgot Password</a>
 		<a href="join.php" class="btn btn-primary" type="button"><span class="fa fa-plus-square"></span> Register</a>
 	</div>
@@ -153,6 +158,6 @@ if (Input::exists()) {
 </div>
 
 <!-- Place any per-page javascript here -->
-<?php 	if($site_settings->recaptcha == 1){ ?>
+<?php 	if ($site_settings->recaptcha == 1) { ?>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <?php } ?>

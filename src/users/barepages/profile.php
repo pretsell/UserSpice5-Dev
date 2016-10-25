@@ -8,7 +8,7 @@ by the UserSpice Team at http://UserSpice.com
 /*
 Secures the page...required for page permission management
 */
-if (!securePage($_SERVER['PHP_SELF'])){die();}
+if (!securePage($_SERVER['PHP_SELF'])) {die();}
 
 /*
 Initialize variables for the page
@@ -16,9 +16,9 @@ Initialize variables for the page
 $errors=[];
 $successes=[];
 
-if($user->isLoggedIn()) {
+if ($user->isLoggedIn()) {
 	$userId = $user->data()->id;
-}else{
+} else {
 	$userId = 0;
 }
 
@@ -26,247 +26,101 @@ if($user->isLoggedIn()) {
 If $_POST data exists, then check CSRF token, and kill page if not correct...no need to process rest of page or form data
 */
 if (Input::exists()) {
-	if(!Token::check(Input::get('csrf'))){
+	if (!Token::check(Input::get('csrf'))) {
 		die('Token doesn\'t match!');
 	}
 }
 
-if(Input::get('id')==$user->data()->id || Input::get('id') == null){
+$id = Input::get('id');
+if ($id==$user->data()->id || $id == null) {
 	/*
 	Displaying all user data and update form
 	*/
 	$displayFullProfile=TRUE;
 	$userData = $user->data();
-}else{
+} else {
 	/*
 	Displaying only public user data without form controls
 	*/
 	$displayFullProfile=FALSE;
-	$userQ = $db->query("SELECT * FROM users WHERE id = ?",array(Input::get('id')));
+	$userQ = $db->query("SELECT * FROM users WHERE id = ?",array($id));
 	$userData = $userQ->first();
 }
+if (!$id)
+	$id = $userId;
 
 /*
 Process form data if submitted
 */
 
-if (Input::exists()){
-	$validation = new Validate();
-
-	/*
-	Update username (display name)
-	*/
-	if ($userData->username != Input::get("username")){
-		$displayname = Input::get("username");
-
-		$fields=array('username'=>$displayname);
-		$validation->check($_POST,array(
-		'username' => array(
-		  'display' => 'Username',
-		  'required' => true,
-		  'unique_update' => 'users,'.$userId,
-		  'min' => 1,
-		  'max' => 25
-		)
-		));
-		if($validation->passed()){
-			/*
-			Username changes are disabled by commenting out this field and disabling input in the form/view;
-			*/
-			//$db->update('users',$userId,$fields);
-
-			$successes[]="Username updated.";
-		}else{
-			/*
-			Validation did not pass so copy errors from validation class to $errors[]
-			*/
-			foreach ($validation->errors() as $error) {
-				$errors[] = $error;
-			}
+$validation = new Validate([
+	'username'=>['action'=>'update', 'update_id'=>$id],
+	'fname',
+	'lname',
+	'email'=>['action'=>'update', 'update_id'=>$id],
+	'old' => array(
+	  'display' => 'Old Password',
+	  'required' => false, // only required if changing pass
+	),
+	'password' => ['required'=>false], // only required if changing pass
+	'confirm' => ['required'=>false], // only required if changing pass
+	'bio',
+]);
+$fldList = [ 'username', 'fname', 'lname', 'email', 'timezone_string', 'bio' ];
+if (Input::exists()) {
+	foreach ($fldList as $fn) {
+		$$fn = $fields[$fn] = Input::get($fn);
+	}
+	$validation->check($_POST);
+	if ($validation->passed()) {
+		if ($email != $userData->email && $userData->email_act=1) { // changed email
+			$fields['email_verified']=0; // no longer verified
 		}
-	}else{
-		$displayname=$userData->username;
+		if (!$site_settings->allow_username_change)
+			unset($fields['username']);
+		$db->update('users',$userId,$fields);
+		$successes[]=lang('ACCOUNT_DETAILS_UPDATED');
+	} else {
+		$errors = $validation->stackErrorMessages($errors);
 	}
 
-	/*
-	Update first name
-	*/
-	if ($userData->fname != Input::get("fname")){
-		$fname = Input::get("fname");
-
-		$fields=array('fname'=>$fname);
-		$validation->check($_POST,array(
-		'fname' => array(
-		  'display' => 'First Name',
-		  'required' => true,
-		  'min' => 1,
-		  'max' => 25
-		)
-		));
-		if($validation->passed()){
-			$db->update('users',$userId,$fields);
-
-			$successes[]='First name updated.';
-		}else{
-			/*
-			Validation did not pass so copy errors from validation class to $errors[]
-			*/
-			foreach ($validation->errors() as $error) {
-				$errors[] = $error;
-			}
-
-		}
-	}else{
-		$fname=$userData->fname;
-	}
-
-	/*
-	Update last name
-	*/
-	if ($userData->lname != Input::get("lname")){
-	  $lname = Input::get("lname");
-
-	  $fields=array('lname'=>$lname);
-	  $validation->check($_POST,array(
-		'lname' => array(
-		  'display' => 'Last Name',
-		  'required' => true,
-		  'min' => 1,
-		  'max' => 25
-		)
-	  ));
-	if($validation->passed()){
-	  $db->update('users',$userId,$fields);
-
-	  $successes[]='Last name updated.';
-	}else{
-			/*
-			Validation did not pass so copy errors from validation class to $errors[]
-			*/
-			foreach ($validation->errors() as $error) {
-				$errors[] = $error;
-			}
-
-	  }
-	}else{
-		$lname=$userData->lname;
-	}
-
-	/*
-	Update email
-	*/
-	if ($userData->email != Input::get("email")){
-	  $email = Input::get("email");
-	  $fields=array('email'=>$email);
-	  $validation->check($_POST,array(
-		'email' => array(
-		  'display' => 'Email',
-		  'required' => true,
-		  'valid_email' => true,
-		  'unique_update' => 'users,'.$userId,
-		  'min' => 3,
-		  'max' => 75
-		)
-	  ));
-	if($validation->passed()){
-	  $db->update('users',$userId,$fields);
-			if($emailR->email_act=1){
-				$db->update('users',$userId,['email_verified'=>0]);
-			}
-
-
-	  $successes[]='Email updated.';
-	}else{
-			/*
-			Validation did not pass so copy errors from validation class to $errors[]
-			*/
-			foreach ($validation->errors() as $error) {
-				$errors[] = $error;
-			}
-	  }
-
-	}else{
-		$email=$userData->email;
-	}
-	
 	/*
 	Update password
 	*/
-	if(Input::get('password')!=="") {
+	if (Input::get('password')!=="") {
 	  $validation->check($_POST,array(
-		'old' => array(
-		  'display' => 'Old Password',
-		  'required' => true,
-		),
-		'password' => array(
-		  'display' => 'New Password',
-		  'required' => true,
-		  'min' => 6,
-		),
-		'confirm' => array(
-		  'display' => 'Confirm New Password',
-		  'required' => true,
-		  'matches' => 'password',
-		),
+			'old' => array(
+			  'display' => 'Old Password',
+			  'required' => true,
+			),
+			'password' => array(
+			  'display' => 'New Password',
+			  'required' => true,
+			  'min' => 6,
+			),
+			'confirm' => array(
+			  'display' => 'Confirm New Password',
+			  'required' => true,
+			  'matches' => 'password',
+			),
 	  ));
-	  	/*
-		Validation did not pass so copy errors from validation class to $errors[]
-		*/
-		foreach ($validation->errors() as $error) {
-			$errors[] = $error;
-		}
-
-	  if (!password_verify(Input::get('old'),$user->data()->password)) {
-			foreach ($validation->errors() as $error) {
-				$errors[] = $error;
+		if ($validation->passed()) {
+		  if (!password_verify(Input::get('old'),$user->data()->password)) {
+				$errors[]=lang('ACCOUNT_PASSWORD_INVALID');
+		  } else {
+				$new_password_hash = password_hash(Input::get('password'),PASSWORD_BCRYPT,array('cost' => 12));
+				$user->update(array('password' => $new_password_hash,),$user->data()->id);
+				$successes[]='Password updated.';
 			}
-			$errors[]='Your password does not match our records.';
-	  }
-		if (empty($errors)) {
-			//process
-			$new_password_hash = password_hash(Input::get('password'),PASSWORD_BCRYPT,array('cost' => 12));
-			$user->update(array('password' => $new_password_hash,),$user->data()->id);
-			$successes[]='Password updated.';
+		} else {
+			$errors = stackErrorMessages($errors);
 		}
 	}
-	/*
-	Update timezone
-	*/
-	if ($userData->timezone_string != Input::get('timezone_string')){
-		$timezone_string = Input::get('timezone_string');
-		$fields=array('timezone_string'=>$timezone_string);
-		$db->update('users',$userData->id,$fields);
-	}else{
-		$timezone_string=$userData->timezone_string;
-	}	
-	
-	/*
-	Update biography text
-	*/
-	if ($userData->bio != Input::get('bio')){
-		$bio = Input::get('bio');
-		$fields=array('bio'=>$bio);
-		$validation->check($_POST,array(
-		'bio' => array(
-		'display' => 'Bio',
-		'required' => true
-		)
-		));
-		if($validation->passed()){
-			$db->update('users',$userData->id,$fields);
-		}	
-	}else{
-		$bio=$userData->bio;
+} else {
+	foreach ($fldList as $f) {
+		$$f = $userData->$f;
+		#echo "DEBUG: f=$f, \$\$f=".$$f."<br />\n";
 	}
-	
-	
-}else{
-	$displayname=$userData->username;
-	$fname=$userData->fname;
-	$lname=$userData->lname;
-	$email=$userData->email;
-	$timezone_string=$userData->timezone_string;
-	$bio=$userData->bio;
 }
 
 /*
@@ -279,49 +133,52 @@ $signupDate = $rawDate['year']."-".$rawDate['month']."-".$rawDate['day'];
 <div class="row">
 <div class="col-xs-12 col-md-3">
 <p><img src="<?=$grav; ?>" class="img-thumbnail" alt="Generic placeholder thumbnail"></p>
+<div class="form-group">
+	<label>Member Since</label>
+	<input  class='form-control' type='text' name='signupdate' value='<?=$signupDate?>' readonly/>
+</div>
+
+<div class="form-group">
+	<label>Number of Logins</label>
+	<input  class='form-control' type='text' name='logins' value='<?=$userData->logins?>' readonly/>
+</div>
+
 </div>
 <div class="col-xs-12 col-md-9">
 <?php
-if($displayFullProfile){
+if ($displayFullProfile) {
 ?>
 	<h1><?=$userData->username?>'s Settings</h1>
-	
+
 	<strong>Want to change your profile picture? </strong><br>
-	Visit <a href="https://en.gravatar.com/">https://en.gravatar.com/</a> and setup an account with the email address <?=$email?>. 
+	Visit <a href="https://en.gravatar.com/">https://en.gravatar.com/</a> and setup an account with the email address <?=$email?>.
 	It works across millions of sites. It's fast and easy!<br>
-	
-	<?=display_errors($errors);?>
-	<?=display_successes($successes);?>
-	
+
+	<?=resultBlock($errors,$successes);?>
+
 	<form name='updateAccount' action='profile.php' method='post'>
 
 		<div class="form-group">
-			<label>Member Since</label>
-			<input  class='form-control' type='text' name='signupdate' value='<?=$signupDate?>' readonly/>
-		</div>
-
-		<div class="form-group">
-			<label>Number of Logins</label>
-			<input  class='form-control' type='text' name='logins' value='<?=$userData->logins?>' readonly/>
-		</div>
-		
-		<div class="form-group">
 			<label>Username</label>
-			<input  class='form-control' type='text' name='username' value='<?=$displayname?>' readonly/>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('username') ?>"></span>
+			<input  class='form-control' type='text' name='username' value='<?=$username?>' <?php if (!$site_settings->allow_username_change) echo "readonly"; ?>/>
 		</div>
 
 		<div class="form-group">
 			<label>First Name</label>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('fname') ?>"></span>
 			<input  class='form-control' type='text' name='fname' value='<?=$fname?>' />
 		</div>
 
 		<div class="form-group">
 			<label>Last Name</label>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('lname') ?>"></span>
 			<input  class='form-control' type='text' name='lname' value='<?=$lname?>' />
 		</div>
 
 		<div class="form-group">
 			<label>Email</label>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('email') ?>"></span>
 			<input class='form-control' type='text' name='email' value='<?=$email?>' />
 		</div>
 
@@ -331,34 +188,37 @@ if($displayFullProfile){
 		</div>
 
 		<div class="form-group">
-			<label>New Password (8 character minimum)</label>
+			<label>New Password</label>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('password') ?>"></span>
 			<input class='form-control' type='password' name='password' />
 		</div>
 
 		<div class="form-group">
 			<label>Confirm Password</label>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('confirm') ?>"></span>
 			<input class='form-control' type='password' name='confirm' />
 		</div>
-		
+
 		<div class="form-group">
 			<label>Timezone</label>
 			<?=timezone_dropdown($timezone_string); //function from helpers.php?>
-		</div>		
+		</div>
 
 		<div class="form-group">
 			<label>Biography</label>
-			<textarea rows="10" id="biographyText" name="bio" ><?=$bio;?></textarea></p>		
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('bio') ?>"></span>
+			<textarea rows="10" id="biographyText" name="bio" ><?=$bio;?></textarea></p>
 		</div>
-		
+
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 
 		<p class="text-center"><input class='btn btn-primary' type='submit' value='Update' class='submit' />
 		<a class="btn btn-info" href="profile.php">Cancel</a></p>
 
-	</form>	
-	
+	</form>
+
 <?php
-}else{
+} else {
 ?>
 	<h1><?=$userData->username?>'s Settings</h1>
 	<p><?php echo $userData->fname." ".$userData->lname?></p>
