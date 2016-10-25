@@ -24,8 +24,6 @@ $errors = array();
 $successes = array();
 
 //Check if selected pages exist
-!           <h2> Administrate Groups </h2>
-!         <div class="well">
 if(!pageIdExists($pageId)) {
   Redirect::to("admin_pages.php"); die();
 }
@@ -95,7 +93,7 @@ $groupData = fetchAllGroups();
         <!-- Main Center Column -->
         <div class="col-xs-12">
           <!-- Content Goes Here. Class width can be adjusted -->
-		  
+
 			<h2>Page Authorizations </h2>
 			<?php
 			echo display_errors($errors);
@@ -104,7 +102,7 @@ $groupData = fetchAllGroups();
 
 			<form name='adminPage' action='admin_page.php?id=<?=$pageId;?>' method='post'>
 				<input type='hidden' name='process' value='1'>
-				
+
 			<div class="row">
 			<div class="col-md-3">
 				<div class="panel panel-default">
@@ -121,7 +119,7 @@ $groupData = fetchAllGroups();
 					</div>
 				</div><!-- /panel -->
 			</div><!-- /.col -->
-			
+
 			<div class="col-md-3">
 				<div class="panel panel-default">
 					<div class="panel-heading"><strong>Public or Private?</strong></div>
@@ -135,7 +133,7 @@ $groupData = fetchAllGroups();
 					</div>
 				</div><!-- /panel -->
 			</div><!-- /.col -->
-			
+
 			<div class="col-md-3">
 				<div class="panel panel-default">
 					<div class="panel-heading"><strong>Remove Access</strong></div>
@@ -155,7 +153,7 @@ $groupData = fetchAllGroups();
 					</div>
 				</div><!-- /panel -->
 			</div><!-- /.col -->
-			
+
 			<div class="col-md-3">
 				<div class="panel panel-default">
 					<div class="panel-heading"><strong>Add Access</strong></div>
@@ -170,8 +168,8 @@ $groupData = fetchAllGroups();
 						</div>
 					</div>
 				</div><!-- /panel -->
-			</div><!-- /.col -->			
-			</div><!-- /.row -->				
+			</div><!-- /.col -->
+			</div><!-- /.row -->
 
 			<input type="hidden" name="csrf" value="<?=Token::generate();?>" >
 			<p><input class='btn btn-primary' type='submit' value='Update' class='submit' /></p>

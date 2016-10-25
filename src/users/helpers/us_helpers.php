@@ -312,6 +312,14 @@ function fetchGroupsByPage($page_id) {
 	return($results);
 }
 
+//Retrieve list of groups that can access a menu
+function fetchGroupsByMenu($menu_id) {
+	$db = DB::getInstance();
+	$query = $db->query("SELECT id, group_id FROM groups_menus WHERE menu_id = ? ",array($menu_id));
+	$results = $query->results();
+	return($results);
+}
+
 //Retrieve list of pages that a group can access
 function fetchPagesByGroup($group_id) {
 	$db = DB::getInstance();
@@ -473,26 +481,30 @@ function checkPermission($groups) {
     return false;
 }
 
-function checkMenu($group, $id) {
-	$db = DB::getInstance();
+function checkMenu($menu_id, $user_id=null) {
 	global $user;
+	$db = DB::getInstance();
 	//Grant access if master user
-	$access = 0;
+	if ($user->isAdmin())
+		return true;
 
-	if ($access == 0) {
-		$query = $db->query("SELECT id FROM groups_users  WHERE user_id = ? AND group_id = ?",array($id,$group));
-		$results = $query->count();
-		if ($results > 0) {
-			$access = 1;
+	# Check if this menu has unrestricted access (group_id==0)
+	$query = $db->query("SELECT id FROM groups_menus  WHERE group_id = 0 AND menu_id = ?",array($menu_id));
+	if ($query->count()) {
+		return true;
+	}
+
+	# If a user_id was passed in, see if that user is part of a group which has access to this menu item
+	if (!is_null($user_id)) {
+		$sql = "SELECT groups_users.group_id
+						FROM groups_menus
+						INNER JOIN groups_users ON (groups_menus.group_id = groups_users.group_id)
+						WHERE menu_id = ?
+						AND user_id = ? ";
+		$query = $db->query($sql,array($menu_id, $user_id));
+		if ($query->count()) {
+			return true;
 		}
-	}
-	if ($access == 1) {
-		return true;
-	}
-	if ($user->data()->id == 1) {
-		return true;
-	} else {
-		return false;
 	}
 }
 
@@ -549,16 +561,42 @@ function lang($key,$markers = NULL) {
 	}
 }
 
-
 //Add all groups/users to the groups_users_raw mapping table
 function addGroupsUsers_raw($group_ids, $users, $user_is_group=0) {
 	$db = DB::getInstance();
 	$i = 0;
+	$sql = "INSERT INTO groups_users_raw (user_id,group_id,user_is_group) VALUES (?,?,?)";
 	foreach((array)$group_ids as $group_id){
 		foreach((array)$users as $user_id){
 			#echo "<pre>DEBUG: AGU: group_id=$group_id, user_id=$user_id</pre><br />\n";
-			$sql = "INSERT INTO groups_users_raw (user_id,group_id,user_is_group) VALUES (?,?,?)";
 			if($db->query($sql,[$user_id,$group_id,$user_is_group])) {
+				$i++;
+			}
+		}
+	}
+	return $i;
+}
+
+//Delete all authorized groups for the given menu(s) and then add from args
+function updateGroupsMenus($group_ids, $menu_ids) {
+	$db = DB::getInstance();
+	$sql = "DELETE FROM groups_menus WHERE menu_id = ?";
+	foreach((array)$menu_ids as $menu_id) {
+		#echo "<pre>DEBUG: UGM: group_id=$group_id, menu_id=$menu_id</pre><br />\n";
+		$db->query($sql,[$menu_id]);
+	}
+	return addGroupsMenus($group_ids, $menu_ids);
+}
+
+//Add all groups/menus to the groups_menus mapping table
+function addGroupsMenus($group_ids, $menu_ids) {
+	$db = DB::getInstance();
+	$i = 0;
+	$sql = "INSERT INTO groups_menus (group_id,menu_id) VALUES (?,?)";
+	foreach((array)$group_ids as $group_id){
+		foreach((array)$menu_ids as $menu_id){
+			#echo "<pre>DEBUG: AGM: group_id=$group_id, menu_id=$menu_id</pre><br />\n";
+			if($db->query($sql,[$group_id,$menu_id])) {
 				$i++;
 			}
 		}

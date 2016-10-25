@@ -41,27 +41,27 @@ foreach ($prep as $key => $value){
 	*/
 	if(sizeof($value['children'])==0){
 		if ($user->isLoggedIn()){
-			if ((checkMenu($value['perm_level'],$user->data()->id)|| $value['perm_level'] ==0) && $value['logged_in']==1){
+			if (checkMenu($value['id'],$user->data()->id) && $value['logged_in']==1){
 				echo prepareItemString($value);
 			}
 		}else{
-			if ($value['logged_in']==0 || $value['perm_level']==0){
+			if ($value['logged_in']==0 || checkMenu($value['id'])){
 				echo prepareItemString($value);
-			}			
+			}
 		}
 	}else{
 		if ($user->isLoggedIn()){
-			if ((checkMenu($value['perm_level'],$user->data()->id)|| $value['perm_level'] ==0) && $value['logged_in']==1){
+			if (checkMenu($value['id'],$user->data()->id) && $value['logged_in']==1){
 				$dropdownString=prepareDropdownString($value);
 				$dropdownString=str_replace('{{username}}',$user->data()->username,$dropdownString);
 				echo $dropdownString;
 			}
 		}else{
-			if ($value['logged_in']==0 || $value['perm_level']==0){
+			if ($value['logged_in']==0 || checkMenu($value['id'])){
 				$dropdownString=prepareDropdownString($value);
 				$dropdownString=str_replace('{{username}}',$user->data()->username,$dropdownString);
 				echo $dropdownString;
-			}			
+			}
 		}
 	}
 }
