@@ -1,7 +1,7 @@
 <?php
 
 error_reporting(E_ALL);
-ini_set("display_errors",1); 
+ini_set("display_errors",1);
 
 $abs_us_root=$_SERVER['DOCUMENT_ROOT'];
 
@@ -12,7 +12,7 @@ $file_found=FALSE;
 for($i = 1; $i < $self_path_length; $i++){
 	array_splice($self_path, $self_path_length-$i, $i);
 	$us_url_root=implode("/",$self_path)."/";
-	
+
 	if (file_exists($abs_us_root.$us_url_root.'z_us_root.php')){
 		$file_found=TRUE;
 		break;
@@ -75,6 +75,8 @@ $GLOBALS['config'] = array(
 'username'     => $dbUsername,
 'password'     => $dbPassword,
 'db'           => $dbDatabase,
+'options'			 => array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET SESSION sql_mode = ''",
+												PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING),
 ),
 'remember'        => array(
   'cookie_name'   => 'pmqesoxiw318374csb',
@@ -137,11 +139,11 @@ if($user->isLoggedIn()){
 	if ($user->data()->permissions==0){
 		$user_blocked=true;
 	}
-	
+
 	/*
 	Set user time zone
 	php.net/manual/en/timezones.php
-	*/	
+	*/
 	if($user->data()->timezone_string !=null){
 		date_default_timezone_set($user->data()->timezone_string);
 	}
@@ -153,7 +155,7 @@ if($user->isLoggedIn()){
 }
 /*
 Process Track Guest
-*/	
+*/
 new_user_online($user_id);
 
 /*

@@ -289,15 +289,16 @@ function createPages($pages) {
 	}
 }
 
-//Match group(s) with page(s)
-function addPage($page, $group) {
+//Add authorization for a group to access page(s) (add to groups_pages)
+function addGroupsPages($pages, $groups) {
 	$db = DB::getInstance();
 	$i = 0;
-	foreach((array)$group as $group_id) {
-		foreach((array)$page as $page_id) {
+	foreach((array)$groups as $group_id) {
+		foreach((array)$pages as $page_id) {
 			$query = $db->query(
 				"INSERT INTO groups_pages (group_id, page_id) VALUES (?, ?)",
 				array($group_id, $page_id));
+			$i++;
 		}
 	}
 	return $i;
@@ -355,7 +356,7 @@ function defaultPage($type) {
 	# this (below) needs work -- I didn't see any "global $site_settings;" anywhere so didn't know how it was working
 	if ($page = $site_settings[$type])
 		return $page;
-	do case($type) {
+	switch ($type) {
 		case 'blocked':
 			$page = 'users/blocked.php';
 			break;
@@ -436,7 +437,7 @@ function securePage($uri) {
 	} elseif (userHasPageAuth($user->data()->id, $pageID)) {
         return true;
     }
-    
+
 	# We've tried everything - send them to the default page
     Redirect::to(US_URL_ROOT.$site_settings->redirect_deny_noperm);
     return false;
@@ -549,11 +550,11 @@ function lang($key,$markers = NULL) {
 }
 
 
-! //Add all groups/users to the groups_users_raw mapping table
+//Add all groups/users to the groups_users_raw mapping table
 function addGroupsUsers_raw($group_ids, $users, $user_is_group=0) {
 	$db = DB::getInstance();
 	$i = 0;
-	foreach((array)$groups as $group_id){
+	foreach((array)$group_ids as $group_id){
 		foreach((array)$users as $user_id){
 			#echo "<pre>DEBUG: AGU: group_id=$group_id, user_id=$user_id</pre><br />\n";
 			$sql = "INSERT INTO groups_users_raw (user_id,group_id,user_is_group) VALUES (?,?,?)";

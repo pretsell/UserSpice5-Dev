@@ -52,7 +52,7 @@ if(!empty($_POST)) {
     ));
     if($validation->passed()) {
       $db->insert('groups',$fields);
-      $successes[]=lang("GROUP_ADD_SUCCESSFUL");
+      $successes[]=lang("GROUP_ADD_SUCCESSFUL", $groupName);
     } else {
       # Append validation errors to error array
       foreach ($validation->errors() as $error) {
@@ -73,17 +73,17 @@ $count = 0;
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
-	</div>	
+	</div>
       <div class="col-xs-12">
 		<?php
 		echo display_errors($errors);
 		echo display_successes($successes);
-		
+
 		?>
         <!-- Main Center Column -->
 
 
-			<form name='adminGroups' action='admin_permissions.php' method='post'>
+			<form name='adminGroups' action='admin_groups.php' method='post'>
             <div>
             <h2> Administrate Groups </h2>
             <div class="well">

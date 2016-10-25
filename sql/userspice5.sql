@@ -2,7 +2,7 @@
 -- version 4.6.2
 -- https://www.phpmyadmin.net/
 --
--- Host: 
+-- Host:
 -- Generation Time: Oct 04, 2016 at 08:21 AM
 -- Server version: 5.6.25-log
 -- PHP Version: 7.0.9
@@ -116,7 +116,8 @@ INSERT INTO `pages` (`id`, `page`, `private`) VALUES
 (32, 'users/admin_security.php', 0),
 (33, 'users/admin_email_test.php', 0),
 (36, 'users/admin_page.php', 0),
-(37, 'users/admin_permission.php', 0),
+(37, 'users/admin_group.php', 0),
+(38, 'users/admin_groups.php', 0),
 (39, 'users/admin_user.php', 0),
 (40, 'users/admin_users.php', 0),
 (42, 'users/db_cred.php', 0),
@@ -153,39 +154,69 @@ INSERT INTO `pages` (`id`, `page`, `private`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `permissions`
+-- Table structure for table `profiles`
 --
 
-CREATE TABLE `permissions` (
+CREATE TABLE `profiles` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `bio` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Indexes for table `profiles`
+--
+ALTER TABLE `profiles`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Inserting data for table `profiles`
+--
+
+INSERT INTO `profiles` (`id`, `user_id`, `bio`) VALUES
+(1, 1, '<h1>This is the Admin\'s bio.</h1>'),
+(2, 2, '<h1>This is the User\'s bio.</h1>');
+
+--
+-- AUTO_INCREMENT for table `profiles`
+--
+ALTER TABLE `profiles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- Table structure for table `groups`
+--
+
+CREATE TABLE `groups` (
   `id` int(11) NOT NULL,
   `name` varchar(150) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `permissions`
+-- Dumping data for table `groups`
 --
 
-INSERT INTO `permissions` (`id`, `name`) VALUES
+INSERT INTO `groups` (`id`, `name`) VALUES
 (1, 'User'),
 (2, 'Administrator');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `permission_page_matches`
+-- Table structure for table `groups_pages`
 --
 
-CREATE TABLE `permission_page_matches` (
+CREATE TABLE `groups_pages` (
   `id` int(11) NOT NULL,
-  `permission_id` int(15) NOT NULL,
+  `group_id` int(15) NOT NULL,
   `page_id` int(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `permission_page_matches`
+-- Dumping data for table `groups_pages`
 --
 
-INSERT INTO `permission_page_matches` (`id`, `permission_id`, `page_id`) VALUES
+INSERT INTO `groups_pages` (`id`, `group_id`, `page_id`) VALUES
 (2, 2, 27),
 (3, 1, 24),
 (4, 1, 22),
@@ -342,20 +373,21 @@ CREATE TABLE `users_session` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `user_permission_matches`
+-- Table structure for table `groups_users_raw`
 --
 
-CREATE TABLE `user_permission_matches` (
+CREATE TABLE `groups_users_raw` (
   `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `permission_id` int(11) NOT NULL
+  `group_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL
+  `user_is_group` BOOLEAN NOT NULL DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `user_permission_matches`
+-- Dumping data for table `groups_users_raw`
 --
 
-INSERT INTO `user_permission_matches` (`id`, `user_id`, `permission_id`) VALUES
+INSERT INTO `groups_users_raw` (`id`, `user_id`, `group_id`) VALUES
 (100, 1, 1),
 (101, 1, 2),
 (102, 2, 1);
@@ -377,15 +409,15 @@ ALTER TABLE `pages`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `permissions`
+-- Indexes for table `groups`
 --
-ALTER TABLE `permissions`
+ALTER TABLE `groups`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `permission_page_matches`
+-- Indexes for table `groups_pages`
 --
-ALTER TABLE `permission_page_matches`
+ALTER TABLE `groups_pages`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -414,9 +446,9 @@ ALTER TABLE `users_session`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `user_permission_matches`
+-- Indexes for table `groups_users_raw`
 --
-ALTER TABLE `user_permission_matches`
+ALTER TABLE `groups_users_raw`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -434,14 +466,14 @@ ALTER TABLE `menus`
 ALTER TABLE `pages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
 --
--- AUTO_INCREMENT for table `permissions`
+-- AUTO_INCREMENT for table `groups`
 --
-ALTER TABLE `permissions`
+ALTER TABLE `groups`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 --
--- AUTO_INCREMENT for table `permission_page_matches`
+-- AUTO_INCREMENT for table `groups_pages`
 --
-ALTER TABLE `permission_page_matches`
+ALTER TABLE `groups_pages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 --
 -- AUTO_INCREMENT for table `settings`
@@ -464,10 +496,42 @@ ALTER TABLE `users_online`
 ALTER TABLE `users_session`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 --
--- AUTO_INCREMENT for table `user_permission_matches`
+-- AUTO_INCREMENT for table `groups_users_raw`
 --
-ALTER TABLE `user_permission_matches`
+ALTER TABLE `groups_users_raw`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+--
+-- CREATE VIEW for view `groups_users`
+--
+CREATE OR REPLACE VIEW groups_users AS
+    SELECT id, user_id, group_id
+    FROM groups_users_raw
+    WHERE user_is_group = 0
+    UNION
+    SELECT ug1.id+ug2.id*1000 AS id, ug1.user_id, ug2.group_id
+    FROM groups_users_raw ug1
+    JOIN groups_users_raw ug2 ON (ug1.group_id = ug2.user_id)
+    WHERE ug2.user_is_group = 1
+    AND ug1.user_is_group = 0
+    UNION
+    SELECT ug1.id+ug2.id*1000+ug3.id*1000000 AS id, ug1.user_id, ug3.group_id
+    FROM groups_users_raw ug1
+    JOIN groups_users_raw ug2 ON (ug1.group_id = ug2.user_id)
+    JOIN groups_users_raw ug3 ON (ug2.group_id = ug3.user_id)
+    WHERE ug3.user_is_group = 1
+    AND ug2.user_is_group = 1
+    AND ug1.user_is_group = 0
+    UNION
+    SELECT ug1.id+ug2.id*1000+ug3.id*1000000+ug4.id*1000000000 AS id, ug1.user_id, ug4.group_id
+    FROM groups_users_raw ug1
+    JOIN groups_users_raw ug2 ON (ug1.group_id = ug2.user_id)
+    JOIN groups_users_raw ug3 ON (ug2.group_id = ug3.user_id)
+    JOIN groups_users_raw ug4 ON (ug3.group_id = ug4.user_id)
+    WHERE ug4.user_is_group = 1
+    AND ug3.user_is_group = 1
+    AND ug2.user_is_group = 1
+    AND ug1.user_is_group = 0

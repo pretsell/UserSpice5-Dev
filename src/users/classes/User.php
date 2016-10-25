@@ -43,9 +43,10 @@ class User {
 	public function create($fields = array()){
 		if (!$this->_db->insert('users', $fields)) {
 			throw new Exception('There was a problem creating an account.');
-		}else
-		$user_id = $this->_db->lastId();
-		$query = $this->_db->insert("groups_users",['user_id'=>$user_id,'group_id'=>1]);
+		} else {
+			$user_id = $this->_db->lastId();
+		}
+		$query = $this->_db->insert("groups_users_raw",['user_id'=>$user_id,'group_id'=>1,'user_is_group'=>0]);
 		// return $user_id;
 		$query2 = $this->_db->insert("profiles",['user_id'=>$user_id, 'bio'=>'This is your bio']);
 		return $user_id;
@@ -75,7 +76,7 @@ class User {
 	}
 
 	public function login($username = null, $password = null, $remember = false){
-		
+
 		if (!$username && !$password && $this->exists()) {
 			Session::put($this->_sessionName, $this->data()->id);
 		} else {
@@ -182,7 +183,7 @@ class User {
 		if(isset($_SESSION['fbProfileData'])) unset($_SESSION['fbProfileData']);
 		if(isset($_SESSION['fb_access_token'])) unset($_SESSION['fb_access_token']);
 		if(isset($_SESSION['user'])) unset($_SESSION['user']);
-		
+
 		Session::delete($this->_sessionName);
 		Cookie::delete($this->_cookieName);
 	}

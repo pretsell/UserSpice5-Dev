@@ -73,7 +73,7 @@ if(Input::exists()) {
 		$add = $_POST['addGroup'];
 		$addition_count = 0;
 		foreach($add as $groupId) {
-			if(addPage($pageId, $groupId)) {
+			if(addGroupsPages($pageId, $groupId)) {
 				$addition_count++;
 			}
 		}

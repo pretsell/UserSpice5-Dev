@@ -8,11 +8,8 @@ by the UserSpice Team at http://UserSpice.com
 require_once 'init.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 
-
-/*
-Secures the page...required for page group/permission management
-*/
-if (!securePage($_SERVER['PHP_SELF'])){die();}
+#Secures the page...required for page group/permission management
+if (!securePage($_SERVER['PHP_SELF'])) { die(); }
 
 $errors = [];
 $successes = [];
@@ -23,18 +20,12 @@ if(Input::exists('post')){
 	}
 }
 
-$validation = new Validate();
-//PHP Goes Here!
-$groupId = $_GET['id'];
-
-/*
-If requested group (permission level) does not exist, redirect to admin_groups.php
-*/
-if(!groupIdExists($groupId)){
-Redirect::to("admin_groups.php"); die();
+# If requested group does not exist, redirect to admin_groups.php
+if(!($groupId = @$_GET['id']) || !groupIdExists($groupId)){
+	Redirect::to("admin_groups.php"); die();
 }
 
-//Fetch information specific to permission level
+//Fetch information specific to this group
 $groupDetails = fetchGroupDetails($groupId);
 //Forms posted
 if(Input::exists()){
@@ -56,6 +47,7 @@ if(Input::exists()){
       $group_name = Input::get('name');
       $fields=array('name'=>$group_name);
       //NEW Validations
+			$validation = new Validate();
       $validation->check($_POST,array(
           'name' => array(
             'display' => 'Group Name',
@@ -68,9 +60,7 @@ if(Input::exists()){
       if($validation->passed()) {
         $db->update('groups',$groupId,$fields);
       } else {
-        /*
-        Append validation errors to error array
-        */
+        # Append validation errors to error array
         foreach ($validation->errors() as $error) {
           $errors[]=$error;
         }
@@ -80,7 +70,7 @@ if(Input::exists()){
     //Remove user(s) from group
     if(!empty($_POST['removeUsers'])) {
       $remove = $_POST['removeUsers'];
-      if ($deletion_count = deleteGroupsUsers_raw($groupId, $remove, null)) {
+      if ($deletion_count = deleteGroupsUsers_raw($groupId, $remove)) {
         $successes[] = lang("GROUP_REMOVE_USERS", array($deletion_count));
       } else {
         $errors[] = lang("SQL_ERROR");
@@ -90,7 +80,7 @@ if(Input::exists()){
     //Remove nested group(s) from group
     if(!empty($_POST['removeGroupGroups'])){
       $remove = $_POST['removeGroupGroups'];
-      if ($deletion_count = deleteGroupsUsers_raw($groupId, null, $remove)) {
+      if ($deletion_count = deleteGroupsUsers_raw($groupId, $remove, 1)) {
         $successes[] = lang("GROUP_REMOVE_GROUPS", array($deletion_count));
       } else {
         $errors[] = lang("SQL_ERROR");
@@ -100,7 +90,7 @@ if(Input::exists()){
     //Add users to group
     if(!empty($_POST['addUsers'])) {
       $add = $_POST['addUsers'];
-      if ($addition_count = addGroupsUsers_raw($groupId, $add, null)) {
+      if ($addition_count = addGroupsUsers_raw($groupId, $add)) {
         $successes[] = lang("GROUP_ADD_USERS", array($addition_count));
       } else {
         $errors[] = lang("SQL_ERROR");
@@ -110,7 +100,7 @@ if(Input::exists()){
     //Add nested groups to group
     if(!empty($_POST['addGroupGroups'])) {
       $add = $_POST['addGroupGroups'];
-      if ($addition_count = addGroupsUsers_raw($groupId, null, $add)) {
+      if ($addition_count = addGroupsUsers_raw($groupId, $add, 1)) {
         $successes[] = lang("GROUP_ADD_GROUPS", array($addition_count));
       } else {
         $errors[] = lang("SQL_ERROR");
@@ -121,7 +111,6 @@ if(Input::exists()){
     if(!empty($_POST['removePage'])) {
       $remove = $_POST['removePage'];
       if ($deletion_count = deleteGroupsPages($remove, $groupId)) {
-        $successes[] = "Removed page permission";
         $successes[] = lang("GROUP_REMOVE_PAGES", array($deletion_count));
       } else {
         $errors[] = lang("SQL_ERROR");
@@ -131,7 +120,7 @@ if(Input::exists()){
     //Add access to pages
     if(!empty($_POST['addPage'])) {
       $add = $_POST['addPage'];
-      if ($addition_count = addPage($add, $groupId)) {
+      if ($addition_count = addGroupsPages($add, $groupId)) {
         $successes[] = lang("GROUP_ADD_PAGES", array($addition_count));
       } else {
         $errors[] = lang("SQL_ERROR");
@@ -163,12 +152,12 @@ $pageData = fetchAllPages();
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
-	</div>	
+	</div>
       <div class="col-xs-12">
 		<?php
 		echo display_errors($errors);
 		echo display_successes($successes);
-		
+
 		?>
           <h1>Configure Details for this Group</h1>
 
@@ -212,7 +201,9 @@ $pageData = fetchAllPages();
             continue;
           }
   				echo "<br><label><input type='checkbox' name='removeGroupGroups[]' id='removeGroupGroups[]' value='$gm->id'> $gm->name</label>\n";
-
+				}
+			}
+			?>
       </p>
       <p><strong>
 			Add Members:</strong>
@@ -234,8 +225,8 @@ $pageData = fetchAllPages();
             continue;
           }
   				echo "<br><label><input type='checkbox' name='addGroupGroups[]' id='addGroupGroups[]' value='$ngm->id'> $ngm->name</label>\n";
-          }
         }
+      }
 			?>
 
 			</div>
