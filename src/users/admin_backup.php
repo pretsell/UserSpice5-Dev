@@ -20,12 +20,8 @@ $successes=[];
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
+checkToken();
 
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
 if(!empty($_POST['backup'])){
 	/*
 	Create backup destination folder: $site_settings->backup_dest

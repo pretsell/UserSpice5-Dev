@@ -12,12 +12,7 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 if(!empty($_POST['settings'])){
 	if($site_settings->recaptcha != $_POST['recaptcha']) {
@@ -35,12 +30,12 @@ if(!empty($_POST['settings'])){
 		$fields=array('site_url'=>$site_url);
 		$db->update('settings',1,$fields);
 	}
-	
+
 	if($site_settings->install_location != $_POST['install_location']) {
 		$install_location = Input::get('install_location');
 		$fields=array('install_location'=>$install_location);
 		$db->update('settings',1,$fields);
-	}		
+	}
 	if($site_settings->copyright_message != $_POST['copyright_message']) {
 		$copyright_message = Input::get('copyright_message');
 		$fields=array('copyright_message'=>$copyright_message);
@@ -51,7 +46,7 @@ if(!empty($_POST['settings'])){
 		$language = Input::get('language');
 		$fields=array('language'=>$language);
 		$db->update('settings',1,$fields);
-	}		
+	}
 	if($site_settings->login_type != $_POST['login_type']) {
 		$login_type = Input::get('login_type');
 		$fields=array('login_type'=>$login_type);
@@ -66,8 +61,8 @@ if(!empty($_POST['settings'])){
 		$debug_mode = Input::get('debug_mode');
 		$fields=array('debug_mode'=>$debug_mode);
 		$db->update('settings',1,$fields);
-	}	
-	
+	}
+
 	if($site_settings->track_guest != $_POST['track_guest']) {
 		$track_guest = Input::get('track_guest');
 		$fields=array('track_guest'=>$track_guest);
@@ -95,13 +90,13 @@ if(!empty($_POST['settings'])){
 			<label for="site_name">Site Name</label>
 			<input type="text" class="form-control" name="site_name" id="site_name" value="<?=$site_settings->site_name?>">
 		</div>
-		
+
 		<!-- Site URL -->
 		<div class="form-group">
 			<label for="site_url">Site URL</label>
 			<input type="text" class="form-control" name="site_url" id="site_url" value="<?=$site_settings->site_url?>">
 		</div>
-		
+
 		<!-- Install Location -->
 		<div class="form-group">
 			<label for="install_location">Install Location</label>
@@ -112,7 +107,7 @@ if(!empty($_POST['settings'])){
 		<div class="form-group">
 			<label for="copyright_message">Copyright Message</label>
 			<input type="text" class="form-control" name="copyright_message" id="copyright_message" value="<?=$site_settings->copyright_message?>">
-		</div>		
+		</div>
 
 		<!-- Language -->
 		<div class="form-group">
@@ -120,7 +115,7 @@ if(!empty($_POST['settings'])){
 			<select id="recaptcha" class="form-control" name="language">
 				<option value="en" <?php if($site_settings->language=='en') echo 'selected="selected"'; ?> >en</option>
 			</select>
-		</div>		
+		</div>
 
 		<!-- Recaptcha Option -->
 		<div class="form-group">
@@ -139,7 +134,7 @@ if(!empty($_POST['settings'])){
 				<option value="0" <?php if($site_settings->site_offline==0) echo 'selected="selected"'; ?> >No</option>
 			</select>
 		</div>
-		
+
 		<!-- debug_mode -->
 		<div class="form-group">
 			<label for="debug_mode">Debug Mode</label>
@@ -147,7 +142,7 @@ if(!empty($_POST['settings'])){
 				<option value="1" <?php if($site_settings->debug_mode==1) echo 'selected="selected"'; ?> >Yes</option>
 				<option value="0" <?php if($site_settings->debug_mode==0) echo 'selected="selected"'; ?> >No</option>
 			</select>
-		</div>		
+		</div>
 
 		<!-- Track Guests -->
 		<div class="form-group">

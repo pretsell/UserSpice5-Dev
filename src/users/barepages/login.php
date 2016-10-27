@@ -25,16 +25,7 @@ if ($site_settings->fblogin) {
 	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/fblogin.php';
 }
 
-
-/*
-If $_POST data exists, then check CSRF token, and kill page if not correct...no need to process rest of page or form data
-*/
-if (Input::exists()) {
-	if (!Token::check(Input::get('csrf'))) {
-		die('Token doesn\'t match!');
-	}
-}
-
+checkToken();
 
 if (Input::exists()) {
 	/*
@@ -58,7 +49,7 @@ if (Input::exists()) {
 			$reCaptchaValid=TRUE;
 		} else {
 			$reCaptchaValid=FALSE;
-			$errors[]='Please check the reCaptcha';
+			$errors[]=lang('CAPTCHA_FAIL');
 		}
 	} else {
 		/*
@@ -90,7 +81,7 @@ if (Input::exists()) {
 					Redirect::to(US_URL_ROOT.$site_settings->redirect_login);
 				}
 			} else {
-				$errors[]= 'Log in failed. Please check your username and password and try again';
+				$errors[]= lang('LOGIN_FAILED');
 			}
 		} else {
 			/*
@@ -111,25 +102,25 @@ if (Input::exists()) {
 	<?=display_successes($successes)?>
 
 	<form name="login" class="form" action="login.php" method="post">
-	<h2 class="text-center"> Sign In</h2>
+	<h2 class="text-center"><?=lang('SIGN_IN')?></h2>
 
 	<div class="form-group">
-		<label class="control-label" for="username">Username OR Email</label>
+		<label class="control-label" for="username"><?=lang('UN_OR_EMAIL')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('username') ?>"></span>
-		<div><input  class="form-control" type="text" name="username" id="username" placeholder="Username/Email" required autofocus></div>
+		<div><input  class="form-control" type="text" name="username" id="username" placeholder="<?=lang('UN_OR_EMAIL')?>" required autofocus></div>
 	</div>
 
 	<div class="form-group">
-		<label class="control-label" for="password">Password</label>
+		<label class="control-label" for="password"><?=lang('PW')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('password') ?>"></span>
-		<div><input type="password" class="form-control"  name="password" id="password"  placeholder="Password" required autocomplete="off"></div>
+		<div><input type="password" class="form-control"  name="password" id="password"  placeholder="<?=lang('PW')?>" required autocomplete="off"></div>
 	</div>
 
 	<?php
 	if ($site_settings->recaptcha == 1) {
 	?>
 	<div class="form-group">
-		<label>Please check the box below to continue</label>
+		<label><?=lang('RECAP')?></label>
 		<div class="g-recaptcha" data-sitekey="<?=$site_settings->recaptcha_public; ?>"></div>
 	</div>
 	<?php } ?>
@@ -138,7 +129,7 @@ if (Input::exists()) {
 	if ($site_settings->allow_remember_me == 1) {
 	?>
 	<div class="form-group">
-		<label class="control-label" for="remember">Remember Me</label>
+		<label class="control-label" for="remember"><?=lang('REMEMBER')?></label>
 		<div><input type="checkbox" name="remember" id="remember" ></div>
 	</div>
 	<?php
@@ -148,10 +139,10 @@ if (Input::exists()) {
 
 	<div class="text-center">
 		<button class="btn btn-primary" type="submit"><span class="fa fa-sign-in"></span> Sign In</button>
-		<?php	if ($site_settings->glogin) {?><a href="<?=$gAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
-		<?php if ($site_settings->fblogin) {?><a href="<?=$fbAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
-		<a href="forgot_password.php" class="btn btn-primary" type="button"><span class="fa fa-wrench"></span> Forgot Password</a>
-		<a href="join.php" class="btn btn-primary" type="button"><span class="fa fa-plus-square"></span> Register</a>
+		<?php	if($site_settings->glogin){?><a href="<?=$gAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
+		<?php if($site_settings->fblogin){?><a href="<?=$fbAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
+		<a href="forgot_password.php" class="btn btn-primary" type="button"><span class="fa fa-wrench"></span> <?=lang('REMEMBER')?></a>
+		<a href="join.php" class="btn btn-primary" type="button"><span class="fa fa-plus-square"></span><?=lang('SIGN_UP')?></a>
 	</div>
 	</form>
 	</div>

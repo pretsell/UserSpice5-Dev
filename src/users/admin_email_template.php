@@ -12,25 +12,13 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
+checkToken();
 
-/*
-Initialize variables for the page
-*/
-$errors=[];
-$successes=[];
-
-/*
-If $_POST data exists, then check CSRF token, and kill page if not correct...no need to process rest of page or form data
-*/
-if (Input::exists('post')) {
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+$errors = $successes = [];
 
 if(isset($_GET['type'])){
 	$type=Input::get('type');
-	
+
 	if($type=='forgot'){
 		if(Input::exists('post')){
 			$emailText=Input::get('emailText');
@@ -43,7 +31,7 @@ if(isset($_GET['type'])){
 		if(Input::exists('post')){
 			$emailText=Input::get('emailText');
 			$fields=array('email_verify_template'=>$emailText);
-			$db->update('settings','1',$fields);			
+			$db->update('settings','1',$fields);
 		}else{
 			$emailText=$site_settings->email_verify_template;
 		}
@@ -67,7 +55,7 @@ if(isset($_GET['type'])){
 <div class="col-xs-12">
 
 	<h2><?=$type?> Template</h2>
-	
+
 	<p>At present email templates require the following "fields" to work properly</p>
 	<ul>
 	<li>{{fname}} The recepients first name</li>
@@ -78,19 +66,19 @@ if(isset($_GET['type'])){
 	<form name='updateEmailTemplate' action='admin_email_template.php?type=<?=$type?>' method='post'>
 		<div class="form-group">
 			<label>Email Text</label>
-			<textarea rows="10" id="emailText" name="emailText" ><?=$emailText;?></textarea></p>		
+			<textarea rows="10" id="emailText" name="emailText" ><?=$emailText;?></textarea></p>
 		</div>
-		
+
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 
 		<p class="text-center"><input class='btn btn-primary' type='submit' value='Update' class='submit' />
 		<a class="btn btn-info" href="admin_email_template.php?type=<?=$type?>">Cancel</a></p>
 
-	</form>	
-	
+	</form>
+
 </div>
 </div>
- 
+
 <!-- footers -->
 <?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 

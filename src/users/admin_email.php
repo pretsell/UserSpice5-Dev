@@ -12,12 +12,7 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 if(isset($_POST['settings'])){
 	if($site_settings->mail_method != $_POST['mail_method']) {
@@ -25,7 +20,7 @@ if(isset($_POST['settings'])){
 		dump($mail_method);
 		$fields=array('mail_method'=>$mail_method);
 		$db->update('settings',1,$fields);
-	}	
+	}
 	if($site_settings->smtp_server != $_POST['smtp_server']) {
 		$smtp_server = Input::get('smtp_server');
 		$fields=array('smtp_server'=>$smtp_server);
@@ -56,7 +51,7 @@ if(isset($_POST['settings'])){
 		$fields=array('from_name'=>$from_name);
 		$db->update('settings',1,$fields);
 	}
-	
+
 	if($site_settings->from_email != $_POST['from_email']) {
 		$from_email = Input::get('from_email');
 		$fields=array('from_email'=>$from_email);
@@ -88,19 +83,19 @@ if(isset($_POST['settings'])){
 				<option value="sendmail" <?php if($site_settings->mail_method=='sendmail') echo 'selected="selected"'; ?> >Sendmail</option>
 				<option value="phpmail" <?php if($site_settings->mail_method=='phpmail') echo 'selected="selected"'; ?> >PHP Mail()</option>
 			</select>
-		</div>		
-		
+		</div>
+
 		<!-- smtp_server -->
 		<div class="form-group">
 			<label for="smtp_server">SMTP Server (only applies to SMTP method)</label>
 			<input type="text" class="form-control" name="smtp_server" id="smtp_server" value="<?=$site_settings->smtp_server?>">
 		</div>
-		
+
 		<!-- smtp_port -->
 		<div class="form-group">
 			<label for="smtp_port">SMTP Port (only applies to SMTP method)</label>
 			<input type="text" class="form-control" name="smtp_port" id="smtp_port" value="<?=$site_settings->smtp_port?>">
-		</div>		
+		</div>
 
 		<!-- smtp_transport -->
 		<div class="form-group">
@@ -115,7 +110,7 @@ if(isset($_POST['settings'])){
 		<div class="form-group">
 			<label for="email_login">Email Login (only applies to SMTP method)</label>
 					<input type="text" class="form-control" name="email_login" id="email_login" value="<?=$site_settings->email_login?>">
-		</div>	
+		</div>
 
 		<!-- email_pass -->
 		<div class="form-group">
@@ -127,13 +122,13 @@ if(isset($_POST['settings'])){
 		<div class="form-group">
 			<label for="from_name">From Name</label>
 			<input type="text" class="form-control" name="from_name" id="from_name" value="<?=$site_settings->from_name?>">
-		</div>	
+		</div>
 
 		<!-- from_email -->
 		<div class="form-group">
 			<label for="from_email">From Email</label>
 			<input type="text" class="form-control" name="from_email" id="from_email" value="<?=$site_settings->from_email?>">
-		</div>			
+		</div>
 
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 

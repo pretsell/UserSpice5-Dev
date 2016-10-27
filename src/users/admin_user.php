@@ -12,15 +12,7 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])) { die(); }
-
-/*
-If $_POST data exists, then check CSRF token, and kill page if not correct...no need to process rest of page or form data
-*/
-if (Input::exists('post')) {
-	if (!Token::check(Input::get('csrf', 'post'))) {
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 $errors = $successes = [];
 $userId = Input::get('id');

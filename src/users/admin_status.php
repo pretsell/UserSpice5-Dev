@@ -13,12 +13,7 @@ clearstatcache();
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 ?>
 <div class="row "> <!-- rows for Info Panels -->
@@ -39,7 +34,7 @@ if(Input::exists()){
 	</div>
 	</div><!--/panel-->
 	</div> <!-- /col -->
-	
+
 	<div class="col-xs-12 col-md-6">
 	<div class="panel panel-default">
 	<div class="panel-heading"><strong>General</strong></div>
@@ -50,7 +45,7 @@ if(Input::exists()){
 	</div>
 	</div><!--/panel-->
 	</div> <!-- /col -->
-	
+
 	<div class="col-xs-12 col-md-6">
 	<div class="panel panel-default">
 	<div class="panel-heading"><strong>PHP ini Important Parameters</strong></div>
@@ -58,7 +53,7 @@ if(Input::exists()){
 	Short Open Tag: <?=ini_get('short_open_tag')?><br/>
 	</div>
 	</div><!--/panel-->
-	</div> <!-- /col -->	
+	</div> <!-- /col -->
 
 	<div class="col-xs-12 col-md-6">
 	<div class="panel panel-default">
@@ -67,12 +62,12 @@ if(Input::exists()){
 	<?php
 	$extensions=get_loaded_extensions();
 	foreach($extensions as $extension){
-	?>	
+	?>
 	<?=$extension?> Available<br/>
 	<?php
 	}
-	
-	
+
+
 	?>
 	</div>
 	</div><!--/panel-->

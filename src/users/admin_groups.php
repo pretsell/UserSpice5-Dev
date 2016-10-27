@@ -13,16 +13,11 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])) { die(); }
-
+checkToken();
 
 $errors = [];
 $successes = [];
 
-if(Input::exists('post')) {
-	if(!Token::check(Input::get('csrf'))) {
-		die('Token doesn\'t match!');
-	}
-}
 $validation = new Validate(
 	['groupname'=>
 			['alias'=>'name',

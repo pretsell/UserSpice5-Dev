@@ -9,26 +9,14 @@ by the UserSpice Team at http://UserSpice.com
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])) {die();}
+checkToken();
 
-/*
-Initialize variables for the page
-*/
-$errors=[];
-$successes=[];
+$errors = $successes = [];
 
 if ($user->isLoggedIn()) {
 	$userId = $user->data()->id;
 } else {
 	$userId = 0;
-}
-
-/*
-If $_POST data exists, then check CSRF token, and kill page if not correct...no need to process rest of page or form data
-*/
-if (Input::exists()) {
-	if (!Token::check(Input::get('csrf'))) {
-		die('Token doesn\'t match!');
-	}
 }
 
 $id = Input::get('id');

@@ -9,15 +9,11 @@ by the UserSpice Team at http://UserSpice.com
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
+checkToken();
 
 $errors = array();
 $email_sent=FALSE;
 
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
 $validation = new Validate(array('email' => array('unique'=>'unset')));
 
 if (Input::get('forgotten_password')) {

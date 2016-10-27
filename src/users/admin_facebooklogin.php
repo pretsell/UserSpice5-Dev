@@ -12,12 +12,7 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 if(!empty($_POST['settings'])){
 	if($site_settings->fblogin != $_POST['fblogin']) {
@@ -39,7 +34,7 @@ if(!empty($_POST['settings'])){
 		$fbcallback = Input::get('fbcallback');
 		$fields=array('fbcallback'=>$fbcallback);
 		$db->update('settings',1,$fields);
-	}	
+	}
 	Redirect::to('admin_facebooklogin.php');
 }
 
@@ -63,26 +58,26 @@ if(!empty($_POST['settings'])){
 				<option value="1" <?php if($site_settings->fblogin==1) echo 'selected="selected"'; ?> >Enabled</option>
 				<option value="0" <?php if($site_settings->fblogin==0) echo 'selected="selected"'; ?> >Disabled</option>
 			</select>
-		</div>		
-		
+		</div>
+
 		<!-- fbid -->
 		<div class="form-group">
 			<label for="fbid">Client/App ID</label>
 			<input type="text" class="form-control" name="fbid" id="fbid" value="<?=$site_settings->fbid?>">
 		</div>
-		
+
 		<!-- fbsecret -->
 		<div class="form-group">
 			<label for="fbsecret">Secret</label>
 			<input type="text" class="form-control" name="fbsecret" id="fbsecret" value="<?=$site_settings->fbsecret?>">
 		</div>
-		
+
 		<!-- fbcallback -->
 		<div class="form-group">
 			<label for="fbcallback">Callback</label>
 			<input type="text" class="form-control" name="fbcallback" id="fbcallback" value="<?=$site_settings->fbcallback?>">
 		</div>
-	
+
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 
 		<p><input class='btn btn-primary' type='submit' name="settings" value='Save Google Settings' /></p>

@@ -8,17 +8,11 @@ by the UserSpice Team at http://UserSpice.com
 require_once 'init.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 
-
 /*
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 //PHP Goes Here!
 delete_user_online(); //Deletes sessions older than 24 hours
@@ -73,7 +67,6 @@ $monthCount = $usersMonthQ->count();
 	</div>
 	</div><!--/panel-->
 
-
 	<div class="panel panel-default">
 	<div class="panel-heading"><strong>All Visitors</strong> <span class="small">(Whether logged in or not)</span></div>
 	<div class="panel-body">
@@ -99,7 +92,7 @@ $monthCount = $usersMonthQ->count();
 
 	<?php foreach($recentUsers as $v1){
 		$user_id=$v1->user_id;
-		
+
 		if($user_id!=null){
 			$username=name_from_id($user_id);
 		}else{
@@ -121,7 +114,7 @@ $monthCount = $usersMonthQ->count();
 	<?php } ?>
 
 	</tbody>
-	<?php }else{echo 'Guest tracking off. Turn "Track Guests" on below for advanced tracking statistics.';} ?>
+	<?php } else { echo 'Guest tracking off. Turn "Track Guests" on below for advanced tracking statistics.'; } ?>
 	</table>
 	</div>
 	</div>

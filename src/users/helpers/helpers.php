@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //echo "helpers included";
 require_once 'us_helpers.php';
 require_once 'users_online.php';
-require_once 'language.php';
+require_once ABS_US_ROOT.US_URL_ROOT.'usersc/language/language.php';
 require_once 'menus.php';
 require_once 'class.treeManager.php';
 require_once 'Shuttle_Dumper.php';
@@ -105,7 +105,7 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 	$db = DB::getInstance();
 	$site_settings_results = $db->query("SELECT * FROM settings");
 	$site_settings = $site_settings_results->first();
-	
+
 	$from = $site_settings->from_email;
 	$from_name=$site_settings->from_name;
 	$smtp_server=$site_settings->smtp_server;
@@ -132,23 +132,23 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 		$mail->isHTML(true);                                  // Set email format to HTML
 		$mail->Subject = $subject;
 		$mail->Body    = $body;
-		
+
 		ob_start();
 		$result = $mail->send();
 		$debug = ob_get_clean();
-		
+
 	}elseif($site_settings->mail_method=='sendmail'){
 		$mail->isSendmail();
 		$mail->setFrom($from, $from_name);
 		$mail->addAddress($to);
-		$mail->isHTML(true); 
+		$mail->isHTML(true);
 		$mail->Subject = $subject;
 		$mail->Body = $body;
-		
+
 		ob_start();
 		$result = $mail->send();
 		$debug = ob_get_clean();
-		
+
 	}elseif($site_settings->mail_method=='phpmail'){
 		$headers   = array();
 		$headers[] = "MIME-Version: 1.0";
@@ -163,21 +163,21 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 		Do nothing since not a recognized option
 		*/
 	}
-	
+
 	/*
 	Return the result as well as the output buffer containing the PHPMailer connection summary
-	*/	
+	*/
 	return [$result,$debug];
 }
 
 function email_body($templateString,$options = array()){
 	$placeholderStrings=['{{fname}}','{{url}}','{{sitename}}'];
 	$placeholderValues=[$options['fname'],$options['url'],$options['sitename']];
-	
+
 	$body='<!DOCTYPE html><html><head><meta charset="utf-8"><title></title></head><body>';
 	$body.=str_replace($placeholderStrings,$placeholderValues,$templateString);
 	$body.='</body></html>';
-	
+
 	return html_entity_decode($body);
 }
 
@@ -271,8 +271,7 @@ function timezone_dropdown($selected){
 		}
 		$dropdownString.='<optgroup>' . "\n";
 	}
-	$dropdownString.='</select>';	
-	
-	return $dropdownString;	
-}
+	$dropdownString.='</select>';
 
+	return $dropdownString;
+}

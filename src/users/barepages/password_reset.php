@@ -9,16 +9,12 @@ by the UserSpice Team at http://UserSpice.com
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
+checkToken();
 
 $errors = array();
 $reset_password_success=FALSE;
 $password_change_form=FALSE;
 
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
 $validate = new Validate([
 	'password',
 	'confirm'

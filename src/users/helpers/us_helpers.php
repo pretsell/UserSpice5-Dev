@@ -378,6 +378,15 @@ function defaultPage($type) {
 	return $page;
 }
 
+//Check token, die if bad
+function checkToken($name='csrf', $method='post') {
+	if (Input::exists($method)) {
+		if (!Token::check(Input::get($name))) {
+			die(lang('TOKEN'));
+		}
+	}
+}
+
 //Check if a user has access to a page
 function securePage($uri) {
 	global $user;
@@ -401,25 +410,16 @@ function securePage($uri) {
 
 	$db = DB::getInstance();
 
-	/*
-	Load site wide settings
-	*/
+	# Load site wide settings
 	$site_settings_results = $db->query("SELECT * FROM settings");
 	$site_settings = $site_settings_results->first();
 
-	//Separate document name from uri
-	//$tokens = explode('/', $uri);
-	//$page = end($tokens);
-
 	$urlRootLength=strlen(US_URL_ROOT);
 	$page=substr($uri,$urlRootLength,strlen($uri)-$urlRootLength);
-
 	//bold($page);
 
 	$id = null;
 	$private = null;
-	// dnd($page);
-	global $user;
 	// dnd($user);
 	if (isset($user) && $user->data() != null) {
 		if ($user->data()->permissions==0) {
@@ -442,17 +442,19 @@ function securePage($uri) {
 	} elseif (!$user->isLoggedIn()) { //If user is not logged in, deny access
 		Redirect::to(US_URL_ROOT.defaultPage('nologin'));
 		return false;
-	} elseif (userHasPageAuth($user->data()->id, $pageID)) {
-        return true;
-    }
+	} elseif (userHasPageAuth($pageID, $user->data()->id)) {
+    return true;
+  }
 
 	# We've tried everything - send them to the default page
-    Redirect::to(US_URL_ROOT.$site_settings->redirect_deny_noperm);
-    return false;
+  Redirect::to(US_URL_ROOT.$site_settings->redirect_deny_noperm);
+  return false;
 }
-function userHasPageAuth($user_id, $page_id) {
-	$db = DB::getInstance();
 
+function userHasPageAuth($page_id, $user_id=null) {
+	global $user;
+	if (is_null($user_id)) $user_id = $user->data()->id;
+	$db = DB::getInstance();
 	$sql = "SELECT groups_pages.group_id
 					FROM groups_pages
 					JOIN groups_users ON (groups_users.group_id = groups_pages.group_id)
@@ -460,25 +462,6 @@ function userHasPageAuth($user_id, $page_id) {
 					AND groups_pages.page_id = ?";
 	$query = $db->query($sql, [$user_id, $page_id]);
 	return ($query->count() > 0);
-}
-
-//Does user have permission
-//This is the old school UserSpice Permission System
-function checkPermission($groups) {
-	$db = DB::getInstance();
-	global $user;
-	//Grant access if master user
-	if ($user->isAdmin())
-		return true;
-
-	foreach($groups[0] as $group) {
-		$query = $db->query("SELECT id FROM groups_users  WHERE user_id = ? AND group_id = ?",array($user->data()->id,$group->group_id));
-        $results = $query->count();
-        if ($results > 0) {
-            return true;
-        }
-	}
-    return false;
 }
 
 function checkMenu($menu_id, $user_id=null) {
@@ -489,7 +472,7 @@ function checkMenu($menu_id, $user_id=null) {
 		return true;
 
 	# Check if this menu has unrestricted access (group_id==0)
-	$query = $db->query("SELECT id FROM groups_menus  WHERE group_id = 0 AND menu_id = ?",array($menu_id));
+	$query = $db->query("SELECT id FROM groups_menus WHERE group_id = 0 AND menu_id = ?",array($menu_id));
 	if ($query->count()) {
 		return true;
 	}
@@ -511,9 +494,8 @@ function checkMenu($menu_id, $user_id=null) {
 //Retrieve information for all groups
 function fetchAllGroups() {
 	$db = DB::getInstance();
-	$query = $db->query("SELECT id, name FROM groups");
-	$results = $query->results();
-	return ($results);
+	$db->findAll('groups');
+	return $query->results();
 }
 
 //Displays error and success messages

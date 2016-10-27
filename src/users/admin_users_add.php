@@ -13,16 +13,9 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page group/permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])) {die();}
+checkToken();
 
-$errors = [];
-$successes = [];
-
-if (Input::exists('post')) {
-	if (!Token::check(Input::get('csrf'))) {
-		die('Token doesn\'t match!');
-	}
-}
-
+$errors = $successes = [];
 $val_err = null;
 $username = null;
 $fname = null;

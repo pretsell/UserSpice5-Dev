@@ -12,20 +12,15 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 if(!empty($_POST['settings'])){
-	
+
 	if($site_settings->force_ssl != $_POST['force_ssl']) {
 		$force_ssl = Input::get('force_ssl');
 		$fields=array('force_ssl'=>$force_ssl);
 		$db->update('settings',1,$fields);
-	}	
+	}
 	if($site_settings->recaptcha != $_POST['recaptcha']) {
 		$recaptcha = Input::get('recaptcha');
 		$fields=array('recaptcha'=>$recaptcha);
@@ -41,7 +36,7 @@ if(!empty($_POST['settings'])){
 		$fields=array('recaptcha_public'=>$recaptcha_public);
 		$db->update('settings',1,$fields);
 	}
-	
+
 	if($site_settings->session_timeout != $_POST['session_timeout']) {
 		$session_timeout = Input::get('session_timeout');
 		$fields=array('session_timeout'=>$session_timeout);
@@ -52,8 +47,8 @@ if(!empty($_POST['settings'])){
 		$allow_remember_me = Input::get('allow_remember_me');
 		$fields=array('allow_remember_me'=>$allow_remember_me);
 		$db->update('settings',1,$fields);
-	}	
-	
+	}
+
 	Redirect::to('admin_security.php');
 }
 
@@ -77,8 +72,8 @@ if(!empty($_POST['settings'])){
 				<option value="1" <?php if($site_settings->force_ssl==1) echo 'selected="selected"'; ?> >Yes</option>
 				<option value="0" <?php if($site_settings->force_ssl==0) echo 'selected="selected"'; ?> >No</option>
 			</select>
-		</div>		
-		
+		</div>
+
 		<!-- Recaptcha Option -->
 		<div class="form-group">
 			<label for="recaptcha">Recaptcha</label>
@@ -99,13 +94,13 @@ if(!empty($_POST['settings'])){
 			<label for="recaptcha_public">Recaptcha Public Key</label>
 			<input type="text" class="form-control" name="recaptcha_public" id="recaptcha_public" value="<?=$site_settings->recaptcha_public?>">
 		</div>
-		
+
 		<!-- session_timeout -->
 		<div class="form-group">
 			<label for="session_timeout">Session Timeout (in seconds: 3600 = 1 hour)</label>
 			<input type="text" class="form-control" name="session_timeout" id="session_timeout" value="<?=$site_settings->session_timeout?>">
 		</div>
-		
+
 		<!-- allow_remember_me -->
 		<div class="form-group">
 			<label for="allow_remember_me">Allow Remember Me</label>
@@ -113,8 +108,8 @@ if(!empty($_POST['settings'])){
 				<option value="1" <?php if($site_settings->allow_remember_me==1) echo 'selected="selected"'; ?> >Yes</option>
 				<option value="0" <?php if($site_settings->allow_remember_me==0) echo 'selected="selected"'; ?> >No</option>
 			</select>
-		</div>				
-		
+		</div>
+
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 
 		<p><input class='btn btn-primary' type='submit' name="settings" value='Save Site Settings' /></p>

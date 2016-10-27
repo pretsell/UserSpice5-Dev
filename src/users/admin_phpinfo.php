@@ -13,12 +13,7 @@ clearstatcache();
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 ?>
 <div class="row "> <!-- rows for Info Panels -->
@@ -32,10 +27,6 @@ if(Input::exists()){
 	<div class="col-xs-12">
 	<?=phpinfo();?>
 	</div> <!-- /col -->
-	
-
-
-
 </div> <!-- /row -->
 
 <!-- footers -->

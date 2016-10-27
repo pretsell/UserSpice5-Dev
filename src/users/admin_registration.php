@@ -12,12 +12,7 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 if(!empty($_POST['settings'])){
 	if($site_settings->site_name != $_POST['agreement']) {
@@ -25,13 +20,13 @@ if(!empty($_POST['settings'])){
 		$fields=array('agreement'=>$agreement);
 		$db->update('settings',1,$fields);
 	}
-	
+
 	if($site_settings->email_act != $_POST['email_act']) {
 		$email_act = Input::get('email_act');
 		$fields=array('email_act'=>$email_act);
 		$db->update('settings',1,$fields);
-	}	
-	
+	}
+
 	Redirect::to('admin_registration.php');
 }
 
@@ -47,20 +42,20 @@ if(!empty($_POST['settings'])){
 	<div class="col-xs-12"> <!-- Site Settings Column -->
 		<form class="" action="admin_registration.php" name="settings" method="post">
 		<h2>Registration</h2>
-		
+
 		<div class="form-group">
 		  <label for="radios">Require Email Verification</label>
-			<div class="">		
+			<div class="">
 				<label class="radio-inline" for="email_act_1">
-				<input type="radio" name="email_act" id="email_act_1" value="1" <?php echo ($site_settings->email_act==1)?'checked':''; ?>>Yes</label> 
+				<input type="radio" name="email_act" id="email_act_1" value="1" <?php echo ($site_settings->email_act==1)?'checked':''; ?>>Yes</label>
 				<label class="radio-inline" for="email_act_0">
-				<input type="radio" name="email_act" id="email_act_0" value="0" <?php echo ($site_settings->email_act==0)?'checked':''; ?>>No</label> 
+				<input type="radio" name="email_act" id="email_act_0" value="0" <?php echo ($site_settings->email_act==0)?'checked':''; ?>>No</label>
 			</div>
 		</div>
 
 		<div class="form-group">
 			<label>Terms and Conditions</label>
-			<textarea class="form-control" rows="10" id="agreement" name="agreement" ><?=$site_settings->agreement;?></textarea></p>		
+			<textarea class="form-control" rows="10" id="agreement" name="agreement" ><?=$site_settings->agreement;?></textarea></p>
 		</div>
 
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />

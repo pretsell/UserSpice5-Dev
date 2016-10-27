@@ -7,15 +7,9 @@ by the UserSpice Team at http://UserSpice.com
 
 ini_set("allow_url_fopen", 1);
 
-/*
-Initialize variables for the page
-*/
-$errors=[];
-$successes=[];
-$username='';
-$fname='';
-$lname='';
-$email='';
+#Initialize variables for the page
+$errors = $successes= [];
+$username = $fname = $lname = $email = '';
 
 /*
 If enabled, insert google and facebook auth url generators
@@ -27,15 +21,7 @@ if ($site_settings->fblogin) {
 	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/fblogin.php';
 }
 
-
-/*
-If $_POST data exists, then check CSRF token, and kill page if not correct...no need to process rest of page or form data
-*/
-if (Input::exists()) {
-	if (!Token::check(Input::get('csrf'))) {
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 $reCaptchaValid=FALSE;
 $createSuccess=FALSE;
@@ -77,7 +63,7 @@ if (Input::exists()) {
 			$reCaptchaValid=TRUE;
 		} else {
 			$reCaptchaValid=FALSE;
-			$errors[]='Please check the reCaptcha';
+			$errors[]=lang('CAPTCHA_FAIL');
 		}
 	} else {
 		/*
@@ -96,7 +82,7 @@ if (Input::exists()) {
 	}
 
 	if (!$agreement_checkbox) {
-		$errors[]='Please read and accept terms and conditions';
+		$errors[]=lang('CHECK_AGREE');
 	}
 
 	if ($reCaptchaValid || $site_settings->recaptcha == 0) { //if recaptcha valid or recaptcha disabled
@@ -156,12 +142,7 @@ if (Input::exists()) {
 			}
 			$createSuccess=TRUE;
 		} else {
-			/*
-			Append validation errors to error array
-			*/
-			foreach ($validation->errors() as $error) {
-				$errors[]=$error;
-			}
+			$errors = stackErrorMessages($errors)
 		}
 	}
 } //Input exists
@@ -174,46 +155,48 @@ if (Input::exists()) {
 <?php
 if (!$createSuccess) {
 ?>
-	<h2>Sign Up</h2>
+	<h2><?=lang('SIGN_UP')?></h2>
 	<?=display_errors($errors);?>
 	<form class="form-signup" action="join.php" method="post">
 
 	<div class="form-group">
-		<label for="username">Choose a Username</label>
+		<label for="username"><?=lang('CHOOSE_USERNAME')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('username') ?>"></span>
-		<input  class="form-control" type="text" name="username" id="username" placeholder="Username" value="<?=$username;?>" required autofocus>
+		<input  class="form-control" type="text" name="username" id="username" placeholder="<?=lang('CHOOSE_USERNAME')?>" value="<?=$username;?>" required autofocus>
+		<p class="help-block"><?=lang('CHOOSE_USERNAME_REQUIREMENTS')?></p>
 	</div>
 	<div class="form-group">
-		<label for="fname">First Name</label>
+		<label for="fname"><?=lang('FNAME')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('fname') ?>"></span>
-		<input type="text" class="form-control" id="fname" name="fname" placeholder="First Name" value="<?=$fname;?>" required>
+		<input type="text" class="form-control" id="fname" name="fname" placeholder="<?=lang('FNAME')?>" value="<?=$fname;?>" required>
 	</div>
 	<div class="form-group">
-		<label for="lname">Last Name</label>
+		<label for="lname"><?=lang('LNAME')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('lname') ?>"></span>
-		<input type="text" class="form-control" id="lname" name="lname" placeholder="Last Name" value="<?=$lname;?>" required>
+		<input type="text" class="form-control" id="lname" name="lname" placeholder="<?=lang('LNAME')?>" value="<?=$lname;?>" required>
 	</div>
 	<div class="form-group">
-		<label for="email">Email Address</label>
+		<label for="email"><?=lang('EMAIL')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('email') ?>"></span>
-		<input  class="form-control" type="text" name="email" id="email" placeholder="Email Address" value="<?=$email;?>" required >
+		<input  class="form-control" type="text" name="email" id="email" placeholder="<?=lang('EMAIL')?>" value="<?=$email;?>" required >
 	</div>
 	<div class="form-group">
-		<label for="password">Choose a Password</label>
+		<label for="password"><?=lang('PW')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('password') ?>"></span>
-		<input  class="form-control" type="password" name="password" id="password" placeholder="Password" required aria-describedby="passwordhelp">
+		<input  class="form-control" type="password" name="password" id="password" placeholder="<?=lang('PW')?>" required aria-describedby="passwordhelp">
+		<span class="help-block" id="passwordhelp"><?=lang('PWR')?></span>
 	</div>
 	<div class="form-group">
-		<label for="confirm">Confirm Password</label>
+		<label for="confirm"><?=lang('PWC')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('confirm') ?>"></span>
-		<input  type="password" id="confirm" name="confirm" class="form-control" placeholder="Confirm Password" required >
+		<input  type="password" id="confirm" name="confirm" class="form-control" placeholder="<?=lang('PWC')?>" required >
 	</div>
 	<div class="form-group">
-		<label for="agreement">Registration User Terms and Conditions</label>
+		<label for="agreement"><?=lang('TNC')?></label>
 		<textarea id="agreement" name="agreement" rows="5" class="form-control" disabled ><?=$site_settings->agreement?></textarea>
 	</div>
 	<div class="form-group">
-		<label for="agreement_checkbox">Check box to agree to terms</label>
+		<label for="agreement_checkbox"><?=lang('CHECK_AGREE')?></label>
 		<input type="checkbox" id="agreement_checkbox" name="agreement_checkbox" >
 	</div>
 	<?php if ($site_settings->recaptcha == 1) { ?>
@@ -223,7 +206,7 @@ if (!$createSuccess) {
 	<?php } ?>
 	<input type="hidden" value="<?=Token::generate();?>" name="csrf">
 	<div class="text-center">
-	<button class="submit btn btn-primary" type="submit" id="next_button"><span class="fa fa-plus-square"></span> Sign Up</button>
+	<button class="submit btn btn-primary" type="submit" id="next_button"><span class="fa fa-plus-square"></span> <?=lang('SIGN_UP')?></button>
 	<?php	if ($site_settings->glogin) {?><a href="<?=$gAuthUrl?>" class="" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
 	<?php if ($site_settings->fblogin) {?><a href="<?=$fbAuthUrl?>" class="" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
 	</div>
@@ -233,16 +216,16 @@ if (!$createSuccess) {
 	if ($site_settings->email_act==0) {
 ?>
 		<div class="jumbotron text-center">
-		<h2>Welcome To <?=$site_settings->site_name?>!</h2>
-		<p>Thanks for registering!</p>
-		<a href="login.php" class="btn btn-primary">Login</a>
+		<h2><?=lang('WELCOME', $site_settings->site_name)?></h2>
+		<p><?=lang('THANKS')?></p>
+		<a href="login.php" class="btn btn-primary"><?=lang('SIGN_IN')?></a>
 		</div>
 <?php
 	} else {
 ?>
 		<div class="jumbotron text-center">
-		<h2>Welcome To <?=$site_settings->site_name?>!</h2>
-		<p>Thanks for registering! Please check your email to verify your account.</p>
+		<h2><?=lang('WELCOME', $site_settings->site_name)?> </h2>
+		<p><?=lang('THANKS_VERIFY')?></p>
 		</div>
 <?php
 	}

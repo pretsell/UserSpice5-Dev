@@ -3,33 +3,27 @@ require_once 'users/init.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'includes/header.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'includes/navigation.php';
 
-$errors=[];
-$successes=[];
+$errors = $successes = [];
 $formValid=false;
 
-if (Input::exists()) {
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 /*
 Build Form
 */
-if(isset($_SESSION['formFields']) && isset($_SESSION['form'])){
+if (isset($_SESSION['formFields']) && isset($_SESSION['form'])) {
 	$formFields=$_SESSION['formFields'];
 	$form=$_SESSION['form'];
 	unset($_SESSION['formFields']);
 	unset($_SESSION['form']);
-	
+
 	$i=0;
-	foreach($formFields as $formField){
+	foreach($formFields as $formField) {
 		$formFields[$i]->setCurrentValue(Input::get($formFields[$i]->getId()));
-		
 		$i++;
 	}
 	$form->setFields($formFields);
-}else{
+} else {
 	/*
 	Input from custom form
 	*/
@@ -38,7 +32,7 @@ if(isset($_SESSION['formFields']) && isset($_SESSION['form'])){
 	$_SESSION['form']=$form;
 }
 
-if(isset($_POST['submit'])){
+if (isset($_POST['submit'])) {
 	/*
 	Form has been submitted with button submit
 	*/
@@ -46,22 +40,22 @@ if(isset($_POST['submit'])){
 	foreach ($form->getValidateErrors() as $error) {
 		$errors[]=$error;
 	}
-	
-	if(!$form->getFormValid()){
+
+	if (!$form->getFormValid()) {
 		/*
 		This happens if the form processing failed, so the session variable is set again
 		*/
 		$i=0;
-		foreach($formFields as $formField){
+		foreach($formFields as $formField) {
 			$formFields[$i]->setCurrentValue(Input::get($formFields[$i]->getId()));
-			
+
 			$i++;
 		}
-		$form->setFields($formFields);		
-			
+		$form->setFields($formFields);
+
 		$_SESSION['formFields']=$formFields;
 		$_SESSION['form']=$form;
-		
+
 	}
 }
 ?>
@@ -75,7 +69,7 @@ if(isset($_POST['submit'])){
 
 <form class="" action="form.php" method="post">
 <?php
-foreach($formFields as $formField){
+foreach($formFields as $formField) {
 	$formField->outputCode();
 }
 ?>

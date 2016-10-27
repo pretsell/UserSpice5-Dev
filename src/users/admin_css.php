@@ -12,12 +12,7 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 if(!empty($_POST['css'])){
 	if($site_settings->css_sample != Input::get('css_sample')) {
@@ -109,7 +104,7 @@ if(!empty($_POST['css'])){
 			</select>
 		</div>
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
-		
+
 		<p><input class='btn btn-large btn-primary' type='submit' name="css" value='Save CSS Settings'/></p>
 		</form>
 	</div> <!-- /col1/3 -->

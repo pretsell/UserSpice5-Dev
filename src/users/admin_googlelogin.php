@@ -12,12 +12,7 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 if(!empty($_POST['settings'])){
 	if($site_settings->glogin != $_POST['glogin']) {
@@ -63,20 +58,20 @@ if(!empty($_POST['settings'])){
 				<option value="1" <?php if($site_settings->glogin==1) echo 'selected="selected"'; ?> >Enabled</option>
 				<option value="0" <?php if($site_settings->glogin==0) echo 'selected="selected"'; ?> >Disabled</option>
 			</select>
-		</div>		
-		
+		</div>
+
 		<!-- gid -->
 		<div class="form-group">
 			<label for="gid">Client/App ID</label>
 			<input type="text" class="form-control" name="gid" id="gid" value="<?=$site_settings->gid?>">
 		</div>
-		
+
 		<!-- gsecret -->
 		<div class="form-group">
 			<label for="gsecret">Secret</label>
 			<input type="text" class="form-control" name="gsecret" id="gsecret" value="<?=$site_settings->gsecret?>">
 		</div>
-		
+
 		<!-- gredirect -->
 		<div class="form-group">
 			<label for="gcallback">Callback</label>

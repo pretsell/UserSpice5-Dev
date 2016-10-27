@@ -11,17 +11,9 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 # Secures the page...required for page permission management
 if (!securePage($_SERVER['PHP_SELF'])) { die(); }
+checkToken();
 
-
-$errors = [];
-$successes = [];
-
-if (Input::exists('post')) {
-	if (!Token::check(Input::get('csrf'))) {
-		die('Token doesn\'t match!');
-	}
-}
-
+$errors = $successes = [];
 $val_err = null;
 $username = null;
 $fname = null;
@@ -53,7 +45,7 @@ $userData = fetchAllUsers(); //Fetch information for all users
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
-	</div>	
+	</div>
 
 	    <div class="col-xs-12 col-md-6">
 		<h2>Manage Users</h2>

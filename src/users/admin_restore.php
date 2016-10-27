@@ -13,19 +13,14 @@ ini_set('memory_limit','1024M');
 require_once 'init.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 
-$errors=[];
-$successes=[];
+$errors = $successes = [];
 
 /*
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
+checkToken();
 
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
 if(!empty($_POST['restore'])){
 	if(Input::get('restore_type') == 'us_files'){
 		/*
@@ -33,20 +28,20 @@ if(!empty($_POST['restore'])){
 		2. Verify the hash matches (can be added later)
 		2b. Create temp directory same as filename but without .zip
 		3. Extract file to temp directory
-		4. Rename users/ folder to users.old/	
+		4. Rename users/ folder to users.old/
 		5. rename backup folder to correct path for users/
 		*/
 		$restoreFile=ABS_US_ROOT.US_URL_ROOT.$site_settings->backup_dest.Input::get('restore_file');
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
 		$restoreDest=ABS_US_ROOT.US_URL_ROOT.$site_settings->backup_dest.substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
-		
+
 		/*
 		Extract Zip File
 		*/
 		if(extractZip($restoreFile,$restoreDest)){
 			$successes[]='Backup extraction successful';
-			
+
 			/*
 			Rename original users/ to users.old/
 			*/
@@ -60,10 +55,10 @@ if(!empty($_POST['restore'])){
 					$successes[]='Successfully copied the restore files.';
 				}else{
 					$errors[]='Could not move restore data.';
-				}				
+				}
 			}else{
 				$errors[]='Could not rename existing "users/" folder.';
-			}	
+			}
 		}else{
 			$errors[]='Count not extract the files';
 		}
@@ -80,13 +75,13 @@ if(!empty($_POST['restore'])){
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
 		$restoreDest=ABS_US_ROOT.US_URL_ROOT.$site_settings->backup_dest.substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
-		
+
 		/*
 		Extract Zip File
 		*/
 		if(extractZip($restoreFile,$restoreDest)){
 			$successes[]='Backup extraction successful';
-			
+
 			/*
 			Rename original users/ to users.old/
 			*/
@@ -99,7 +94,7 @@ if(!empty($_POST['restore'])){
 					$successes[]='Successfully copied the restore files.';
 				}else{
 					$errors[]='Could not move restore data.';
-				}				
+				}
 			}else{
 				$errors[]='Could not rename existing "users/" folder.';
 			}
@@ -112,12 +107,12 @@ if(!empty($_POST['restore'])){
 					$successes[]='Successfully executed: '.$sqlFile;
 				}else{
 					$errors[]='Did NOT execute correctly: '.$sqlFile;
-				}		
-			}			
+				}
+			}
 		}else{
 			$errors[]='Count not extract the files';
-		}		
-		
+		}
+
 	}elseif(Input::get('restore_type') == 'db_only'){
 		/*
 		1. Verify the file exists
@@ -131,7 +126,7 @@ if(!empty($_POST['restore'])){
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
 		$restoreDest=ABS_US_ROOT.US_URL_ROOT.$site_settings->backup_dest.substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
-		
+
 		/*
 		Extract Zip File
 		*/
@@ -146,27 +141,27 @@ if(!empty($_POST['restore'])){
 					$successes[]='Successfully executed: '.$sqlFile;
 				}else{
 					$errors[]='Did NOT execute correctly: '.$sqlFile;
-				}		
+				}
 			}
 		}else{
 			$errors[]='Count not extract the files';
-		}		
+		}
 	}else{
 		/*
 		Unknown state? Do nothing.
 		*/
 	}
 }elseif(!empty($_POST['save'])){
-	
+
 	Redirect::to('admin_backup.php');
 }else{
 	/*
 	other form?
-	*/	
+	*/
 }
 
 if(Input::exists('get')){
-	
+
 }
 
 /*
@@ -192,7 +187,7 @@ foreach($allBackupFiles as $backupFile){
 	<?=display_successes($successes);?>
 	<?=display_errors($errors);?>
 	<form class="" action="admin_restore.php" name="backup" method="post">
-	
+
 		<!-- restore_type Option -->
 		<div class="form-group">
 			<label for="restore_type">Restore Type</label>
@@ -209,23 +204,23 @@ foreach($allBackupFiles as $backupFile){
 			<?php
 			$i=0;
 			foreach ($allBackupFiles as $backupFile){
-				$filename=end(explode('/',$backupFile));			
+				$filename=end(explode('/',$backupFile));
 			?>
-				<option value="<?=$filename?>"><?=$filename.' ('.$allBackupFilesSize[$i].' bytes)'?></option>			
+				<option value="<?=$filename?>"><?=$filename.' ('.$allBackupFilesSize[$i].' bytes)'?></option>
 			<?php
 			$i++;}
 			?>
 			</select>
 		</div>
-	
+
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 		<p>
 		<input class='btn btn-primary' type='submit' name="restore" value='Restore' />
 		</p>
 
 	</form>
-	
-	
+
+
 	</div>
 </div>
 

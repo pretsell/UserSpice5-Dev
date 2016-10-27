@@ -12,21 +12,16 @@ require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
 Secures the page...required for page permission management
 */
 if (!securePage($_SERVER['PHP_SELF'])){die();}
+checkToken();
 
-
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
 if(!empty($_POST['submit'])){
 	Redirect::to('admin_updates.php');
 }
 
 if(Input::exists('get')){
-	
+
 }else{
-	
+
 }
 
 ?>
@@ -42,14 +37,14 @@ if(Input::exists('get')){
 		<h2>Updates</h2>
 
 		<form class="" action="admin_updates.php" name="settings" method="post">
-		
-		
+
+
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
 
 		<input class='btn btn-primary' type='submit' name="submit" value='Save Site Settings' />
-		
+
 		<a class="btn btn-primary" href="admin_updates.php?action=checkversion">Check For Latest Version</a>
-		
+
 		</form>
 	</div> <!-- /col1/2 -->
 </div> <!-- /row -->

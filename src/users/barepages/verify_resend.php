@@ -5,29 +5,21 @@ An Open Source PHP User Management System
 by the UserSpice Team at http://UserSpice.com
 */
 
-/*
-Initialize variables for the page
-*/
-$errors=array();
-$successes=array();
+$errors = $successes = [];
 
 if($user->isLoggedIn()){
 	$user->logout();
 	Redirect::to('verify_resend.php');
 }
 
-if(Input::exists()){
-	if(!Token::check(Input::get('csrf'))){
-		die('Token doesn\'t match!');
-	}
-}
+checkToken();
 
 $email_sent=FALSE;
 
 if(Input::exists('post')){
 	$email = Input::get('email');
 	$fuser = new User($email);
-	
+
 	$validate = new Validate();
 	$validation = $validate->check($_POST,array(
 	'email' => array(
@@ -37,7 +29,7 @@ if(Input::exists('post')){
 	),
 	));
 	if($validation->passed()){ //if email is valid, do this
-	
+
 		if($fuser->exists()){
 			//send the email
 			/*
@@ -105,4 +97,3 @@ if ($email_sent){
 }
 
 ?>
-
