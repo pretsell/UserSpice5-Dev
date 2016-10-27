@@ -48,7 +48,7 @@ $monthCount = $usersMonthQ->count();
 ?>
 <div class="row "> <!-- rows for Info Panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$$cfg->get('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 	<div class="col-xs-12">
@@ -70,7 +70,7 @@ $monthCount = $usersMonthQ->count();
 	<div class="panel panel-default">
 	<div class="panel-heading"><strong>All Visitors</strong> <span class="small">(Whether logged in or not)</span></div>
 	<div class="panel-body">
-	<?php  if($site_settings->track_guest == 1){ ?>
+	<?php  if($$cfg->get('track_guest') == 1){ ?>
 	<?="In the last 30 minutes, the unique visitor count was ".count_users()."<br>";?>
 	<?php }else{ ?>
 	Guest tracking off. Turn "Track Guests" on below for advanced tracking statistics.
@@ -86,7 +86,7 @@ $monthCount = $usersMonthQ->count();
 	<div class="panel-body">
 	<div class="uvistable table-responsive">
 	<table class="table">
-	<?php if($site_settings->track_guest == 1){ ?>
+	<?php if($$cfg->get('track_guest') == 1){ ?>
 	<thead><tr><th>Username</th><th>IP</th><th>Last Activity</th></tr></thead>
 	<tbody>
 

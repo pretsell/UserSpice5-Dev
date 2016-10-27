@@ -359,7 +359,7 @@ function deleteUsers($users) {
 }
 
 function defaultPage($type) {
-	if ($page = Config::get('userspice/default_'.$type.'_page'))
+	if ($page = $cfg->get('userspice/default_'.$type.'_page'))
 		return $page;
 	# this (below) needs work -- I didn't see any "global $site_settings;" anywhere so didn't know how it was working
 	if ($page = $site_settings[$type])
@@ -447,7 +447,7 @@ function securePage($uri) {
   }
 
 	# We've tried everything - send them to the default page
-  Redirect::to(US_URL_ROOT.$site_settings->redirect_deny_noperm);
+  Redirect::to(US_URL_ROOT.$$cfg->get('redirect_deny_noperm'));
   return false;
 }
 
@@ -494,8 +494,7 @@ function checkMenu($menu_id, $user_id=null) {
 //Retrieve information for all groups
 function fetchAllGroups() {
 	$db = DB::getInstance();
-	$db->findAll('groups');
-	return $query->results();
+	return $db->findAll('groups')->results();
 }
 
 //Displays error and success messages

@@ -47,7 +47,7 @@ by the UserSpice Team at http://UserSpice.com
 		<ul class="dropdown-menu">
 		  <li><a href="<?=US_URL_ROOT?>users/forgot_password.php">Forgot Password</a></li>
 		  <?php
-		  if ($site_settings->email_act==1){
+		  if ($$cfg->get('email_act')==1){
 		  ?>
 			<li><a href="<?=US_URL_ROOT?>users/verify_resend.php">Resend Email Verification</a></li>
 		  <?php

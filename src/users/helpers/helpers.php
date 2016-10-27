@@ -106,17 +106,17 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 	$site_settings_results = $db->query("SELECT * FROM settings");
 	$site_settings = $site_settings_results->first();
 
-	$from = $site_settings->from_email;
-	$from_name=$site_settings->from_name;
-	$smtp_server=$site_settings->smtp_server;
-	$smtp_port=$site_settings->smtp_port;
-	$smtp_username=$site_settings->email_login;
-	$smtp_password=$site_settings->email_pass;
-	$smtp_transport=$site_settings->smtp_transport;
+	$from = $$cfg->get('from_email');
+	$from_name=$$cfg->get('from_name');
+	$smtp_server=$$cfg->get('smtp_server');
+	$smtp_port=$$cfg->get('smtp_port');
+	$smtp_username=$$cfg->get('email_login');
+	$smtp_password=$$cfg->get('email_pass');
+	$smtp_transport=$$cfg->get('smtp_transport');
 
 	$mail = new PHPMailer;
 
-	if ($site_settings->mail_method=='smtp'){
+	if ($$cfg->get('mail_method')=='smtp'){
 		$mail->SMTPDebug = $debug_level;                               // Enable verbose debug output
         if ($debug_level) 
             $mail->Debugoutput = 'html';
@@ -137,7 +137,7 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 		$result = $mail->send();
 		$debug = ob_get_clean();
 
-	}elseif($site_settings->mail_method=='sendmail'){
+	}elseif($$cfg->get('mail_method')=='sendmail'){
 		$mail->isSendmail();
 		$mail->setFrom($from, $from_name);
 		$mail->addAddress($to);
@@ -149,7 +149,7 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 		$result = $mail->send();
 		$debug = ob_get_clean();
 
-	}elseif($site_settings->mail_method=='phpmail'){
+	}elseif($$cfg->get('mail_method')=='phpmail'){
 		$headers   = array();
 		$headers[] = "MIME-Version: 1.0";
 		$headers[] = "Content-type: text/plain; charset=iso-8859-1";

@@ -15,22 +15,22 @@ if (!securePage($_SERVER['PHP_SELF'])){die();}
 checkToken();
 
 if(!empty($_POST['settings'])){
-	if($site_settings->glogin != $_POST['glogin']) {
+	if($$cfg->get('glogin') != $_POST['glogin']) {
 		$glogin = Input::get('glogin');
 		$fields=array('glogin'=>$glogin);
 		$db->update('settings',1,$fields);
 	}
-	if($site_settings->gid != $_POST['gid']) {
+	if($$cfg->get('gid') != $_POST['gid']) {
 		$gid = Input::get('gid');
 		$fields=array('gid'=>$gid);
 		$db->update('settings',1,$fields);
 	}
-	if($site_settings->gsecret != $_POST['gsecret']) {
+	if($$cfg->get('gsecret') != $_POST['gsecret']) {
 		$gsecret = Input::get('gsecret');
 		$fields=array('gsecret'=>$gsecret);
 		$db->update('settings',1,$fields);
 	}
-	if($site_settings->gcallback != $_POST['gcallback']) {
+	if($$cfg->get('gcallback') != $_POST['gcallback']) {
 		$gcallback = Input::get('gcallback');
 		$fields=array('gcallback'=>$gcallback);
 		$db->update('settings',1,$fields);
@@ -41,7 +41,7 @@ if(!empty($_POST['settings'])){
 ?>
 <div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$$cfg->get('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
@@ -55,27 +55,27 @@ if(!empty($_POST['settings'])){
 		<div class="form-group">
 			<label for="glogin">Feature State</label>
 			<select id="glogin" class="form-control" name="glogin">
-				<option value="1" <?php if($site_settings->glogin==1) echo 'selected="selected"'; ?> >Enabled</option>
-				<option value="0" <?php if($site_settings->glogin==0) echo 'selected="selected"'; ?> >Disabled</option>
+				<option value="1" <?php if($$cfg->get('glogin')==1) echo 'selected="selected"'; ?> >Enabled</option>
+				<option value="0" <?php if($$cfg->get('glogin')==0) echo 'selected="selected"'; ?> >Disabled</option>
 			</select>
 		</div>
 
 		<!-- gid -->
 		<div class="form-group">
 			<label for="gid">Client/App ID</label>
-			<input type="text" class="form-control" name="gid" id="gid" value="<?=$site_settings->gid?>">
+			<input type="text" class="form-control" name="gid" id="gid" value="<?=$$cfg->get('gid')?>">
 		</div>
 
 		<!-- gsecret -->
 		<div class="form-group">
 			<label for="gsecret">Secret</label>
-			<input type="text" class="form-control" name="gsecret" id="gsecret" value="<?=$site_settings->gsecret?>">
+			<input type="text" class="form-control" name="gsecret" id="gsecret" value="<?=$$cfg->get('gsecret')?>">
 		</div>
 
 		<!-- gredirect -->
 		<div class="form-group">
 			<label for="gcallback">Callback</label>
-			<input type="text" class="form-control" name="gcallback" id="gcallback" value="<?=$site_settings->gcallback?>">
+			<input type="text" class="form-control" name="gcallback" id="gcallback" value="<?=$$cfg->get('gcallback')?>">
 		</div>
 
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />
