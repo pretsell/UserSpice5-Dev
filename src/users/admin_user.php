@@ -113,22 +113,22 @@ $useravatar = '<img src="'.$grav.'" class="img-responsive img-thumbnail" alt="">
 	?>
 	<div class="form-group">
 		<label>Username</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('username') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('username') ?>"></span>
 		<input  class='form-control' type='text' name='username' value='<?=$userdetails->username?>' />
 	</div>
 	<div class="form-group">
 		<label>Email</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('email') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('email') ?>"></span>
 		<input class='form-control' type='text' name='email' value='<?=$userdetails->email?>' />
 	</div>
 	<div class="form-group">
 		<label>First Name</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('fname') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('fname') ?>"></span>
 		<input  class='form-control' type='text' name='fname' value='<?=$userdetails->fname?>' />
 	</div>
 	<div class="form-group">
 		<label>Last Name</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('lname') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('lname') ?>"></span>
 		<input  class='form-control' type='text' name='lname' value='<?=$userdetails->lname?>' />
 	</div>
 

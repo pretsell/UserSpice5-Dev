@@ -76,7 +76,7 @@ if($email_sent){
 	<form action="forgot_password.php" method="post" class="form ">
 		<div class="form-group">
 			<label for="email">Email</label>
-			<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('email') ?>"></span>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('email') ?>"></span>
 			<input type="text" name="email" placeholder="Email Address" class="form-control" autofocus>
 		</div>
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>">

@@ -205,32 +205,32 @@ echo display_successes($successes);
 
 	<div class="form-group">
 		<label for="username">Username</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('username') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('username') ?>"></span>
 		<input class="form-control" type="text" name="username" placeholder="Username" value="<?=$username;?>" autofocus>
 	</div>
 	<div class="form-group">
 		<label for="fname">First Name</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('fname') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('fname') ?>"></span>
 		<input type="text" class="form-control" name="fname" placeholder="First Name" value="<?=$fname;?>" >
 	</div>
 	<div class="form-group">
 		<label for="lname">Last Name</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('lname') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('lname') ?>"></span>
 		<input type="text" class="form-control" name="lname" placeholder="Last Name" value="<?=$lname;?>" >
 	</div>
 	<div class="form-group">
 		<label for="email">Email Address</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('email') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('email') ?>"></span>
 		<input  class="form-control" type="text" name="email" placeholder="Email Address" value="<?=$email;?>"  >
 	</div>
 	<div class="form-group">
 		<label for="password">Choose a Password</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('password') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('password') ?>"></span>
 		<input  class="form-control" type="password" name="password" placeholder="Password"  aria-describedby="passwordhelp">
 	</div>
 	<div class="form-group">
 		<label for="confirm">Confirm Password</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('confirm') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('confirm') ?>"></span>
 		<input  type="password" name="confirm" class="form-control" placeholder="Confirm Password" aria-describedby="confirmhelp" >
 	</div>
 

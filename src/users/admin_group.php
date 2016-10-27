@@ -157,7 +157,7 @@ $pageData = fetchAllPages();
 			</p>
 			<p>
 			<label>Name:</label>
-			<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('name') ?>"></span>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('name') ?>"></span>
 			<br />
 			<input type='text' name='name' value='<?=$groupDetails['name']?>' />
 			</p>

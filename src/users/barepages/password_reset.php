@@ -81,12 +81,12 @@ if ((Input::get('reset') == 1)){
 				<?=display_errors($errors);?>
 				<div class="form-group">
 					<label for="password">New Password:</label>
-					<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('password') ?>"></span>
+					<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('password') ?>"></span>
 					<input type="password" name="password" value="" id="password" class="form-control">
 				</div>
 				<div class="form-group">
 					<label for="confirm">Confirm Password:</label>
-					<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('confirm') ?>"></span>
+					<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('confirm') ?>"></span>
 					<input type="password" name="confirm" value="" id="confirm" class="form-control">
 				</div>
 				<input type="hidden" name="csrf" value="<?=Token::generate();?>">

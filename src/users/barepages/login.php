@@ -115,13 +115,13 @@ if (Input::exists()) {
 
 	<div class="form-group">
 		<label class="control-label" for="username">Username OR Email</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('username') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('username') ?>"></span>
 		<div><input  class="form-control" type="text" name="username" id="username" placeholder="Username/Email" required autofocus></div>
 	</div>
 
 	<div class="form-group">
 		<label class="control-label" for="password">Password</label>
-		<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('password') ?>"></span>
+		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('password') ?>"></span>
 		<div><input type="password" class="form-control"  name="password" id="password"  placeholder="Password" required autocomplete="off"></div>
 	</div>
 

@@ -80,7 +80,7 @@ $count = 0;
 			  <h4>Create a new Group</h4>
 				<label>Group Name:</label>
 				<input type='text' name='name' />
-				<span class="glyphicon glyphicon-question-sign" title="<?= $validation->describe('name') ?>"></span>
+				<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('name') ?>"></span>
             </div>
 
 			  <br>
