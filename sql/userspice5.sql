@@ -20,6 +20,60 @@ SET time_zone = "+00:00";
 -- Database: `loginrayseenet`
 --
 
+--
+-- Table structure for table `validate_rules`
+--
+
+CREATE TABLE `validate_rules` (
+  `id` int(11) NOT NULL,
+  `name` varchar(50) COLLATE utf8_bin NOT NULL,
+  `display` varchar(250) COLLATE utf8_bin NOT NULL,
+  `min` int(11) DEFAULT NULL,
+  `max` int(11) DEFAULT NULL,
+  `required` tinyint(1) DEFAULT NULL,
+  `unique_in_table` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+  `match_field` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+  `is_numeric` tinyint(1) DEFAULT NULL,
+  `valid_email` tinyint(1) DEFAULT NULL,
+  `regex` varchar(500) COLLATE utf8_bin DEFAULT NULL,
+  `regex_display` varchar(500) COLLATE utf8_bin DEFAULT NULL COMMENT AS `This will enable a non-tech human readable display if someone asks for a regex match validation`
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+--
+-- Dumping data for table `validate_rules`
+--
+
+INSERT INTO `validate_rules` (`id`, `name`, `display`, `min`, `max`, `required`, `unique_in_table`, `match_field`, `is_numeric`, `valid_email`, `regex`, `regex_display`) VALUES
+(1, 'groupname', 'Group Name', 1, 150, 1, 'groups', NULL, NULL, NULL, NULL, NULL),
+(2, 'username', 'Username', 1, 150, 1, 'users', NULL, NULL, NULL, '/^[^\\t !@#$%^&*(){}\\[\\]`~\\\\|]*$/', 'No spaces or special characters'),
+(3, 'fname', 'First Name', 1, 150, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, 'lname', 'Last Name', 1, 150, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, 'email', 'Email', 3, 250, 1, 'users', NULL, NULL, 1, NULL, NULL),
+(6, 'password', 'Password', 6, 150, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(7, 'confirm', 'Confirm Password', NULL, NULL, 1, NULL, 'password', NULL, NULL, NULL, NULL),
+(8, 'bio', 'Bio', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL);
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `validate_rules`
+--
+ALTER TABLE `validate_rules`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `validate_rules`
+--
+ALTER TABLE `validate_rules`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  
 -- --------------------------------------------------------
 
 --
