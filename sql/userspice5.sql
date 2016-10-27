@@ -73,7 +73,7 @@ ALTER TABLE `validate_rules`
 --
 ALTER TABLE `validate_rules`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-  
+
 -- --------------------------------------------------------
 
 --
@@ -131,18 +131,18 @@ INSERT INTO `menus` (`id`, `menu_title`, `parent`, `dropdown`, `logged_in`, `dis
 (6, 'main', -1, 1, 1, 3, 'Help', '', 'fa fa-fw fa-life-ring'),
 (8, 'main', -1, 0, 0, 1, 'Register', 'users/join.php', 'fa fa-fw fa-plus-square'),
 (9, 'main', -1, 0, 0, 2, 'Log In', 'users/login.php', 'fa fa-fw fa-sign-in'),
-(10, 'admin', -1, 2, 1, 0, 'Info', 'users/admin.php', ''),
-(11, 'admin', -1, 2, 1, 1, 'Settings', '', ''),
-(12, 'admin', 11, 2, 1, 2, 'Security', 'users/admin_security.php', ''),
-(13, 'admin', 11, 2, 1, 3, 'CSS', 'users/admin_css.php', ''),
-(14, 'admin', -1, 2, 1, 4, 'Users', 'users/admin_users.php', ''),
-(15, 'admin', -1, 2, 1, 5, 'Groups', 'users/admin_groups.php', ''),
-(16, 'admin', -1, 2, 1, 6, 'Pages', 'users/admin_pages.php', ''),
-(17, 'admin', 20, 2, 1, 7, 'Settings', 'users/admin_email.php', ''),
-(18, 'admin', -1, 2, 1, 8, 'Menus', 'users/admin_menus.php', ''),
-(20, 'admin', -1, 2, 1, 7, 'Email', '', ''),
-(21, 'admin', 20, 2, 1, 99999, 'Email Verify Template', 'users/admin_email_template.php?type=verify', ''),
-(22, 'admin', 20, 2, 1, 99999, 'Forgot Password Template', 'users/admin_email_template.php?type=forgot', ''),
+(10, 'admin', -1, 0, 1, 0, 'Info', 'users/admin.php', ''),
+(11, 'admin', -1, 1, 1, 1, 'Settings', '', ''),
+(12, 'admin', 11, 0, 1, 2, 'Security', 'users/admin_security.php', ''),
+(13, 'admin', 11, 0, 1, 3, 'CSS', 'users/admin_css.php', ''),
+(14, 'admin', -1, 0, 1, 4, 'Users', 'users/admin_users.php', ''),
+(15, 'admin', -1, 0, 1, 5, 'Groups', 'users/admin_groups.php', ''),
+(16, 'admin', -1, 0, 1, 6, 'Pages', 'users/admin_pages.php', ''),
+(17, 'admin', 20, 0, 1, 7, 'Settings', 'users/admin_email.php', ''),
+(18, 'admin', -1, 0, 1, 8, 'Menus', 'users/admin_menus.php', ''),
+(20, 'admin', -1, 1, 1, 7, 'Email', '', ''),
+(21, 'admin', 20, 0, 1, 99999, 'Email Verify Template', 'users/admin_email_template.php?type=verify', ''),
+(22, 'admin', 20, 0, 1, 99999, 'Forgot Password Template', 'users/admin_email_template.php?type=forgot', ''),
 (23, 'main', 6, 0, 0, 99999, 'Verify Resend', 'users/verify_resend.php', ''),
 (24, 'admin', 11, 0, 1, 0, 'General', 'users/admin_general.php', ''),
 (25, 'admin', 11, 0, 1, 1, 'Redirects', 'users/admin_redirects.php', ''),
