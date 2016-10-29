@@ -56,9 +56,6 @@ Autoload Facebook and Google APIs/SDKs
 require_once ABS_US_ROOT.US_URL_ROOT.'users/social_src/Google/autoload.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'users/social_src/Facebook/autoload.php';
 
-
-
-
 /*
 session_start() is placed after the autoloading so that class definitions are loaded before any session processing
 */
@@ -87,6 +84,7 @@ $GLOBALS['config'] = array(
   'token_name' => 'token',
 )
 );
+$GLOBALS['cfg'] = new Config();
 
 /*
 $us_tables = the tables that makeup userspice
@@ -109,16 +107,10 @@ Get DB istance for page
 $db = DB::getInstance();
 
 /*
-Load site wide settings
-*/
-$site_settings_results = $db->query("SELECT * FROM settings");
-$site_settings = $site_settings_results->first();
-
-/*
 Look for "remember me" cookie
 */
-if(Cookie::exists(Config::get('remember/cookie_name')) && !Session::exists(Config::get('session/session_name'))){
-	$hash = Cookie::get(Config::get('remember/cookie_name'));
+if(Cookie::exists($cfg->get('remember/cookie_name')) && !Session::exists($cfg->get('session/session_name'))){
+	$hash = Cookie::get($cfg->get('remember/cookie_name'));
 	$hashCheck = $db->query("SELECT * FROM users_session WHERE hash = ? AND uagent = ?",array($hash,Session::uagent_no_version()));
 
 	if ($hashCheck->count()) {
@@ -149,7 +141,7 @@ if($user->isLoggedIn()){
 	}
 	$user_id=$user->data()->id;
 }else{
-	if($site_settings->track_guest == 1){
+	if($$cfg->get('track_guest') == 1){
 		$user_id=0;
 	}
 }
@@ -171,14 +163,14 @@ if($user->isLoggedIn()){
 /*
 Maintenance Mode
 */
-if ($site_settings->site_offline==1){
+if ($$cfg->get('site_offline')==1){
 	die("The site is currently offline.");
 }
 
 /*
 SSL Enforcement
 */
-if ($site_settings->force_ssl == 1){
+if ($$cfg->get('force_ssl') == 1){
 	if (!isset($_SERVER['HTTPS']) || !$_SERVER['HTTPS']) {
 		// if request is not secure, redirect to secure url
 		$url = 'https://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
@@ -190,8 +182,8 @@ if ($site_settings->force_ssl == 1){
 /*
 Session Time Out Management
 */
-//if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > $site_settings->session_timeout) && $user->isLoggedIn()) {
-if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > $site_settings->session_timeout)) {
+//if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > $$cfg->get('session_timeout')) && $user->isLoggedIn()) {
+if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > $$cfg->get('session_timeout'))) {
 	session_unset(); // unset $_SESSION variable for the run-time
 	session_destroy(); // destroy session data in storage
 
