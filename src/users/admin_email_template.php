@@ -25,7 +25,7 @@ if(isset($_GET['type'])){
 			$fields=array('forgot_password_template'=>$emailText);
 			$db->update('settings','1',$fields);
 		}else{
-			$emailText=$site_settings->forgot_password_template;
+			$emailText=$cfg->get('forgot_password_template');
 		}
 	}elseif($type=='verify'){
 		if(Input::exists('post')){
@@ -33,7 +33,7 @@ if(isset($_GET['type'])){
 			$fields=array('email_verify_template'=>$emailText);
 			$db->update('settings','1',$fields);
 		}else{
-			$emailText=$site_settings->email_verify_template;
+			$emailText=$cfg->get('email_verify_template');
 		}
 	}else{
 		/*
@@ -45,7 +45,7 @@ if(isset($_GET['type'])){
 ?>
 <div class="row">
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->

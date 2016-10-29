@@ -70,7 +70,7 @@ $useravatar = '<img src="'.$grav.'" class="img-responsive img-thumbnail" alt="">
 ?>
 <div class="row">
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 	<div class="col-xs-12 col-md-3"><!--left col-->

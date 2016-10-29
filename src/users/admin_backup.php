@@ -24,9 +24,10 @@ checkToken();
 
 if(!empty($_POST['backup'])){
 	/*
-	Create backup destination folder: $site_settings->backup_dest
+	Create backup destination folder: $cfg->get('backup_dest')
 	*/
-	$destPath=ABS_US_ROOT.US_URL_ROOT.$site_settings->backup_dest;
+	$backup_dest = $cfg->get('backup_dest', 'backup');
+	$destPath=ABS_US_ROOT.US_URL_ROOT.$backup_dest;
 	if(!file_exists($destPath)){
 		if (mkdir($destPath)){
 			$destPathSuccess=true;
@@ -43,7 +44,7 @@ if(!empty($_POST['backup'])){
 	Generate backup path
 	*/
 	$backupDateTimeString=date("Y-m-d\TH-i-s");
-	$backupPath=ABS_US_ROOT.US_URL_ROOT.$site_settings->backup_dest.'backup_'.$backupDateTimeString.'/';
+	$backupPath=ABS_US_ROOT.US_URL_ROOT.$backup_dest.'backup_'.$backupDateTimeString.'/';
 
 	if(!file_exists($backupPath)){
 		if (mkdir($backupPath)){
@@ -158,7 +159,7 @@ if(!empty($_POST['backup'])){
 		*/
 	}
 }elseif(!empty($_POST['save'])){
-	if($site_settings->backup_dest != $_POST['backup_dest']) {
+	if($backup_dest != $_POST['backup_dest']) {
 		$backup_dest = Input::get('backup_dest');
 		$fields=array('backup_dest'=>$backup_dest);
 		$db->update('settings',1,$fields);
@@ -178,7 +179,7 @@ if(Input::exists('get')){
 /*
 Get array of existing backup zip files
 */
-$allBackupFiles=glob(ABS_US_ROOT.US_URL_ROOT.$site_settings->backup_dest.'backup*.zip');
+$allBackupFiles=glob(ABS_US_ROOT.US_URL_ROOT.$backup_dest.'backup*.zip');
 $allBackupFilesSize=[];
 foreach($allBackupFiles as $backupFile){
 	$allBackupFilesSize[]=filesize($backupFile);
@@ -187,7 +188,7 @@ foreach($allBackupFiles as $backupFile){
 ?>
 <div class="row"> <!-- row for Users, Groups, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
@@ -202,7 +203,7 @@ foreach($allBackupFiles as $backupFile){
 		<!-- backup_dest Option -->
 		<div class="form-group">
 			<label class="control-label" for="backup_dest">Backup Destination (relative to the z_us_root.php file)</label>
-			<input  class="form-control" type="text" name="backup_dest" id="backup_dest" placeholder="Backup Destination" value="<?=$site_settings->backup_dest?>">
+			<input  class="form-control" type="text" name="backup_dest" id="backup_dest" placeholder="Backup Destination" value="<?=$backup_dest?>">
 		</div>
 		<p><input class='btn btn-primary' type='submit' name="save" value='Save Settings' /></p>
 
@@ -233,7 +234,7 @@ foreach($allBackupFiles as $backupFile){
 				$objectName=explode('/',$backupFile);
 				$filename=end($objectName);
 			?>
-				<tr><td><a href="<?=US_URL_ROOT.$site_settings->backup_dest.$filename?>"><?=$filename?></a></td><td><?=$allBackupFilesSize[$i]?></td></tr>
+				<tr><td><a href="<?=US_URL_ROOT.$backup_dest.$filename?>"><?=$filename?></a></td><td><?=$allBackupFilesSize[$i]?></td></tr>
 			<?php
 			$i++;}
 			?>

@@ -15,24 +15,24 @@ if (!securePage($_SERVER['PHP_SELF'])){die();}
 checkToken();
 
 if(!empty($_POST['css'])){
-	if($site_settings->css_sample != Input::get('css_sample')) {
+	if($cfg->get('css_sample') != Input::get('css_sample')) {
 		$css_sample = Input::get('css_sample');
 		$fields=array('css_sample'=>$css_sample);
 		$db->update('settings',1,$fields);
 	}
 
-	if($site_settings->css1 != Input::get('css1')) {
+	if($cfg->get('css1') != Input::get('css1')) {
 		$css1 = Input::get('css1');
 		$fields=array('css1'=>$css1);
 		$db->update('settings',1,$fields);
 	}
-	if($site_settings->css2 != Input::get('css2')) {
+	if($cfg->get('css2') != Input::get('css2')) {
 		$css2 = Input::get('css2');
 		$fields=array('css2'=>$css2);
 		$db->update('settings',1,$fields);
 	}
 
-	if($site_settings->css3 != Input::get('css3')) {
+	if($cfg->get('css3') != Input::get('css3')) {
 		$css3 = Input::get('css3');
 		$fields=array('css3'=>$css3);
 		$db->update('settings',1,$fields);
@@ -43,7 +43,7 @@ if(!empty($_POST['css'])){
 ?>
 <div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 	<div class="col-xs-12"><!-- CSS Settings Column -->
@@ -54,15 +54,15 @@ if(!empty($_POST['css'])){
 		<div class="form-group">
 			<label for="css_sample">Show CSS Samples</label>
 			<select id="css_sample" class="form-control" name="css_sample">
-				<option value="1" <?php if($site_settings->css_sample==1) echo 'selected="selected"'; ?> >Enabled</option>
-				<option value="0" <?php if($site_settings->css_sample==0) echo 'selected="selected"'; ?> >Disabled</option>
+				<option value="1" <?php if($cfg->get('css_sample')==1) echo 'selected="selected"'; ?> >Enabled</option>
+				<option value="0" <?php if($cfg->get('css_sample')==0) echo 'selected="selected"'; ?> >Disabled</option>
 			</select>
 		</div>
 
 		<div class="form-group">
 			<label for="css1">Primary Color Scheme (Loaded 1st)</label>
 			<select class="form-control" name="css1" id="css1" >
-				<option selected="selected"><?=$site_settings->css1?></option>
+				<option selected="selected"><?=$cfg->get('css1')?></option>
 				<?php
 				$css_userspice=glob('../users/css/color_schemes/*.css');
 				$css_custom=glob('../usersc/css/color_schemes/*.css');
@@ -77,7 +77,7 @@ if(!empty($_POST['css'])){
 		<div class="form-group">
 			<label for="css2">Secondary CSS (Loaded 2nd)</label>
 			<select class="form-control" name="css2" id="css2">
-				<option selected="selected"><?=$site_settings->css2?></option>
+				<option selected="selected"><?=$cfg->get('css2')?></option>
 				<?php
 				$css_userspice=glob('../users/css/*.css');
 				$css_custom=glob('../usersc/css/*.css');
@@ -92,7 +92,7 @@ if(!empty($_POST['css'])){
 		<div class="form-group">
 			<label for="css3">Custom CSS (Loaded 3rd)</label>
 			<select class="form-control" name="css3" id="css3">
-				<option selected="selected"><?=$site_settings->css3?></option>
+				<option selected="selected"><?=$cfg->get('css3')?></option>
 				<?php
 				$css_userspice=glob('../users/css/*.css');
 				$css_custom=glob('../usersc/css/*.css');
@@ -110,7 +110,7 @@ if(!empty($_POST['css'])){
 	</div> <!-- /col1/3 -->
 </div> <!-- /row -->
 
-<?php if ($site_settings->css_sample){?>
+<?php if ($cfg->get('css_sample')){?>
 <div class="row">
 
 	<div class="col-xs-12 text-center">

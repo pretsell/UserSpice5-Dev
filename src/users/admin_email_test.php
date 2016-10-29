@@ -31,7 +31,7 @@ if(!empty($_POST)){
 ?>
 <div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
@@ -42,14 +42,14 @@ It's a good idea to test to make sure you can actually receive system emails bef
 <?php
 if (Input::exists()){
 	if($mail_result[0]){
-		if($site_settings->mail_method=='smtp'){
+		if($cfg->get('mail_method')=='smtp'){
 			echo '<h3>PHPMailer Transaction Log</h3>';
 			echo '<pre>'.$mail_result[1].'</pre>';
 		}
 		echo '<div class="alert alert-success">Mail sent successfully</div>';
 		
 	}else{
-		if($site_settings->mail_method=='smtp'){
+		if($cfg->get('mail_method')=='smtp'){
 			echo '<h3>PHPMailer Transaction Log</h3>';
 			echo '<pre>'.$mail_result[1].'</pre>';
 		}

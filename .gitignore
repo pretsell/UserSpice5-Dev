@@ -1,2 +1,5 @@
 src/users/db_cred.php
+src/users/init.php
 src/.htaccess
+*.bak
+*~
