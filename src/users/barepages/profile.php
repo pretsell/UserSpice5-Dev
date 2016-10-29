@@ -64,7 +64,7 @@ if (Input::exists()) {
 		if ($email != $userData->email && $userData->email_act=1) { // changed email
 			$fields['email_verified']=0; // no longer verified
 		}
-		if (!$$cfg->get('allow_username_change'))
+		if (!$cfg->get('allow_username_change'))
 			unset($fields['username']);
 		$db->update('users',$userId,$fields);
 		$successes[]=lang('ACCOUNT_DETAILS_UPDATED');
@@ -151,7 +151,7 @@ if ($displayFullProfile) {
 		<div class="form-group">
 			<label>Username</label>
 			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('username') ?>"></span>
-			<input  class='form-control' type='text' name='username' value='<?=$username?>' <?php if (!$$cfg->get('allow_username_change')) echo "readonly"; ?>/>
+			<input  class='form-control' type='text' name='username' value='<?=$username?>' <?php if (!$cfg->get('allow_username_change')) echo "readonly"; ?>/>
 		</div>
 
 		<div class="form-group">

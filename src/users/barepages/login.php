@@ -18,10 +18,10 @@ $validation = new Validate([
 /*
 If enabled, insert google and facebook auth url generators
 */
-if ($$cfg->get('glogin')) {
+if ($cfg->get('glogin')) {
 	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/glogin.php';
 }
-if ($$cfg->get('fblogin')) {
+if ($cfg->get('fblogin')) {
 	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/fblogin.php';
 }
 
@@ -31,7 +31,7 @@ if (Input::exists()) {
 	/*
 	If recaptcha is enabled, then process recaptcha and response
 	*/
-	if ($$cfg->get('recaptcha') == 1) {
+	if ($cfg->get('recaptcha') == 1) {
 		$remoteIp=$_SERVER["REMOTE_ADDR"];
 		$gRecaptchaResponse=Input::get('g-recaptcha-response');
 		$response = null;
@@ -39,7 +39,7 @@ if (Input::exists()) {
 		require_once 'includes/recaptcha.config.php';
 
 		// check secret key
-		$reCaptcha = new ReCaptcha($$cfg->get('recaptcha_private'));
+		$reCaptcha = new ReCaptcha($cfg->get('recaptcha_private'));
 
 		// if submitted check response
 		if ($gRecaptchaResponse) {
@@ -58,7 +58,7 @@ if (Input::exists()) {
 		$reCaptchaValid=TRUE;
 	}
 
-	if ($reCaptchaValid || $$cfg->get('recaptcha') == 0) { //if recaptcha valid or recaptcha disabled
+	if ($reCaptchaValid || $cfg->get('recaptcha') == 0) { //if recaptcha valid or recaptcha disabled
 
 		$validation->check($_POST);
 
@@ -72,13 +72,13 @@ if (Input::exists()) {
 				/*
 				Feel free to change where the user goes after login!
 				*/
-				if ($_SESSION['securePageRequest'] && $$cfg->get('redirect_referrer_login')) {
+				if ($_SESSION['securePageRequest'] && $cfg->get('redirect_referrer_login')) {
 					//bold('HERE');
 					$securePageRequest=$_SESSION['securePageRequest'];
 					unset($_SESSION['securePageRequest']);
 					Redirect::to($securePageRequest);
 				} else {
-					Redirect::to(US_URL_ROOT.$$cfg->get('redirect_login'));
+					Redirect::to(US_URL_ROOT.$cfg->get('redirect_login'));
 				}
 			} else {
 				$errors[]= lang('LOGIN_FAILED');
@@ -117,16 +117,16 @@ if (Input::exists()) {
 	</div>
 
 	<?php
-	if ($$cfg->get('recaptcha') == 1) {
+	if ($cfg->get('recaptcha') == 1) {
 	?>
 	<div class="form-group">
 		<label><?=lang('RECAP')?></label>
-		<div class="g-recaptcha" data-sitekey="<?=$$cfg->get('recaptcha_public'); ?>"></div>
+		<div class="g-recaptcha" data-sitekey="<?=$cfg->get('recaptcha_public'); ?>"></div>
 	</div>
 	<?php } ?>
 
 	<?php
-	if ($$cfg->get('allow_remember_me') == 1) {
+	if ($cfg->get('allow_remember_me') == 1) {
 	?>
 	<div class="form-group">
 		<label class="control-label" for="remember"><?=lang('REMEMBER')?></label>
@@ -139,8 +139,8 @@ if (Input::exists()) {
 
 	<div class="text-center">
 		<button class="btn btn-primary" type="submit"><span class="fa fa-sign-in"></span> Sign In</button>
-		<?php	if($$cfg->get('glogin')){?><a href="<?=$gAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
-		<?php if($$cfg->get('fblogin')){?><a href="<?=$fbAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
+		<?php	if($cfg->get('glogin')){?><a href="<?=$gAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
+		<?php if($cfg->get('fblogin')){?><a href="<?=$fbAuthUrl?>" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
 		<a href="forgot_password.php" class="btn btn-primary" type="button"><span class="fa fa-wrench"></span> <?=lang('REMEMBER')?></a>
 		<a href="join.php" class="btn btn-primary" type="button"><span class="fa fa-plus-square"></span><?=lang('SIGN_UP')?></a>
 	</div>
@@ -149,6 +149,6 @@ if (Input::exists()) {
 </div>
 
 <!-- Place any per-page javascript here -->
-<?php 	if ($$cfg->get('recaptcha') == 1) { ?>
+<?php 	if ($cfg->get('recaptcha') == 1) { ?>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <?php } ?>

@@ -15,13 +15,13 @@ if (!securePage($_SERVER['PHP_SELF'])){die();}
 checkToken();
 
 if(!empty($_POST['settings'])){
-	if($$cfg->get('site_name') != $_POST['agreement']) {
+	if($cfg->get('site_name') != $_POST['agreement']) {
 		$agreement = Input::get('agreement');
 		$fields=array('agreement'=>$agreement);
 		$db->update('settings',1,$fields);
 	}
 
-	if($$cfg->get('email_act') != $_POST['email_act']) {
+	if($cfg->get('email_act') != $_POST['email_act']) {
 		$email_act = Input::get('email_act');
 		$fields=array('email_act'=>$email_act);
 		$db->update('settings',1,$fields);
@@ -33,7 +33,7 @@ if(!empty($_POST['settings'])){
 ?>
 <div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$$cfg->get('version')?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
@@ -47,15 +47,15 @@ if(!empty($_POST['settings'])){
 		  <label for="radios">Require Email Verification</label>
 			<div class="">
 				<label class="radio-inline" for="email_act_1">
-				<input type="radio" name="email_act" id="email_act_1" value="1" <?php echo ($$cfg->get('email_act')==1)?'checked':''; ?>>Yes</label>
+				<input type="radio" name="email_act" id="email_act_1" value="1" <?php echo ($cfg->get('email_act')==1)?'checked':''; ?>>Yes</label>
 				<label class="radio-inline" for="email_act_0">
-				<input type="radio" name="email_act" id="email_act_0" value="0" <?php echo ($$cfg->get('email_act')==0)?'checked':''; ?>>No</label>
+				<input type="radio" name="email_act" id="email_act_0" value="0" <?php echo ($cfg->get('email_act')==0)?'checked':''; ?>>No</label>
 			</div>
 		</div>
 
 		<div class="form-group">
 			<label>Terms and Conditions</label>
-			<textarea class="form-control" rows="10" id="agreement" name="agreement" ><?=$$cfg->get('agreement');?></textarea></p>
+			<textarea class="form-control" rows="10" id="agreement" name="agreement" ><?=$cfg->get('agreement');?></textarea></p>
 		</div>
 
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />

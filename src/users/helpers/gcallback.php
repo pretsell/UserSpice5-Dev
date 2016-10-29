@@ -21,9 +21,9 @@ if($user->isLoggedIn()){
 }
 
 $gClient = new Google_Client();
-$gClient->setClientId($$cfg->get('gid'));
-$gClient->setClientSecret($$cfg->get('gsecret'));
-$gClient->setRedirectUri($$cfg->get('gcallback'));
+$gClient->setClientId($cfg->get('gid'));
+$gClient->setClientSecret($cfg->get('gsecret'));
+$gClient->setRedirectUri($cfg->get('gcallback'));
 $gClient->setScopes(array('profile'));
 
 /*
@@ -40,7 +40,7 @@ $gOauth2=new Google_Service_Oauth2($gClient);
 if (isset($_GET['code'])) {
   $gClient->authenticate($_GET['code']);
   $_SESSION['access_token'] = $gClient->getAccessToken();
-  Redirect::to($$cfg->get('gcallback'));
+  Redirect::to($cfg->get('gcallback'));
 }
 
 /************************************************
@@ -97,7 +97,7 @@ if (isset($_SESSION['gProfileData'])){
 		/*
 		Redirect after login
 		*/
-		Redirect::to(US_URL_ROOT.$$cfg->get('redirect_login'));
+		Redirect::to(US_URL_ROOT.$cfg->get('redirect_login'));
 		
 	}else{
 		/*
@@ -145,7 +145,7 @@ if (isset($_SESSION['gProfileData'])){
 		/*
 		Redirect after login
 		*/
-		Redirect::to(US_URL_ROOT.$$cfg->get('redirect_login'));		
+		Redirect::to(US_URL_ROOT.$cfg->get('redirect_login'));		
 	}
 }elseif(Input::get('error')=='access_denied'){
 	/*

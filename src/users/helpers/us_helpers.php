@@ -447,7 +447,7 @@ function securePage($uri) {
   }
 
 	# We've tried everything - send them to the default page
-  Redirect::to(US_URL_ROOT.$$cfg->get('redirect_deny_noperm'));
+  Redirect::to(US_URL_ROOT.$cfg->get('redirect_deny_noperm'));
   return false;
 }
 

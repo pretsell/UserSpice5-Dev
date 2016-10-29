@@ -24,7 +24,7 @@ checkToken();
 
 if(!empty($_POST['backup'])){
 	/*
-	Create backup destination folder: $$cfg->get('backup_dest')
+	Create backup destination folder: $cfg->get('backup_dest')
 	*/
 	$backup_dest = $cfg->get('backup_dest', 'backup');
 	$destPath=ABS_US_ROOT.US_URL_ROOT.$backup_dest;

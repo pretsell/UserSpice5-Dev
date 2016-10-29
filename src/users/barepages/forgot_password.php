@@ -27,14 +27,14 @@ if (Input::get('forgotten_password')) {
 			/*
 			URL includes the <a> and </a> tags, including the url string plus the link text
 			*/
-			$url='<a href="'.$$cfg->get('site_url').'/users/password_reset.php?email='.rawurlencode($email).'&vericode='.$fuser->data()->vericode.'&reset=1">Reset Password</a>';
+			$url='<a href="'.$cfg->get('site_url').'/users/password_reset.php?email='.rawurlencode($email).'&vericode='.$fuser->data()->vericode.'&reset=1">Reset Password</a>';
 			$options = array(
 			  'fname' => $fuser->data()->fname,
 			  'url' => $url,
-			  'sitename' => $$cfg->get('site_name'),
+			  'sitename' => $cfg->get('site_name'),
 			);
 			$subject = 'Password Reset';
-			$body =  email_body($$cfg->get('forgot_password_template'),$options);
+			$body =  email_body($cfg->get('forgot_password_template'),$options);
 			$email_sent=email($email,$subject,$body);
 			if(!$email_sent){
 				$errors[] = 'Email NOT sent due to error. Please contact site administrator.';

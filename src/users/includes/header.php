@@ -25,16 +25,16 @@ if(file_exists('usersc/'.$currentPage)){
 	<meta name="description" content="">
 	<meta name="author" content="">
 	
-	<title><?=$$cfg->get('site_name');?></title>
+	<title><?=$cfg->get('site_name');?></title>
 
 	<!-- Bootstrap Core CSS -->
-	<link href="<?=US_URL_ROOT.$$cfg->get('css1') ?>" rel="stylesheet">
+	<link href="<?=US_URL_ROOT.$cfg->get('css1') ?>" rel="stylesheet">
 	
 	<!-- Template CSS -->
-	<link href="<?=US_URL_ROOT.$$cfg->get('css2') ?>" rel="stylesheet">
+	<link href="<?=US_URL_ROOT.$cfg->get('css2') ?>" rel="stylesheet">
 
 	<!-- Your Custom CSS Goes Here!-->
-	<link href="<?=US_URL_ROOT.$$cfg->get('css3') ?>" rel="stylesheet">
+	<link href="<?=US_URL_ROOT.$cfg->get('css3') ?>" rel="stylesheet">
 
 	<!-- Custom Fonts -->
 	<link href="<?=US_URL_ROOT?>users/fonts/css/font-awesome.min.css" rel="stylesheet" type="text/css">

@@ -35,14 +35,14 @@ if(Input::exists('post')){
 			/*
 			URL includes the <a> and </a> tags, including the url string plus the link text
 			*/
-			$url='<a href="'.$$cfg->get('site_url').'/users/verify.php?email='.rawurlencode($email).'&vericode='.$fuser->data()->vericode.'">Verify your email</a>';
+			$url='<a href="'.$cfg->get('site_url').'/users/verify.php?email='.rawurlencode($email).'&vericode='.$fuser->data()->vericode.'">Verify your email</a>';
 			$options = array(
 			  'fname' => $fuser->data()->fname,
 			  'url' => $url,
-			  'sitename' => $$cfg->get('site_name'),
+			  'sitename' => $cfg->get('site_name'),
 			);
 			$subject = 'Verify Your Email';
-			$body =  email_body($$cfg->get('email_verify_template'),$options);
+			$body =  email_body($cfg->get('email_verify_template'),$options);
 			$email_sent=email($email,$subject,$body);
 			if(!$email_sent){
 				$errors[] = 'Email NOT sent due to error. Please contact site administrator.';

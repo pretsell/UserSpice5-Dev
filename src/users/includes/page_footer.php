@@ -24,15 +24,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	<div class="row">
 	<hr>
 		<div class="col-xs-12 text-center">
-			<footer><?=$$cfg->get('copyright_message')?> &copy; 2016</footer>
+			<footer><?=$cfg->get('copyright_message')?> &copy; 2016</footer>
 			<?php
-			if ($$cfg->get('debug_mode')){
+			if ($cfg->get('debug_mode')){
 				echo "<h2>IN DEBUG MODE</h2>";
 				echo "Queries this page: ".$db->getQueryCount();
 			}
 			
 			?>
-			<?php if($$cfg->get('recaptcha_public') == "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI") { echo "<h3 align='center'>For security reasons, you need to change your reCAPTCHA key.</h3>"; } ?>
+			<?php if($cfg->get('recaptcha_public') == "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI") { echo "<h3 align='center'>For security reasons, you need to change your reCAPTCHA key.</h3>"; } ?>
 		</div>
 	</div>
 </div>
