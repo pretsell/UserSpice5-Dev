@@ -64,7 +64,7 @@ if (Input::exists()) {
 		if ($email != $userData->email && $userData->email_act=1) { // changed email
 			$fields['email_verified']=0; // no longer verified
 		}
-		if (!$cfg->get('allow_username_change'))
+		if (!$site_settings->allow_username_change)
 			unset($fields['username']);
 		$db->update('users',$userId,$fields);
 		$successes[]=lang('ACCOUNT_DETAILS_UPDATED');
@@ -122,11 +122,6 @@ $signupDate = $rawDate['year']."-".$rawDate['month']."-".$rawDate['day'];
 <div class="col-xs-12 col-md-3">
 <p><img src="<?=$grav; ?>" class="img-thumbnail" alt="Generic placeholder thumbnail"></p>
 <div class="form-group">
-<strong>Want to change your profile picture? </strong><br>
-Visit <a href="https://en.gravatar.com/">https://en.gravatar.com/</a> and setup an account with the email address <?=$email?>.
-It works across millions of sites. It's fast and easy!<br>
-</div>
-<div class="form-group">
 	<label>Member Since</label>
 	<input  class='form-control' type='text' name='signupdate' value='<?=$signupDate?>' readonly/>
 </div>
@@ -143,6 +138,9 @@ if ($displayFullProfile) {
 ?>
 	<h1><?=$userData->username?>'s Settings</h1>
 
+	<strong>Want to change your profile picture? </strong><br>
+	Visit <a href="https://en.gravatar.com/">https://en.gravatar.com/</a> and setup an account with the email address <?=$email?>.
+	It works across millions of sites. It's fast and easy!<br>
 
 	<?=resultBlock($errors,$successes);?>
 
@@ -151,7 +149,7 @@ if ($displayFullProfile) {
 		<div class="form-group">
 			<label>Username</label>
 			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('username') ?>"></span>
-			<input  class='form-control' type='text' name='username' value='<?=$username?>' <?php if (!$cfg->get('allow_username_change')) echo "readonly"; ?>/>
+			<input  class='form-control' type='text' name='username' value='<?=$username?>' <?php if (!$site_settings->allow_username_change) echo "readonly"; ?>/>
 		</div>
 
 		<div class="form-group">

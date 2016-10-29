@@ -15,22 +15,22 @@ if (!securePage($_SERVER['PHP_SELF'])){die();}
 checkToken();
 
 if(!empty($_POST['settings'])){
-	if($cfg->get('fblogin') != $_POST['fblogin']) {
+	if($site_settings->fblogin != $_POST['fblogin']) {
 		$fblogin = Input::get('fblogin');
 		$fields=array('fblogin'=>$fblogin);
 		$db->update('settings',1,$fields);
 	}
-	if($cfg->get('fbid') != $_POST['fbid']) {
+	if($site_settings->fbid != $_POST['fbid']) {
 		$fbid = Input::get('fbid');
 		$fields=array('fbid'=>$fbid);
 		$db->update('settings',1,$fields);
 	}
-	if($cfg->get('fbsecret') != $_POST['fbsecret']) {
+	if($site_settings->fbsecret != $_POST['fbsecret']) {
 		$fbsecret = Input::get('fbsecret');
 		$fields=array('fbsecret'=>$fbsecret);
 		$db->update('settings',1,$fields);
 	}
-	if($cfg->get('fbcallback') != $_POST['fbcallback']) {
+	if($site_settings->fbcallback != $_POST['fbcallback']) {
 		$fbcallback = Input::get('fbcallback');
 		$fields=array('fbcallback'=>$fbcallback);
 		$db->update('settings',1,$fields);
@@ -41,7 +41,7 @@ if(!empty($_POST['settings'])){
 ?>
 <div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=$site_settings->version?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
@@ -55,27 +55,27 @@ if(!empty($_POST['settings'])){
 		<div class="form-group">
 			<label for="fblogin">Feature State</label>
 			<select id="fblogin" class="form-control" name="fblogin">
-				<option value="1" <?php if($cfg->get('fblogin')==1) echo 'selected="selected"'; ?> >Enabled</option>
-				<option value="0" <?php if($cfg->get('fblogin')==0) echo 'selected="selected"'; ?> >Disabled</option>
+				<option value="1" <?php if($site_settings->fblogin==1) echo 'selected="selected"'; ?> >Enabled</option>
+				<option value="0" <?php if($site_settings->fblogin==0) echo 'selected="selected"'; ?> >Disabled</option>
 			</select>
 		</div>
 
 		<!-- fbid -->
 		<div class="form-group">
 			<label for="fbid">Client/App ID</label>
-			<input type="text" class="form-control" name="fbid" id="fbid" value="<?=$cfg->get('fbid')?>">
+			<input type="text" class="form-control" name="fbid" id="fbid" value="<?=$site_settings->fbid?>">
 		</div>
 
 		<!-- fbsecret -->
 		<div class="form-group">
 			<label for="fbsecret">Secret</label>
-			<input type="text" class="form-control" name="fbsecret" id="fbsecret" value="<?=$cfg->get('fbsecret')?>">
+			<input type="text" class="form-control" name="fbsecret" id="fbsecret" value="<?=$site_settings->fbsecret?>">
 		</div>
 
 		<!-- fbcallback -->
 		<div class="form-group">
 			<label for="fbcallback">Callback</label>
-			<input type="text" class="form-control" name="fbcallback" id="fbcallback" value="<?=$cfg->get('fbcallback')?>">
+			<input type="text" class="form-control" name="fbcallback" id="fbcallback" value="<?=$site_settings->fbcallback?>">
 		</div>
 
 		<input type="hidden" name="csrf" value="<?=Token::generate();?>" />

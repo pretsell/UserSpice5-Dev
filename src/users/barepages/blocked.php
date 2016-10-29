@@ -1,1 +1,1 @@
-<h2>Your account with username <?=$user->data()->username?> has been blocked by an administrator. All account actions and permissions associated with your account will not function. If you believe this is an error, please contact the operator of <?=$cfg->get('site_name')?>.</h2>
+<h2>Your account with username <?=$user->data()->username?> has been blocked by an administrator. All account actions and permissions associated with your account will not function. If you believe this is an error, please contact the operator of <?=$site_settings->site_name?>.</h2>
