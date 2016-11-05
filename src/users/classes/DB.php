@@ -22,14 +22,14 @@ class DB {
 	private $_pdo, $_query, $_error = false, $_results, $_resultsArray, $_count = 0, $_lastId, $_queryCount=0;
 
 	private function __construct() {
-		if (!$opts = $cfg->get('mysql/options'))
+		if (!$opts = Config::simpleGet('mysql/options'))
 			$opts = array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET SESSION sql_mode = ''");
 		try{
 			$this->_pdo = new PDO('mysql:host=' .
-				$cfg->get('mysql/host') .';dbname='.
-				$cfg->get('mysql/db'),
-				$cfg->get('mysql/username'),
-				$cfg->get('mysql/password'),
+				Config::simpleGet('mysql/host') .';dbname='.
+				Config::simpleGet('mysql/db'),
+				Config::simpleGet('mysql/username'),
+				Config::simpleGet('mysql/password'),
 				$opts);
 		} catch(PDOException $e) {
 			die($e->getMessage());

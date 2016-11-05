@@ -102,15 +102,15 @@ Include necessary header files
 require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/helpers.php';
 require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/menus.php';
 /*
-Get DB istance for page
+Get DB instance for page
 */
 $db = DB::getInstance();
 
 /*
 Look for "remember me" cookie
 */
-if(Cookie::exists($cfg->get('remember/cookie_name')) && !Session::exists($cfg->get('session/session_name'))){
-	$hash = Cookie::get($cfg->get('remember/cookie_name'));
+if(Cookie::exists(configGet('remember/cookie_name')) && !Session::exists(configGet('session/session_name'))){
+	$hash = Cookie::get(configGet('remember/cookie_name'));
 	$hashCheck = $db->query("SELECT * FROM users_session WHERE hash = ? AND uagent = ?",array($hash,Session::uagent_no_version()));
 
 	if ($hashCheck->count()) {
@@ -141,7 +141,7 @@ if($user->isLoggedIn()){
 	}
 	$user_id=$user->data()->id;
 }else{
-	if($$cfg->get('track_guest') == 1){
+	if(configGet('track_guest') == 1){
 		$user_id=0;
 	}
 }
@@ -163,14 +163,14 @@ if($user->isLoggedIn()){
 /*
 Maintenance Mode
 */
-if ($$cfg->get('site_offline')==1){
+if (configGet('site_offline')==1){
 	die("The site is currently offline.");
 }
 
 /*
 SSL Enforcement
 */
-if ($$cfg->get('force_ssl') == 1){
+if (configGet('force_ssl') == 1){
 	if (!isset($_SERVER['HTTPS']) || !$_SERVER['HTTPS']) {
 		// if request is not secure, redirect to secure url
 		$url = 'https://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
@@ -182,8 +182,8 @@ if ($$cfg->get('force_ssl') == 1){
 /*
 Session Time Out Management
 */
-//if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > $$cfg->get('session_timeout')) && $user->isLoggedIn()) {
-if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > $$cfg->get('session_timeout'))) {
+//if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > configGet('session_timeout')) && $user->isLoggedIn()) {
+if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > configGet('session_timeout'))) {
 	session_unset(); // unset $_SESSION variable for the run-time
 	session_destroy(); // destroy session data in storage
 

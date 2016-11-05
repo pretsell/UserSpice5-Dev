@@ -22,8 +22,8 @@ class User {
 
 	public function __construct($user = null){
 		$this->_db = DB::getInstance();
-		$this->_sessionName = $cfg->get('session/session_name');
-		$this->_cookieName = $cfg->get('remember/cookie_name');
+		$this->_sessionName = configGet('session/session_name');
+		$this->_cookieName = configGet('remember/cookie_name');
 
 		if (!$user) {
 			if (Session::exists($this->_sessionName)) {
@@ -94,7 +94,7 @@ class User {
 								'uagent' => Session::uagent_no_version()
 							));
 
-						Cookie::put($this->_cookieName, $hash, $cfg->get('remember/cookie_expiry'));
+						Cookie::put($this->_cookieName, $hash, configGet('remember/cookie_expiry'));
 					}
 					$this->_db->query("UPDATE users SET last_login = ?, logins = logins + 1 WHERE id = ?",[date("Y-m-d H:i:s"),$this->data()->id]);
 					return true;
@@ -125,7 +125,7 @@ class User {
 								'uagent' => Session::uagent_no_version()
 							));
 
-						Cookie::put($this->_cookieName, $hash, $cfg->get('remember/cookie_expiry'));
+						Cookie::put($this->_cookieName, $hash, configGet('remember/cookie_expiry'));
 					}
 					$this->_db->query("UPDATE users SET last_login = ?, logins = logins + 1 WHERE id = ?",[date("Y-m-d H:i:s"),$this->data()->id]);
 					return true;
@@ -147,16 +147,25 @@ class User {
 		return $this->_isLoggedIn;
 	}
 
+    // isAdmin()
+    // Determine if the current user has admin authorization
+    //
+    // Note that "magic" IDs (users.id==0 and groups.id==2) which
+    // previously identified administrators are no longer supported as of US5.
+    // This function - User::isAdmin() - is THE standard way to determine 
+    // if a user is an admin.
 	public function isAdmin(){
-		if (!$this->_isLoggedIn)
+		if (!$this->isLoggedIn()) {
 			return false;
-		if ($this->_data->id === 0)
+        }
+		$sql = 'SELECT group_id
+			FROM groups_users
+			JOIN groups ON (groups_users.group_id = groups.id)
+			WHERE groups_users.user_id = ?
+			AND groups.admin';
+		$this->_db->query($sql, array($this->_data->id));
+		if ($this->_db->count() > 0) {
 			return true;
-		if (!$adminGroups = $cfg->get('userspice/admin_groups'))
-			$adminGroups = array(2); // default in UserSpice
-		foreach ((array)$adminGroups as $group) {
-			if ( $this->_db->query('SELECT * FROM groups_users WHERE user_id = ? AND group_id = ?', array($this->_data->id, $group))->count() > 0)
-				return true;
 		}
 		return false;
 	}

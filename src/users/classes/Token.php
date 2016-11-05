@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 class Token {
 	public static function generate(){
-		return Session::put($cfg->get('session/token_name'), md5(uniqid()));
+		return Session::put(configGet('session/token_name'), md5(uniqid()));
 	}
 
 	public static function check($token){
-		$tokenName = $cfg->get('session/token_name');
+		$tokenName = configGet('session/token_name');
 
 		if (Session::exists($tokenName) && $token === Session::get($tokenName)) {
 			Session::delete($tokenName);

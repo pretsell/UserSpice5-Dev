@@ -41,8 +41,8 @@ if (Input::exists('post')) {
     }
   } else {
     //Update group name
-    if ($groupDetails['name'] != $_POST['name']) {
-      $group_name = Input::get('name');
+    $group_name = Input::get('name');
+    if ($groupDetails['name'] != $group_name) {
       $fields=array('name'=>$group_name);
       $validation->check($_POST);
       if ($validation->passed()) {
@@ -63,7 +63,7 @@ if (Input::exists('post')) {
     }
 
     //Remove nested group(s) from group
-    if ($remove = $_POST['removeGroupGroups']) {
+    if ($remove = Input::get('removeGroupGroups', 'post')) {
       if ($deletion_count = deleteGroupsUsers_raw($groupId, $remove, 1)) {
         $successes[] = lang("GROUP_REMOVE_GROUPS", array($deletion_count));
       } else {
@@ -130,7 +130,7 @@ $pageData = fetchAllPages();
 
     <div class="row">
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
       <div class="col-xs-12">

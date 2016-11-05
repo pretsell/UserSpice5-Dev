@@ -90,7 +90,7 @@ foreach ($allGroups as $group) {
 ?>
 <div class="row"> <!-- row for Users, Groups, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->

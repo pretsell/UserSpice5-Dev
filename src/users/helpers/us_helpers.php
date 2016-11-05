@@ -359,7 +359,7 @@ function deleteUsers($users) {
 }
 
 function defaultPage($type) {
-	if ($page = $cfg->get('userspice/default_'.$type.'_page'))
+	if ($page = configGet('userspice/default_'.$type.'_page'))
 		return $page;
 	# this (below) needs work -- I didn't see any "global $site_settings;" anywhere so didn't know how it was working
 	if ($page = $site_settings[$type])
@@ -401,8 +401,7 @@ function securePage($uri) {
 	// dnd($user);
 	if (isset($user) && $user->data() != null) {
 		if ($user->data()->permissions==0) {
-			bold('<br><br><br>Sorry. You have been banned. If you feel this is an error, please contact the administrator.');
-			die();
+			Redirect::to(US_URL_ROOT.defaultPage('blocked'));
 		}
 		if ($user->isAdmin())
 			return true;
@@ -420,12 +419,6 @@ function securePage($uri) {
 
 	$id = null;
 	$private = null;
-	// dnd($user);
-	if (isset($user) && $user->data() != null) {
-		if ($user->data()->permissions==0) {
-			Redirect::to(US_URL_ROOT.defaultPage('blocked'));
-		}
-	}
 	//retrieve page details
 	$query = $db->query("SELECT id, page, private FROM pages WHERE page = ?",[$page]);
 	$count = $query->count();
@@ -443,12 +436,12 @@ function securePage($uri) {
 		Redirect::to(US_URL_ROOT.defaultPage('nologin'));
 		return false;
 	} elseif (userHasPageAuth($pageID, $user->data()->id)) {
-    return true;
-  }
+        return true;
+    }
 
 	# We've tried everything - send them to the default page
-  Redirect::to(US_URL_ROOT.$cfg->get('redirect_deny_noperm'));
-  return false;
+    Redirect::to(US_URL_ROOT.configGet('redirect_deny_noperm'));
+    return false;
 }
 
 function userHasPageAuth($page_id, $user_id=null) {
@@ -480,10 +473,10 @@ function checkMenu($menu_id, $user_id=null) {
 	# If a user_id was passed in, see if that user is part of a group which has access to this menu item
 	if (!is_null($user_id)) {
 		$sql = "SELECT groups_users.group_id
-						FROM groups_menus
-						INNER JOIN groups_users ON (groups_menus.group_id = groups_users.group_id)
-						WHERE menu_id = ?
-						AND user_id = ? ";
+				FROM groups_menus
+				INNER JOIN groups_users ON (groups_menus.group_id = groups_users.group_id)
+				WHERE menu_id = ?
+				AND user_id = ? ";
 		$query = $db->query($sql,array($menu_id, $user_id));
 		if ($query->count()) {
 			return true;
@@ -637,4 +630,14 @@ function updateEmail($id, $email) {
 	$db->update('users',$id,$fields);
 
 	return true;
+}
+
+function dbg($str, $level=1) {
+    global $debugLevel;
+    if (!isset($debugLevel)) $debugLevel = 3;
+    if ($level < $debugLevel) {
+    	echo "<text padding='1em' align='center'><h4><span style='background:white'>";
+        echo "DEBUG: ".$str;
+    	echo "</h4></span></text>";
+    }
 }
