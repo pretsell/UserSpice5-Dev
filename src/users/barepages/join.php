@@ -14,10 +14,10 @@ $username = $fname = $lname = $email = '';
 /*
 If enabled, insert google and facebook auth url generators
 */
-if ($cfg->get('glogin')) {
+if (configGet('glogin')) {
 	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/glogin.php';
 }
-if ($cfg->get('fblogin')) {
+if (configGet('fblogin')) {
 	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/fblogin.php';
 }
 
@@ -45,7 +45,7 @@ if (Input::exists()) {
 	/*
 	If recaptcha is enabled, then process recaptcha and response
 	*/
-	if ($cfg->get('recaptcha') == 1) {
+	if (configGet('recaptcha') == 1) {
 		$remoteIp=$_SERVER["REMOTE_ADDR"];
 		$gRecaptchaResponse=Input::get('g-recaptcha-response');
 		$response = null;
@@ -53,7 +53,7 @@ if (Input::exists()) {
 		require_once 'includes/recaptcha.config.php';
 
 		// check secret key
-		$reCaptcha = new ReCaptcha($cfg->get('recaptcha_private'));
+		$reCaptcha = new ReCaptcha(configGet('recaptcha_private'));
 
 		// if submitted check response
 		if ($gRecaptchaResponse) {
@@ -85,7 +85,7 @@ if (Input::exists()) {
 		$errors[]=lang('CHECK_AGREE');
 	}
 
-	if ($reCaptchaValid || $cfg->get('recaptcha') == 0) { //if recaptcha valid or recaptcha disabled
+	if ($reCaptchaValid || configGet('recaptcha') == 0) { //if recaptcha valid or recaptcha disabled
 
 		/*
 		Perform input validation prior to creating account
@@ -100,19 +100,19 @@ if (Input::exists()) {
 			$user = new User();
 			$join_date = date("Y-m-d H:i:s");
 
-			if ($cfg->get('email_act') == 1) {
+			if (configGet('email_act') == 1) {
 				/*
 				If email activation is enabled, then set email account as not verified and prepare and send email
 				*/
 				/*
 				URL includes the <a> and </a> tags, including the url string plus the link text
 				*/
-				$url='<a href="'.$cfg->get('site_url').'/users/verify.php?email='.rawurlencode($email).'&vericode='.$vericode.'">Verify your email</a>';
-				$options = array('fname' => $fname,'url' => $url,'sitename' => $cfg->get('site_name'),);
+				$url='<a href="'.configGet('site_url').'/users/verify.php?email='.rawurlencode($email).'&vericode='.$vericode.'">Verify your email</a>';
+				$options = array('fname' => $fname,'url' => $url,'sitename' => configGet('site_name'),);
 
 				$email_verified=0;
-				$subject = 'Welcome to '.$cfg->get('site_name').'!';
-				$body = email_body($cfg->get('email_verify_template'),$options);
+				$subject = 'Welcome to '.configGet('site_name').'!';
+				$body = email_body(configGet('email_verify_template'),$options);
 				email($email,$subject,$body);
 			} else {
 				/*
@@ -142,7 +142,7 @@ if (Input::exists()) {
 			}
 			$createSuccess=TRUE;
 		} else {
-			$errors = stackErrorMessages($errors)
+			$errors = stackErrorMessages($errors);
 		}
 	}
 } //Input exists
@@ -193,30 +193,30 @@ if (!$createSuccess) {
 	</div>
 	<div class="form-group">
 		<label for="agreement"><?=lang('TNC')?></label>
-		<textarea id="agreement" name="agreement" rows="5" class="form-control" disabled ><?=$cfg->get('agreement')?></textarea>
+		<textarea id="agreement" name="agreement" rows="5" class="form-control" disabled ><?=configGet('agreement')?></textarea>
 	</div>
 	<div class="form-group">
 		<label for="agreement_checkbox"><?=lang('CHECK_AGREE')?></label>
 		<input type="checkbox" id="agreement_checkbox" name="agreement_checkbox" >
 	</div>
-	<?php if ($cfg->get('recaptcha') == 1) { ?>
+	<?php if (configGet('recaptcha') == 1) { ?>
 	<div class="form-group">
-		<div class="g-recaptcha" data-sitekey="<?=$cfg->get('recaptcha_public'); ?>"></div>
+		<div class="g-recaptcha" data-sitekey="<?=configGet('recaptcha_public'); ?>"></div>
 	</div>
 	<?php } ?>
 	<input type="hidden" value="<?=Token::generate();?>" name="csrf">
 	<div class="text-center">
 	<button class="submit btn btn-primary" type="submit" id="next_button"><span class="fa fa-plus-square"></span> <?=lang('SIGN_UP')?></button>
-	<?php	if ($cfg->get('glogin')) {?><a href="<?=$gAuthUrl?>" class="" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
-	<?php if ($cfg->get('fblogin')) {?><a href="<?=$fbAuthUrl?>" class="" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
+	<?php	if (configGet('glogin')) {?><a href="<?=$gAuthUrl?>" class="" type="button"><img src="<?=US_URL_ROOT.'users/images/google.png'?>" height="35px"></a><?php } ?>
+	<?php if (configGet('fblogin')) {?><a href="<?=$fbAuthUrl?>" class="" type="button"><img src="<?=US_URL_ROOT.'users/images/facebook.png'?>" height="35px"></a><?php } ?>
 	</div>
 	</form>
 <?php
 } else {
-	if ($cfg->get('email_act')==0) {
+	if (configGet('email_act')==0) {
 ?>
 		<div class="jumbotron text-center">
-		<h2><?=lang('WELCOME', $cfg->get('site_name'))?></h2>
+		<h2><?=lang('WELCOME', configGet('site_name'))?></h2>
 		<p><?=lang('THANKS')?></p>
 		<a href="login.php" class="btn btn-primary"><?=lang('SIGN_IN')?></a>
 		</div>
@@ -224,7 +224,7 @@ if (!$createSuccess) {
 	} else {
 ?>
 		<div class="jumbotron text-center">
-		<h2><?=lang('WELCOME', $cfg->get('site_name'))?> </h2>
+		<h2><?=lang('WELCOME', configGet('site_name'))?> </h2>
 		<p><?=lang('THANKS_VERIFY')?></p>
 		</div>
 <?php
@@ -235,6 +235,6 @@ if (!$createSuccess) {
 </div>
 </div>
 
-<?php 	if ($cfg->get('recaptcha') == 1) { ?>
+<?php 	if (configGet('recaptcha') == 1) { ?>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <?php } ?>

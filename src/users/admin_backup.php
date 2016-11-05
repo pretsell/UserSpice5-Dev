@@ -24,9 +24,9 @@ checkToken();
 
 if(!empty($_POST['backup'])){
 	/*
-	Create backup destination folder: $cfg->get('backup_dest')
+	Create backup destination folder: configGet('backup_dest')
 	*/
-	$backup_dest = $cfg->get('backup_dest', 'backup');
+	$backup_dest = configGet('backup_dest', 'backup');
 	$destPath=ABS_US_ROOT.US_URL_ROOT.$backup_dest;
 	if(!file_exists($destPath)){
 		if (mkdir($destPath)){
@@ -188,7 +188,7 @@ foreach($allBackupFiles as $backupFile){
 ?>
 <div class="row"> <!-- row for Users, Groups, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->

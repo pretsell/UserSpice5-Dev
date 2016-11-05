@@ -31,10 +31,10 @@ if(!empty($_POST['restore'])){
 		4. Rename users/ folder to users.old/
 		5. rename backup folder to correct path for users/
 		*/
-		$restoreFile=ABS_US_ROOT.US_URL_ROOT.$cfg->get('backup_dest').Input::get('restore_file');
+		$restoreFile=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
-		$restoreDest=ABS_US_ROOT.US_URL_ROOT.$cfg->get('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
+		$restoreDest=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
 
 		/*
 		Extract Zip File
@@ -71,10 +71,10 @@ if(!empty($_POST['restore'])){
 		4. Rename users/ folder to users.old/
 		5. rename backup folder to correct path for users/
 		*/
-		$restoreFile=ABS_US_ROOT.US_URL_ROOT.$cfg->get('backup_dest').Input::get('restore_file');
+		$restoreFile=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
-		$restoreDest=ABS_US_ROOT.US_URL_ROOT.$cfg->get('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
+		$restoreDest=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
 
 		/*
 		Extract Zip File
@@ -122,10 +122,10 @@ if(!empty($_POST['restore'])){
 		4. Rename users/ folder to users.old/
 		5. rename backup folder to correct path for users/
 		*/
-		$restoreFile=ABS_US_ROOT.US_URL_ROOT.$cfg->get('backup_dest').Input::get('restore_file');
+		$restoreFile=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
-		$restoreDest=ABS_US_ROOT.US_URL_ROOT.$cfg->get('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
+		$restoreDest=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
 
 		/*
 		Extract Zip File
@@ -167,7 +167,7 @@ if(Input::exists('get')){
 /*
 Get array of existing backup zip files
 */
-$allBackupFiles=glob(ABS_US_ROOT.US_URL_ROOT.$cfg->get('backup_dest').'backup*.zip');
+$allBackupFiles=glob(ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').'backup*.zip');
 $allBackupFilesSize=[];
 foreach($allBackupFiles as $backupFile){
 	$allBackupFilesSize[]=filesize($backupFile);
@@ -176,7 +176,7 @@ foreach($allBackupFiles as $backupFile){
 ?>
 <div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
 	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=$cfg->get('version')?></h1>
+	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
 	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
