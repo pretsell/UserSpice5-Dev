@@ -53,10 +53,7 @@ function userIdExists($id) {
 //Retrieve information for a single group
 function fetchGroupDetails($id) {
 	$db = DB::getInstance();
-	$query = $db->query("SELECT id, name FROM groups WHERE id = ? LIMIT 1",array($id));
-	$results = $query->first();
-	$row = array('id' => $results->id, 'name' => $results->name);
-	return ($row);
+	return $db->findById('groups',$id)->first();
 }
 
 //Change a group's name
@@ -64,6 +61,24 @@ function updateGroupName($id, $name) {
 	$db = DB::getInstance();
 	$fields=array('name'=>$name);
 	$db->update('groups',$id,$fields);
+}
+
+//Retrieve all group types
+function fetchAllGroupTypes() {
+	$db = DB::getInstance();
+	return $db->findAll('grouptypes')->results();
+}
+
+//Find the row where $searchProp has $searchVal in the array of
+//objects in $aoo (arrayOfObject) and return the property of $rtnProp
+//  (this is useful for searching results from database)
+function findValInArrayOfObject($aoo, $searchProp, $searchVal, $rtnProp) {
+    foreach ($aoo as $o) {
+        if ($o->$searchProp == $searchVal) {
+            return $o->$rtnProp;
+        }
+    }
+    return false;
 }
 
 //Checks if a username exists in the DB
@@ -77,9 +92,7 @@ function usernameExists($username)   {
 //Retrieve information for all users
 function fetchAllUsers() {
 	$db = DB::getInstance();
-	$query = $db->query("SELECT * FROM users");
-	$results = $query->results();
-	return ($results);
+	return $db->findAll('users')->results();
 }
 
 //Retrieve complete user information by username, token or ID
@@ -155,28 +168,14 @@ function fetchGroupMembers_raw($group_id, $reverse_logic=false) {
 }
 
 //Retrieve list of users who are members of a given group
-// or (if $reverse_logic == true) who are NOT members of a given group
-function fetchGroupUsers($group_id, $reverse_logic=false) {
+function fetchUsersByGroup($group_id) {
 	$db = DB::getInstance();
-	if ($reverse_logic) {
-		$sql = "SELECT users.id as user_id, username
-						FROM users
-						WHERE NOT EXISTS (
-							SELECT *
-							FROM groups_users
-							WHERE users.id = user_id
-							AND group_id = ?
-						)";
-	} else {
-		$sql = "SELECT user_id, username
-						FROM groups_users
-						JOIN users ON (user_id = users.id)
-						WHERE group_id = ?";
-	}
-	echo "DEBUG: group_id = $group_id, sql=$sql<br />\n";
-	$query = $db->query($sql,array($group_id));
-	echo "DEBUG: count=".$query->count()."<br />\n";
-	return $query->results();
+	$sql = "SELECT user_id, fname, lname, username
+			FROM groups_users
+			JOIN users ON (user_id = users.id)
+			WHERE group_id = ?";
+	#echo "DEBUG: group_id = $group_id, sql=$sql<br />\n";
+	return $db->query($sql,array($group_id))->results();
 }
 
 //Remove user(s) from group(s)
@@ -231,11 +230,16 @@ function getUSPageFiles() {
 //Delete a page from the DB
 function deletePages($pages) {
 	$db = DB::getInstance();
-	if (!$query = $db->query("DELETE FROM pages WHERE id IN ({$pages})")) {
-		throw new Exception('There was a problem deleting pages.');
-	} else {
-		return true;
-	}
+    $count=0;
+    $sql = "DELETE FROM pages WHERE id = ?";
+    foreach ((array)$pages as $p) {
+    	if (!$query = $db->query($sql, [$p])) {
+    		throw new Exception('There was a problem deleting pages.');
+    	} else {
+    		$count++;
+    	}
+    }
+    return $count;
 }
 
 //Fetch information on all pages
@@ -336,20 +340,22 @@ function fetchPagesByGroup($group_id) {
 //Remove authorization for a group to access page(s) (delete from groups_pages)
 function deleteGroupsPages($pages, $groups) {
 	$db = DB::getInstance();
-	$bindvals = array();
-	$sql = "DELETE FROM groups_pages WHERE "
-	 				. $db->calcInOrEqual('group_id', $groups, $bindvals)
-					. " AND "
-	 				. $db->calcInOrEqual('page_id', $pages, $bindvals);
-	$q = $db->query($sql,$bindvals);
-	return $q->count();
+	$count = 0;
+	$sql = "DELETE FROM groups_pages WHERE group_id = ? AND page_id = ?";
+    foreach ($pages as $p) {
+        foreach ($groups as $g) {
+        	$q = $db->query($sql, [$p, $g]);
+            $count++;
+        }
+    }
+	return $count;
 }
 
 //Delete a defined array of users
 function deleteUsers($users) {
 	$db = DB::getInstance();
 	$i = 0;
-	foreach($users as $id) {
+	foreach((array)$users as $id) {
 		$query1 = $db->query("DELETE FROM users WHERE id = ?",array($id));
 		$query2 = $db->query("DELETE FROM groups_users_raw WHERE user_id = ?",array($id));
 		$query3 = $db->query("DELETE FROM profiles WHERE user_id = ?",array($id));
@@ -357,6 +363,31 @@ function deleteUsers($users) {
 	}
 	return $i;
 }
+
+//Delete rows from groups_roles_users
+// optional 2nd arg allows to delete from groups_users_raw if needed
+function deleteGroupsRolesUsers($gru_ids, $fix_groups_users_too=false) {
+	$db = DB::getInstance();
+	$i = 0;
+	foreach((array)$gru_ids as $id) {
+        if ($fix_groups_users_too) {
+            # Check if this is the last group for which this user holds this role
+            if ($results = $db->findById('groups_roles_users', $id)->first()) {
+                $sql = "SELECT id
+                        FROM groups_roles_users
+                        WHERE role_group_id = ?
+                        AND user_id = ?
+                        AND id != ?";
+                if ($db->query($sql, [$results->role_group_id, $results->user_id, $id])->count() < 1) {
+                    deleteGroupsUsers_raw($results->role_group_id, $results->user_id);
+                }
+            }
+        }
+		$i += $db->query("DELETE FROM groups_roles_users WHERE id = ?",array($id))->count();
+	}
+	return $i;
+}
+
 
 function defaultPage($type) {
 	if ($page = configGet('userspice/default_'.$type.'_page'))
@@ -487,7 +518,30 @@ function checkMenu($menu_id, $user_id=null) {
 //Retrieve information for all groups
 function fetchAllGroups() {
 	$db = DB::getInstance();
-	return $db->findAll('groups')->results();
+	return $db->findAll('groups', ['is_role', 'name'])->results();
+}
+
+function fetchRolesByType($grouptype_id, $allow_null) {
+	$db = DB::getInstance();
+    $sql = "SELECT groups.id, groups.name, groups.short_name
+            FROM groups
+            WHERE groups.is_role > 0
+            AND (groups.grouptype_id = ?";
+    if ($allow_null) {
+        $sql .= " OR groups.grouptype_id IS NULL";
+    }
+    $sql .= ")";
+	return $db->query($sql, [$grouptype_id])->results();
+}
+function fetchRolesByGroup($group_id) {
+	$db = DB::getInstance();
+    $sql = "SELECT gru.id, gru.role_group_id, groups.name, groups.short_name,
+                    gru.user_id, users.username, users.fname, users.lname
+            FROM groups_roles_users gru
+            JOIN groups ON (gru.role_group_id = groups.id)
+            JOIN users ON (gru.user_id = users.id)
+            WHERE gru.group_id = ?";
+	return $db->query($sql, [$group_id])->results();
 }
 
 //Displays error and success messages
@@ -535,17 +589,47 @@ function lang($key,$markers = NULL) {
 	}
 }
 
+function addGroupsRolesUsers($group_ids, $role_ids, $user_ids) {
+    $db = DB::getInstance();
+	$i = 0;
+    $findsql = "SELECT id
+                FROM groups_roles_users
+                WHERE group_id = ?
+                AND role_group_id = ?
+                AND user_id = ?";
+	$inssql = "INSERT INTO groups_roles_users (group_id,role_group_id,user_id)
+                VALUES (?,?,?)";
+	foreach((array)$group_ids as $group_id) {
+		foreach((array)$role_ids as $role_id) {
+    		foreach((array)$user_ids as $user_id) {
+                # Check if it already exists - if not, add it
+                $db->query($findsql, [$group_id, $role_id, $user_id]);
+                if ($db->count() == 0) {
+        			if($db->query($inssql,[$group_id,$role_id,$user_id])) {
+        				$i++;
+        			}
+                }
+            }
+		}
+	}
+	return $i;
+}
+
 //Add all groups/users to the groups_users_raw mapping table
-function addGroupsUsers_raw($group_ids, $users, $user_is_group=0) {
+function addGroupsUsers_raw($group_ids, $user_ids, $user_is_group=0) {
 	$db = DB::getInstance();
 	$i = 0;
-	$sql = "INSERT INTO groups_users_raw (user_id,group_id,user_is_group) VALUES (?,?,?)";
+	$sql = "INSERT INTO groups_users_raw (group_id,user_id,user_is_group) VALUES (?,?,?)";
+    $findsql = "SELECT id FROM groups_users_raw WHERE group_id = ? AND user_id = ? AND user_is_group = ?";
 	foreach((array)$group_ids as $group_id){
-		foreach((array)$users as $user_id){
+		foreach((array)$user_ids as $user_id){
 			#echo "<pre>DEBUG: AGU: group_id=$group_id, user_id=$user_id</pre><br />\n";
-			if($db->query($sql,[$user_id,$group_id,$user_is_group])) {
-				$i++;
-			}
+            $db->query($findsql, [$group_id, $user_id, $user_is_group]);
+            if ($db->count() == 0) {
+    			if($db->query($sql,[$group_id,$user_id,$user_is_group])) {
+    				$i++;
+    			}
+            }
 		}
 	}
 	return $i;
