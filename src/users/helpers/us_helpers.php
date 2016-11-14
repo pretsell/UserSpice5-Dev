@@ -178,6 +178,27 @@ function fetchUsersByGroup($group_id) {
 	return $db->query($sql,array($group_id))->results();
 }
 
+// Delete row from grouptypes
+function deleteGrouptypes($grouptype_ids, &$errors, &$successes) {
+	$db = DB::getInstance();
+    $count = 0;
+    foreach ((array)$grouptype_ids as $id) {
+        if ($db->query('SELECT id FROM groups WHERE grouptype_id = ?', [$id])->count()) {
+            $errors[] = lang('GROUPTYPE_IN_USE');
+            $errors[] = lang('GROUPTYPE_DELETE_FAILED');
+        } else {
+            $db->deleteById('grouptypes', $id);
+            if (!$db->count()) {
+                $errors[] = lang('GROUPTYPE_DELETE_FAILED');
+            }
+            $count += $db->count();
+        }
+    }
+    if ($count) {
+        $successes[] = lang('GROUPTYPE_DELETE_SUCCESS', $count);
+    }
+    return $count;
+}
 //Remove user(s) from group(s)
 // $user_is_group is provided programmatically (never from a form) so doesn't
 // need to be bound
@@ -418,6 +439,33 @@ function checkToken($name='csrf', $method='post') {
 	}
 }
 
+// find a file in a (configurable) list of paths
+function pathFinder($file, $root, $configKey, $defaultPath) {
+    if ($configKey) {
+        $paths = configGet($configKey, $defaultPath);
+    } else {
+        $paths = $defaultPath;
+    }
+    if (!is_array($paths)) {
+        $paths = preg_split('/[:;]/', $paths);
+    }
+    $root = trim($root);
+    if ($root && substr($root, -1, 1) != DIRECTORY_SEPARATOR) {
+        $root .= DIRECTORY_SEPARATOR;
+    }
+    foreach ($paths as $p) {
+        $p = trim($p);
+        if (!$p) continue; // use "." if you want cwd
+        if (substr($p, -1, 1) != DIRECTORY_SEPARATOR) {
+            $p .= DIRECTORY_SEPARATOR;
+        }
+        if (file_exists($root.$p.$file)) {
+            return $root.$p.$file;
+        }
+    }
+    return false;
+}
+
 //Check if a user has access to a page
 function securePage($uri) {
 	global $user;
@@ -444,16 +492,18 @@ function securePage($uri) {
 	$site_settings_results = $db->query("SELECT * FROM settings");
 	$site_settings = $site_settings_results->first();
 
-	$urlRootLength=strlen(US_URL_ROOT);
-	$page=substr($uri,$urlRootLength,strlen($uri)-$urlRootLength);
+    if (substr($uri, 0, strlen(US_URL_ROOT)) == US_URL_ROOT) {
+    	$page=substr($uri,strlen(US_URL_ROOT));
+    } else {
+        $page = $uri;
+    }
 	//bold($page);
 
-	$id = null;
-	$private = null;
 	//retrieve page details
 	$query = $db->query("SELECT id, page, private FROM pages WHERE page = ?",[$page]);
 	$count = $query->count();
 	if ($count==0) {
+        bold($page);
 		bold('<br><br>You must go into the Admin Panel and click the Manage Pages button to add this page to the database. Doing so will make this error go away.');
 		die();
 	}
@@ -572,7 +622,7 @@ function resultBlock($errors,$successes) {
 //Inputs language strings from selected language.
 function lang($key,$markers = NULL) {
 	global $lang;
-	$str = isset($lang[$key]) ? $lang[$key] : "No language key found: $key";
+	$str = isset($lang[$key]) ? $lang[$key] : "";
 	if ($markers !== NULL) {
         //Replace any dynamic markers
         $iteration = 1;
@@ -583,6 +633,10 @@ function lang($key,$markers = NULL) {
 	}
 	//Ensure we have something to return
 	if ($str == "") {
+        #dbg(substr($key, -6));
+        if (substr($key, -6) == '_LABEL') {
+            return ucwords(strtolower(str_replace(['_LABEL', '_'], ['', ' '], $key)));
+        }
 		return ("No language key found: $key");
 	} else {
 		return $str;

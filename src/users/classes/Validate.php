@@ -38,7 +38,7 @@ class Validate{
 				$rulename = $rule; // shorthand
 			$query = $this->_db->query("SELECT * FROM validate_rules WHERE name = ?", [$rulename]);
 			$results = $query->first();
-			foreach (['display', 'required', 'max', 'min',
+			foreach (['display', 'alias', 'required', 'max', 'min',
 								'unique'=>'unique_in_table', 'matches'=>'match_field',
 								'update_id', 'is_numeric', 'valid_email', 'regex',
 								'regex_display'] as $k => $rn) {
@@ -55,21 +55,26 @@ class Validate{
 					$newrule[$k] = $results->$rn;
 				}
 			}
+			if (isset($newrule['alias'])) $rulename = $newrule['alias'];
 			if (isset($rule['alias'])) $rulename = $rule['alias'];
 			$newRuleList[$rulename] = $newrule;
 		}
 		return $newRuleList;
 	}
 
+    public function listFields() {
+        return array_keys($this->_ruleList);
+    }
+
 	public function describe($fields=array(), $ruleList=array(), $rulesToDescribe=array()) {
 		$rtn = array();
 		if (!$ruleList) $ruleList = $this->_ruleList;
 		if (!$fields) $fields = array_keys($ruleList);
 		foreach ((array)$fields as $f) {
-			#echo "DEBUG: f=$f<br />\n";
+			#dbg( "DEBUG: f=$f<br />\n");
 			if (isset($ruleList[$f])) {
 				foreach ((array)$ruleList[$f] as $k => $r) {
-					#echo "DEBUG: k=$k<br />\n";
+					#dbg( "DEBUG: k=$k<br />\n");
 					switch ($k) {
 						case 'min':
 							$rtn[] = 'Min '.$r.' character'.($r>1?'s':'').' ';
@@ -108,20 +113,27 @@ class Validate{
 
 	public function check($source, $items = array()) {
 		$this->_errors = [];
-		if (!$items && $this->_ruleList) $items = $this->_ruleList;
+		if (!$items && $this->_ruleList) {
+            $items = $this->_ruleList;
+        }
 		#var_dump($items);
 		foreach ($items as $item => $rules) {
 			$item = sanitize($item);
 			$display = $rules['display'];
 			foreach ($rules as $rule => $rule_value) {
+                #dbg("Validate::check(): rule=$rule<br />\n");
 				$value = trim($source[$item]);
 				$value = sanitize($value);
 
 				if (in_array($rule, ['display','regex_display','alias', 'update_id']))
 					continue; // these aren't really "rules" per se
+                #dbg("Validate::check(): after continue<br />\n");
+                #dbg("Validate::check(): rule=$rule, rule_value=$rule_value, value='$value'<br />\n");
 				if ($rule === 'required' && $rule_value && empty($value)) {
+                    #dbg("ERROR - required<br />\n");
 					$this->addError(["{$display} is required",$item]);
 				} elseif (!empty($value)) {
+                    #dbg("Validate::check(): rule=$rule, rule_value=$rule_value item=$item<br />\n");
 					switch ($rule) {
 						case 'min':
 							if (strlen($value) < $rule_value) {
@@ -190,16 +202,13 @@ class Validate{
 		if (empty($this->_errors)) {
 			$this->_passed = true;
 		}
+        #dbg("check(): returning ".($this->_passed?'true':'false')."<br />\n");
 		return $this;
 	}
 
 	public function addError($error) {
 		$this->_errors[] = $error;
-		if (empty($this->_errors)) {
-			$this->_passed = true;
-		}else{
-			$this->_passed = false;
-		}
+		$this->_passed = false;
 	}
 
 	public function display_errors() {

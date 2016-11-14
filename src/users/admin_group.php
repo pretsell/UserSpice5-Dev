@@ -14,19 +14,20 @@ if (!securePage($_SERVER['PHP_SELF'])) {
 }
 checkToken();
 
+
 $errors = $successes = [];
-$mode = Input::get('mode');
-// whitelist the values from $_GET['mode'] for security
-if ($mode == 'role') {
-    $modeName = 'Role';
+if (isset($mode) && $mode == 'role') {
+    $modeName = 'Group Role';
+    $parentScript = 'admin_roles.php';
 } else {
     $modeName = 'Group';
     $mode = 'normal';
+    $parentScript = 'admin_groups.php';
 }
 
-// If requested group does not exist, redirect to admin_groups.php
+// If requested group does not exist, redirect to $parentScript (admin_groups.php or admin_roles.php)
 if (!($group_id = @$_GET['id']) || !groupIdExists($group_id)) {
-    Redirect::to('admin_groups.php', "?mode=$mode");
+    Redirect::to($parentScript, "?mode=$mode");
     die();
 }
 
@@ -46,7 +47,7 @@ if (Input::exists('post')) {
     if ($deletions = Input::get('deleteGroup', 'post')) {
         if ($deletion_count = deleteGroups($deletions)) {
             $successes[] = lang('GROUP_DELETIONS_SUCCESSFUL', array($deletion_count));
-            Redirect::to('admin_groups.php');
+            Redirect::to($parentScript);
         } else {
             $errors[] = 'SQL Error';
         }
@@ -83,7 +84,7 @@ if (Input::exists('post')) {
             # Add this user to the role-group in groups_users_raw
             addGroupsUsers_raw($role_id, $roleuser_id);
             $successes[] = lang('GROUP_ROLE_ADD_SUCCESSFUL');
-        } elseif ($_POST['newRole'] || $_POST['newRoleUser']) {
+        } elseif (@$_POST['newRole'] || @$_POST['newRoleUser']) {
             $errors[] = lang('GROUP_NEED_ROLE_AND_USER');
         }
 
@@ -180,13 +181,18 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
 	</div>
 	<div class="col-xs-12">
 		<?php resultBlock($errors, $successes); ?>
-          <h1>Configure Details for this <?= $modeName ?></h1>
+          <h1>Configure Details for <?= $modeName ?> `<?= $groupDetails->name ?>`</h1>
 
-			<form name='adminGroup' action='admin_group.php?id=<?=$group_id?>' method='post'>
-                <input type="hidden" name="mode" value="<?=$mode?>" />
+        <ul class="nav nav-tabs" id="myTab">
+          <li class="active"><a href="#groupInfo" data-toggle="tab">Group Information</a></li>
+          <li><a href="#groupMembers" data-toggle="tab">Group Membership</a></li>
+          <li><a href="#groupAccess" data-toggle="tab">Page Access</a></li>
+        </ul>
+			<form name='adminGroup' method='post'>
+                <input type="hidden" name="id" value="<?=$group_id?>" />
     			<input type="hidden" name="csrf" value="<?=Token::generate(); ?>" >
-    </div>
-      <div class="col-xs-12 col-md-6 col-lg-4">
+    <div class="tab-content">
+      <div class="tab-pane active col-xs-12" id="groupInfo">
 			<h3><?= $modeName ?> Information</h3>
 			<div id='regbox'>
 			<p>
@@ -209,7 +215,7 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
             if ($groupTypeData) { // don't show option if no group types set up
             ?>
             <p>
-                <label><?php if ($mode == 'role') echo "Role Available to this "; ?>Group Type:</label>
+                <label><?= ($mode == 'role') ? "Role configurable for this " :'' ?>Group Type:</label>
     			<span class="glyphicon glyphicon-info-sign" title="Choose from the List below"></span>
                 <br />
                 <select name="grouptype_id" style="min-width: 90%; max-width:90%;">
@@ -241,11 +247,11 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                 if ($groupRoles) {
                 ?>
                     <p>
-                    <label>Current Group Roles:</label>
-        			<span class="glyphicon glyphicon-info-sign" title="Check those you wish to DELETE, then save changes"></span>
+                    <label>Remove Group Roles:</label>
+        			<span class="glyphicon glyphicon-info-sign" title="Check those you wish to delete, then update the group"></span>
                     <table style="width: 90%;">
                     <tr>
-                        <th>Del&nbsp;&nbsp;</th><th>Role Name / User</th>
+                        <th>Delete&nbsp;&nbsp;</th><th>Role Name / User</th>
                     </tr>
                     <?php
                     foreach ($groupRoles as $gru) {
@@ -308,22 +314,24 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
             ?>
 			</p>
 			</div>
-    		<input class='btn btn-primary' type='submit' value='Update <?= $modeName ?>' class='submit' />
-			<button class="btn btn-primary btn-danger" name="deleteGroup" value="<?= $group_id ?>">Delete <?= $modeName ?></button>
         </div>
-        <div class="col-xs-12 col-md-6 col-lg-4">
+        <div class="tab-pane col-xs-12" id="groupMembers">
 			<h3>Group Membership</h3>
 			<div id='regbox'>
-			<p><strong>
-            Remove Members:</strong>
-            <br />Users:
+          <div class="col-xs-12 col-sm-6">
+			<h4>Remove Members:</h4>
 			<?php
             //Display list of groups with access
             $nested = false;
+            $first = true;
             foreach ($groupMembers as $gm) {
                 if ($gm->group_or_user == 'group') {
                     $nested = true;
                     continue;
+                }
+                if ($first) {
+                    echo "Users:\n";
+                    $first = false;
                 }
                 echo "<br><label><input type='checkbox' name='removeUsers[]' id='removeUsers[]' value='$gm->id'> $gm->name</label>\n";
             }
@@ -337,39 +345,43 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                 }
             }
             ?>
-      </p>
-      <p><strong>
-			Add Members:</strong>
-      <br />Users:
+          </div>
+          <div class="tab-pane col-xs-12 col-sm-6">
+            <h4>Add Members:</h4>
 			<?php
             //List users NOT in this group
-      $nested = false;
+            $nested = false;
+            $first = true;
             foreach ($nonGroupMembers as $ngm) {
                 if ($ngm->group_or_user == 'group') {
                     $nested = true;
                     continue;
                 }
+                if ($first) {
+                    echo "Users:\n";
+                    $first = false;
+                }
                 echo "<br><label><input type='checkbox' name='addUsers[]' id='addUsers[]' value='$ngm->id'> $ngm->name</label>\n";
             }
-      if ($nested) {
-          echo '<br />Nested Groups:';
-          foreach ($nonGroupMembers as $ngm) {
-              if ($ngm->group_or_user != 'group') {
-                  continue;
-              }
-              echo "<br><label><input type='checkbox' name='addGroupGroups[]' id='addGroupGroups[]' value='$ngm->id'> $ngm->name</label>\n";
-          }
-      }
+            if ($nested) {
+                echo '<br />Nested Groups:';
+                foreach ($nonGroupMembers as $ngm) {
+                    if ($ngm->group_or_user != 'group') {
+                        continue;
+                    }
+                    echo "<br><label><input type='checkbox' name='addGroupGroups[]' id='addGroupGroups[]' value='$ngm->id'> $ngm->name</label>\n";
+                }
+            }
             ?>
+          </div>
 
 			</div>
-    		<input class='btn btn-primary' type='submit' value='Update <?= $modeName ?>' class='submit' />
         </div>
-        <div class="col-xs-12 col-md-6 col-lg-4">
+        <div class="tab-pane col-xs-12" id="groupAccess">
 			<h3>Page Access</h3>
 			<div id='regbox'>
-			<p><br><strong>
-			Remove Page Access From This Group:</strong>
+            <div class="col-xs-12 col-sm-4">
+			<h4>Remove Access From This Group:</h4>
 			<?php
             //Display list of pages with this group
             $page_ids = [];
@@ -379,37 +391,40 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
             foreach ($pageData as $v1) {
                 if (in_array($v1->id, $page_ids)) {
                     ?>
-				<br><input type='checkbox' name='removePage[]' id='removePage[]' value='<?=$v1->id; ?>'> <?=$v1->page; ?>
+				<input type='checkbox' name='removePage[]' id='removePage[]' value='<?=$v1->id; ?>'> <?=$v1->page; ?><br />
 			  <?php
                 }
             }  ?>
-			</p>
-			<p><br><strong>
-			Add Access To This Level:</strong>
+            </div>
+            <div class="col-xs-12 col-sm-4">
+			<h4>Add Access To This Group:</h4>
 			<?php
-            //Display list of pages with this access level
+            //Display list of pages NOT accessible by this group
             foreach ($pageData as $v1) {
                 if (!in_array($v1->id, $page_ids) && $v1->private == 1) {
                     ?>
-				<br><input type='checkbox' name='addPage[]' id='addPage[]' value='<?=$v1->id; ?>'> <?=$v1->page; ?>
+				<input type='checkbox' name='addPage[]' id='addPage[]' value='<?=$v1->id; ?>'> <?=$v1->page; ?><br />
 			  <?php
                 }
             }  ?>
-			</p>
-			<p><br><strong>
-			Public Pages:</strong>
+            </div>
+            <div class="col-xs-12 col-sm-4">
+			<h4>Public Pages:</h4>
 			<?php
             //List public pages
             foreach ($pageData as $v1) {
                 if ($v1->private != 1) {
-                    echo '<br>'.$v1->page;
+                    echo $v1->page.'<br />';
                 }
             }
             ?>
-			</p>
 			</div>
-    		<input class='btn btn-primary' type='submit' value='Update <?= $modeName ?>' class='submit' />
+			</div>
       </div>
+      </div>
+    </div>
+		<input class='btn btn-primary' type='submit' value='Update <?= $modeName ?>' class='submit' />
+		<button class="btn btn-primary btn-danger" name="deleteGroup" value="<?= $group_id ?>">Delete <?= $modeName ?></button>
 		</form>
     </div>
     <!-- /.row -->
@@ -417,5 +432,4 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
 <?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls?>
 
     <!-- Place any per-page javascript here -->
-
 <?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html?>

@@ -69,15 +69,15 @@ class DB {
 		return $this;
 	}
 
-	public function findAll($table) {
-		return $this->action('SELECT *',$table);
+	public function findAll($table, $orderBy=null) {
+		return $this->action('SELECT *',$table, array(), $orderBy);
 	}
 
 	public function findById($table,$id) {
 		return $this->action('SELECT *',$table,array('id','=',$id));
 	}
 
-	public function action($action, $table, $where = array()) {
+	public function action($action, $table, $where=array(), $orderBy=null) {
 		$sql = "{$action} FROM {$table}";
 		$value = '';
 		if (count($where) === 3) {
@@ -91,14 +91,17 @@ class DB {
 				$sql .= " WHERE {$field} {$operator} ?";
 			}
 		}
+        if ($orderBy) {
+            $sql .= " ORDER BY " . implode(",", (array)$orderBy);
+        }
 		if (!$this->query($sql, array($value))->error()) {
 			return $this;
 		}
 		return false;
 	}
 
-	public function get($table, $where) {
-		return $this->action('SELECT *', $table, $where);
+	public function get($table, $where, $orderBy=null) {
+		return $this->action('SELECT *', $table, $where, $orderBy);
 	}
 
 	public function delete($table, $where) {

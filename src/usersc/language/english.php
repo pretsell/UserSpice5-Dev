@@ -148,6 +148,7 @@ $lang = array_merge($lang,array(
 	"PAGE_ACCESS_REMOVED"			=> "Page access removed for %m1% group(s)",
 	"PAGE_ACCESS_ADDED"			=> "Page access added for %m1% group(s)",
 	"TOKEN"	=> "Token does not match!",
+    "NO_ACCESS" => "You do not have privilege to access that page.",
 	));
 
 //Groups
@@ -162,14 +163,20 @@ $lang = array_merge($lang,array(
     "GROUP_NEED_ROLE_AND_USER"  => "Must specify BOTH role AND user to add a role",
     "GROUP_ROLE_ADD_SUCCESSFUL"  => "Group role added successfully",
     "GROUP_ROLE_DELETE_SUCCESSFUL"  => "Group role deleted successfully",
-    "GROUP_ROLE_DELETE_FAILED"  => "Attempted delete of Group role FAILED",
+    "GROUP_ROLE_DELETE_FAILED"  => "Attempted deletion of Group role FAILED",
 	"GROUP_REMOVE_PAGES"		=> "Successfully removed access to %m1% page(s)",
 	"GROUP_ADD_PAGES"			=> "Successfully added access to %m1% page(s)",
 	"GROUP_REMOVE_USERS"		=> "Successfully removed %m1% user(s)",
 	"GROUP_REMOVE_GROUPS"		=> "Successfully removed %m1% nested group(s)",
 	"GROUP_ADD_GROUPS"			=> "Successfully added %m1% nested group(s)",
 	"GROUP_ADD_USERS"			=> "Successfully added %m1% user(s)",
-	"CANNOT_DELETE_NEWUSERS"		=> "You cannot delete the default 'new user' group",
-	"CANNOT_DELETE_ADMIN"			=> "You cannot delete the default 'admin' group",
+	"CANNOT_DELETE_NEWUSERS"	=> "You cannot delete the default 'new user' group",
+	"CANNOT_DELETE_ADMIN"	    => "You cannot delete the default 'admin' group",
+    'GROUPTYPE_ADD_SUCCESS'     => "Successfully added Group Type '%m1%'",
+    'GROUPTYPE_UPDATE_SUCCESS'  => "Successfully updated Group Type '%m1%'",
+    'GROUPTYPE_UPDATE_FAILED'   => "Attempted update of Group Type '%m1%' FAILED",
+    'GROUPTYPE_DELETE_SUCCESS'  => "Successfully deleted %m1% Group Type(s)",
+    'GROUPTYPE_DELETE_FAILED'   => "Attempted deletion of Group Type(s) FAILED",
+    'GROUPTYPE_IN_USE'          => "Group Type is in use and cannot be deleted",
 	));
 ?>
