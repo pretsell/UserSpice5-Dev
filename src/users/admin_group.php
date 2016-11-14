@@ -192,33 +192,31 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                 <input type="hidden" name="id" value="<?=$group_id?>" />
     			<input type="hidden" name="csrf" value="<?=Token::generate(); ?>" >
     <div class="tab-content">
-      <div class="tab-pane active col-xs-12" id="groupInfo">
+      <div class="tab-pane active col-xs-12 col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6" id="groupInfo">
 			<h3><?= $modeName ?> Information</h3>
 			<div id='regbox'>
-			<p>
+        	<div class="form-group">
 			<label>ID:</label>
 			<?=$groupDetails->id?>
-			</p>
-			<p>
+            </div>
+        	<div class="form-group">
 			<label>Name:</label>
 			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('name') ?>"></span>
-			<br />
-			<input type='text' name='name' value='<?=$groupDetails->name?>' />
-			</p>
-			<p>
+			<input class='form-control' type='text' name='name' value='<?=$groupDetails->name?>' />
+            </div>
+        	<div class="form-group">
 			<label>Short Name:</label>
 			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('short_name') ?>"></span>
-			<br />
-			<input type='text' name='short_name' value='<?=$groupDetails->short_name?>' />
-			</p>
+			<input class='form-control' type='text' name='short_name' value='<?=$groupDetails->short_name?>' />
+            </div>
             <?php
             if ($groupTypeData) { // don't show option if no group types set up
             ?>
-            <p>
+        	<div class="form-group">
                 <label><?= ($mode == 'role') ? "Role configurable for this " :'' ?>Group Type:</label>
     			<span class="glyphicon glyphicon-info-sign" title="Choose from the List below"></span>
                 <br />
-                <select name="grouptype_id" style="min-width: 90%; max-width:90%;">
+                <select class='form-control' name="grouptype_id" style="min-width: 90%; max-width:90%;">
                     <?php
                     if ($groupDetails->grouptype_id === null) {
                         $selected = 'selected="selected"';
@@ -236,7 +234,7 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                         $firstOpt = '';
                     } ?>
                 </select>
-            </p>
+            </div>
             <?php
             }
             if ($groupRoleData && $mode != 'role') { // don't show option if no group roles set up
@@ -246,10 +244,10 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                 <?php
                 if ($groupRoles) {
                 ?>
-                    <p>
+                	<div class="form-group">
                     <label>Remove Group Roles:</label>
         			<span class="glyphicon glyphicon-info-sign" title="Check those you wish to delete, then update the group"></span>
-                    <table style="width: 90%;">
+                    <table class="table table-hover">
                     <tr>
                         <th>Delete&nbsp;&nbsp;</th><th>Role Name / User</th>
                     </tr>
@@ -261,7 +259,7 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                             <input type="checkbox" name="deleteRoles[<?=$gru->id?>]" value="<?=$gru->id?>" />
                         </td>
                         <td>
-                            <?=$gru->name." (".$gru->short_name.'): '?><br />
+                            <?=$gru->name." (".$gru->short_name.'): '?>
                             <?=$gru->fname." ".$gru->lname.' ('.$gru->username.')'?>
                         </td>
                     </tr>
@@ -269,19 +267,17 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                     }
                     ?>
                     </table>
-                    </p>
+                    </div>
                 <?php
                 }
                 ?>
                 <?php
                 if ($groupUsers) {
                 ?>
-                    <p>
+                	<div class="form-group">
                     <label>Add new Role:</label>
         			<span class="glyphicon glyphicon-info-sign" title="Choose both a role and a group member from the lists below"></span>
-                    <br />
-                    <p>
-                    <select name="newRole" style="min-width: 90%; max-width:90%;">
+                    <select class='form-control' name="newRole" style="min-width: 90%; max-width:90%;">
                         <option value="">Choose a Role</option>
                         <?php
                         foreach ($groupRoleData as $gr) {
@@ -291,16 +287,13 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                         }
                         ?>
                     </select>
-                    </p>
-                    <p>
-                    <select name="newRoleUser" style="min-width: 90%; max-width:90%;">
+                    <select class='form-control' name="newRoleUser" style="min-width: 90%; max-width:90%;">
                         <option value="">Choose a Group Member</option>
                         <?php foreach ($groupUsers as $gu) { ?>
                         <option value="<?=$gu->user_id?>"><?= $gu->fname.' '.$gu->lname.' ('.$gu->username.')' ?></option>
                         <?php } ?>
                     </select>
-                    </p>
-                    </p>
+                    </div> <!-- form-group for 'add new role' -->
                 <?php
                 } else {
                 ?>
