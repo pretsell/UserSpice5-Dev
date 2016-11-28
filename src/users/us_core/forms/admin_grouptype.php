@@ -44,18 +44,25 @@ if (!$grouptype_id = Input::get('id')) {
 
 # Initialize the form with form fields and HTML snippets
 $myForm = new Form([
-        'name' => new FormField_Text('grouptypes.name', [
-                        'new_valid' => [
-                                    'action'=>'update',
-                                    'update_id'=>$grouptype_id,
-                                ],
-                    ]),
-        'short_name' => new FormField_Text('grouptypes.short_name', [
-                        'new_valid' => [
-                                    'action'=>'update',
-                                    'update_id'=>$grouptype_id,
-                                ],
-                    ]),
+        'toc' => new FormField_TabToc('toc', ['toc-type'=>'pill']),
+        'tab' => new FormTab_Contents([
+            'tab1' => new FormTab_Pane([
+                'name' => new FormField_Text('grouptypes.name', [
+                                'new_valid' => [
+                                            'action'=>'update',
+                                            'update_id'=>$grouptype_id,
+                                        ],
+                            ]),
+            ], ['active_tab'=>'active', 'tab_id'=>'tab1']),
+            'tab2' => new FormTab_Pane([
+                'short_name' => new FormField_Text('grouptypes.short_name', [
+                                'new_valid' => [
+                                            'action'=>'update',
+                                            'update_id'=>$grouptype_id,
+                                        ],
+                            ]),
+            ], ['tab_id'=>'tab2']),
+        ]),
         'save' => new FormField_ButtonSubmit('save', [
                     'label' => lang('SAVE_GROUP_TYPE_LABEL')
                 ]),
@@ -67,12 +74,12 @@ $myForm = new Form([
     [
         'table'=>'grouptypes'
     ]);
-
+$myForm->getField('toc')->setRepeatValues($myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]));
 #
 # Update the database with any form data in $_POST
 #
 if (Input::exists('post')) {
-    $myForm->setFieldValues($db->findById('grouptypes', $grouptype_id)->first());
+    $myForm->setFieldValues($db->queryById('grouptypes', $grouptype_id)->first());
     $myForm->setNewValues($_POST);
     if ($myForm->updateIfChangedAndValid($grouptype_id, $errors)) {
         $successes[] = lang('GROUPTYPE_UPDATE_SUCCESS', $myForm->getField('name')->getNewValue());
@@ -85,7 +92,7 @@ if (Input::exists('post')) {
 #
 # Prepare all data for displaying the form
 #
-$myForm->setFieldValues($db->findById('grouptypes', $grouptype_id)->first());
+$myForm->setFieldValues($db->queryById('grouptypes', $grouptype_id)->first());
 
 #
 # Display the form

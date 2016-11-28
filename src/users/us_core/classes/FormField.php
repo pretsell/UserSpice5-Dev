@@ -64,17 +64,14 @@ abstract class US_FormField {
              </div>',
         $HTMLScript = '';
     # Commented-out values below are added just-in-time prior to replacement
-    protected $_replaces = [
+    # (see self::getHTML()) Note that some replacement macros may be set/used
+    # in self::setRepeatValues() as well.
+    protected $_macros = [
             '{DIV-CLASS}'  => 'form-group',
             '{LABEL-CLASS}'=> 'control-label',
-            #'{FIELD-NAME}' => '', // $fn
-            #'{LABEL-TEXT}' => '$opt[label]', // if $lang[label-token] ? lang(label-token) : label-text
             '{REQUIRED-CLASS}' => 'fa fa-asterisk',
             '{HINT-CLASS}' => 'fa fa-info-circle',
-            #'{HINT-TEXT}'  => '', // $validation->describe($fn)
             '{INPUT-CLASS}'=> 'form-control',
-            #'{TYPE}'       => $this->_fieldType;
-            #'{VALUE}'      => '',
             '{TH-CLASS}'    => '',
             '{PLACEHOLDER}'=> '',
         ];
@@ -133,9 +130,12 @@ abstract class US_FormField {
                     break;
                 default:
                     if (preg_match('/^\{.*\}$/', $k)) {
-                        $this->setReplace($k, $v);
-                        #var_dump($this->_replaces);
+                        $this->setReplace(strtoupper($k), $v);
+                        #var_dump($this->_macros);
+                    } else {
+                        $this->setReplace('{'.strtoupper($k).'}', $v);
                     }
+                    #dbg("__construct: _macros=<pre>".print_r($this->_macros,true)."</pre><br />");
                     // else ... don't do anything - may have come from extra DB columns
             }
         }
@@ -183,7 +183,7 @@ abstract class US_FormField {
         }
         # Now $html holds $this->HTMLInput with data replaced. Now we will calculate
         # an array of macros for search/replace. Static values are already in
-        # $this->_replaces but others have to be set "just in time"...
+        # $this->_macros but others have to be set "just in time"...
         $justInTimeRepl = [
                     '{TYPE}'           => $this->getFieldType(),
                     '{FIELD-NAME}'     => $this->getFieldName(),
@@ -200,7 +200,7 @@ abstract class US_FormField {
                     '{TD-CLASS}'       => $this->getTableDataCellClass(),
                     '{TH-CLASS}'       => $this->getTableHeadCellClass(),
         ];
-        $repl = array_merge($this->_replaces, $justInTimeRepl, (array)@$opts['replaces']);
+        $repl = array_merge($this->_macros, $justInTimeRepl, (array)@$opts['replaces']);
         # since this is slightly "expensive" we won't evaluate unless it is needed
         if (!isset($repl['{HINT-TEXT}']) && $this->getValidator()) {
             $repl['{HINT-TEXT}'] = $this->getValidator()->describe($this->_fieldName);
@@ -209,6 +209,9 @@ abstract class US_FormField {
         return $html;
     }
 
+    public function describeValidation() {
+        return $this->getValidator()->describe($this->_fieldName);
+    }
     public function getTableHeadCellClass() {
         return $this->_tableHeadCellClass;
     }
@@ -272,7 +275,7 @@ abstract class US_FormField {
         $this->_repeatValues[] = $opts;
     }
     public function setReplace($search, $replace) {
-        $this->_replaces[$search] = $replace;
+        $this->_macros[$search] = $replace;
     }
     # Does the validation for this field say it is a required field?
 	public function getRequired() {

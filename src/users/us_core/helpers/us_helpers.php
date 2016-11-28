@@ -38,35 +38,35 @@ function get_gravatar($email, $s = 120, $d = 'mm', $r = 'pg', $img = false, $att
 	return $url;
 }
 
+//Check if the group has admin privileges
+function groupIsAdmin($id) {
+	$db = DB::getInstance();
+	if ($g = $db->queryById('groups', $id)->first()) {
+        return ($g->is_admin);
+    }
+    return false;
+}
 //Check if a group ID exists in the DB
 function groupIdExists($id) {
-	$db = DB::getInstance();
-	return (boolean)$db->findById('groups', $id);
+    return (boolean)fetchGroupDetails($id);
 }
 
 //Check if a user ID exists in the DB
 function userIdExists($id) {
 	$db = DB::getInstance();
-	return (boolean)$db->findById('users', $id);
+	return $db->queryById('users', $id)->found();
 }
 
 //Retrieve information for a single group
 function fetchGroupDetails($id) {
 	$db = DB::getInstance();
-	return $db->findById('groups',$id)->first();
-}
-
-//Change a group's name
-function updateGroupName($id, $name) {
-	$db = DB::getInstance();
-	$fields=array('name'=>$name);
-	$db->update('groups',$id,$fields);
+	return $db->queryById('groups', $id)->first();
 }
 
 //Retrieve all group types
 function fetchAllGroupTypes() {
 	$db = DB::getInstance();
-	return $db->findAll('grouptypes')->results();
+	return $db->queryAll('grouptypes')->results();
 }
 
 //Find the row where $searchProp has $searchVal in the array of
@@ -81,19 +81,10 @@ function findValInArrayOfObject($aoo, $searchProp, $searchVal, $rtnProp) {
     return false;
 }
 
-//Checks if a username exists in the DB
-function usernameExists($username)   {
-    global $T;
-	$db = DB::getInstance();
-	$query = $db->query("SELECT * FROM $T[users] WHERE username = ?",array($username));
-	$results = $query->results();
-	return ($results);
-}
-
 //Retrieve information for all users
 function fetchAllUsers() {
 	$db = DB::getInstance();
-	return $db->findAll('users')->results();
+	return $db->queryAll('users')->results();
 }
 
 //Retrieve complete user information by username, token or ID
@@ -211,13 +202,17 @@ function deleteGrouptypes($grouptype_ids, &$errors, &$successes) {
 function deleteGroupsUsers_raw($groups, $users, $user_is_group=0) {
     global $T;
 	$db = DB::getInstance();
-	$bindvals = array();
-	$sql = "DELETE FROM $T[groups_users_raw] WHERE user_is_group = $user_is_group AND "
-	 				. $db->calcInOrEqual('group_id', $groups, $bindvals)
-					. " AND "
-	 				. $db->calcInOrEqual('user_id', $users, $bindvals);
-	$q = $db->query($sql,$bindvals);
-    return $q->count();
+    $count = 0;
+	$sql = "DELETE FROM $T[groups_users_raw]
+            WHERE user_is_group = $user_is_group
+            AND group_id = ?
+			AND user_id = ?";
+    foreach ((array)$groups as $g) {
+        foreach ((array)$users as $u) {
+        	$count += $db->query($sql, [$g, $u])->count();
+        }
+    }
+    return $count;
 }
 
 //Retrieve a list of all .php files in root files folder
@@ -311,16 +306,18 @@ function pageIdExists($id) {
 
 //Toggle private/public setting of a page
 function updatePrivate($id, $private) {
+    global $T;
 	$db = DB::getInstance();
-	return $db->update('pages', $id, ['private'=>$private]);
+	return $db->update($T['pages'], $id, ['private'=>$private]);
 }
 
 //Add a page to the DB
 function createPages($pages) {
+    global $T;
 	$db = DB::getInstance();
 	foreach($pages as $page) {
 		$fields=array('page'=>$page, 'private'=>'0');
-		$db->insert('pages',$fields);
+		$db->insert($T['pages'],$fields);
 	}
 }
 
@@ -368,14 +365,14 @@ function fetchPagesByGroup($group_id) {
 	return $query->results();
 }
 
-//Remove authorization for a group to access page(s) (delete from groups_pages)
+//Remove authorization for group(s) to access page(s) (delete from groups_pages)
 function deleteGroupsPages($pages, $groups) {
     global $T;
 	$db = DB::getInstance();
 	$count = 0;
 	$sql = "DELETE FROM $T[groups_pages] WHERE group_id = ? AND page_id = ?";
-    foreach ($pages as $p) {
-        foreach ($groups as $g) {
+    foreach ((array)$pages as $p) {
+        foreach ((array)$groups as $g) {
         	$q = $db->query($sql, [$p, $g]);
             $count++;
         }
@@ -405,7 +402,7 @@ function deleteGroupsRolesUsers($gru_ids, $fix_groups_users_too=false) {
 	foreach((array)$gru_ids as $id) {
         if ($fix_groups_users_too) {
             # Check if this is the last group for which this user holds this role
-            if ($results = $db->findById('groups_roles_users', $id)->first()) {
+            if ($results = $db->queryById('groups_roles_users', $id)->first()) {
                 $sql = "SELECT id
                         FROM $T[groups_roles_users]
                         WHERE role_group_id = ?
@@ -550,15 +547,16 @@ function securePage($uri) {
 
 function userHasPageAuth($page_id, $user_id=null) {
 	global $user, $T;
-	if (is_null($user_id)) $user_id = $user->data()->id;
+	if (is_null($user_id)) {
+        $user_id = $user->data()->id;
+    }
 	$db = DB::getInstance();
 	$sql = "SELECT gp.group_id
 					FROM $T[groups_pages] gp
 					JOIN $T[groups_users] gu ON (gu.group_id = gp.group_id)
 					WHERE gu.user_id = ?
 					AND gp.page_id = ?";
-	$query = $db->query($sql, [$user_id, $page_id]);
-	return ($query->count() > 0);
+	return $db->query($sql, [$user_id, $page_id])->count();
 }
 
 function checkMenu($menu_id, $user_id=null) {
@@ -592,7 +590,7 @@ function checkMenu($menu_id, $user_id=null) {
 //Retrieve information for all groups
 function fetchAllGroups() {
 	$db = DB::getInstance();
-	return $db->findAll('groups', ['is_role', 'name'])->results();
+	return $db->queryAll('groups', ['is_role', 'name'])->results();
 }
 
 function fetchRolesByType($grouptype_id, $allow_null) {
@@ -738,7 +736,7 @@ function addGroupsMenus($group_ids, $menu_ids) {
 	foreach((array)$group_ids as $group_id){
 		foreach((array)$menu_ids as $menu_id){
 			#echo "<pre>DEBUG: AGM: group_id=$group_id, menu_id=$menu_id</pre><br />\n";
-			if($db->insert('groups_menus', ['group_id'=>$group_id,'menu_id'=>$menu_id])) {
+			if($db->insert($T['groups_menus'], ['group_id'=>$group_id,'menu_id'=>$menu_id])) {
 				$i++;
 			}
 		}
@@ -753,11 +751,12 @@ function deleteGroups($groups) {
 	$i = 0;
 	$db = DB::getInstance();
 	foreach((array)$groups as $id) {
-		if ($id == 1) {
+		if ($id == configGet('newuser_default_group', 1)) {
             $errors[] = lang("CANNOT_DELETE_NEWUSERS");
-		}
-		elseif ($id == 2) {
+		} elseif (groupIsAdmin($id)) {
 			$errors[] = lang("CANNOT_DELETE_ADMIN");
+			$errors[] = lang("HOW_TO_DELETE_ADMIN");
+			$errors[] = lang("BE_CAREFUL_DELETE_ADMIN");
 		} else {
 			$query1 = $db->query("DELETE FROM $T[groups] WHERE id = ?",array($id));
 			$query2 = $db->query("DELETE FROM $T[groups_users_raw] WHERE group_id = ?",array($id));
@@ -769,38 +768,11 @@ function deleteGroups($groups) {
 	return $i;
 }
 
-//Checks if an email is valid
-function isValidEmail($email) {
-	if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-		return true;
-	}
-	else {
-		return false;
-	}
-}
-
-//Check if an email exists in the DB
-function emailExists($email) {
-    global $T;
-	$db = DB::getInstance();
-	$query = $db->query("SELECT email FROM $T[users] WHERE email = ?",array($email));
-	return ($query->count() > 0);
-}
-
-//Update a user's email
-function updateEmail($id, $email) {
-	$db = DB::getInstance();
-	$fields=array('email'=>$email);
-	$db->update('users',$id,$fields);
-
-	return true;
-}
-
 // include a file and RETURN that value
 // This allows the contents of included scripts to be manipulated as strings
-function getInclude($fn) {
+function getInclude($fileName) {
     ob_start();
-    include($fn);
+    include($fileName);
     return ob_get_clean();
 }
 

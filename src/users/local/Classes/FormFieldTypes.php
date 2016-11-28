@@ -2,7 +2,7 @@
 /* Feel free to customize these classes */
 class FormField_ButtonAnchor extends US_FormField_ButtonAnchor {
 }
-class FormField_ButtonSubmit extends US_FormField_Submit {
+class FormField_ButtonSubmit extends US_FormField_ButtonSubmit {
 }
 class FormField_ButtonDelete extends US_FormField_ButtonDelete {
 }
@@ -19,6 +19,8 @@ class FormField_Recaptcha extends US_FormField_Recaptcha {
 class FormField_Select extends US_FormField_Select {
 }
 class FormField_Table extends US_FormField_Table {
+}
+class FormField_TabToC extends US_FormField_TabToC {
 }
 class FormField_Text extends US_FormField_Text {
 }

@@ -12,5 +12,9 @@ foreach ($us_pages as $p) {
 require_once 'c:/wamp/www/UserSpice5-Dev/src/z_us_root.php';
 require_once US_ROOT_DIR.'us_core/master_form.php';
 EOF;
-    file_put_contents(US_ROOT_DIR.$p, $contents);
+    if (file_put_contents(US_ROOT_DIR.$p, $contents) === false) {
+        echo "ERROR creating $p<br />\n";
+    } else {
+        echo "Created $p<br />\n";
+    }
 }

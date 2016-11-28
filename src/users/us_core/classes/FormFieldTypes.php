@@ -27,8 +27,8 @@ abstract class FormField_Button extends FormField {
         $HTMLPost = '';
     public function fixSnippets() {
         parent::fixSnippets();
-        $this->_replaces['{INPUT-CLASS}'] = 'btn btn-primary';
-        $this->_replaces['{BUTTON-ICON}'] = '';
+        $this->_macros['{INPUT-CLASS}'] = 'btn btn-primary';
+        $this->_macros['{BUTTON-ICON}'] = '';
     }
 }
 abstract class US_FormField_ButtonAnchor extends FormField_Button {
@@ -44,7 +44,7 @@ abstract class US_FormField_ButtonSubmit extends FormField_Button {
 abstract class US_FormField_ButtonDelete extends FormField_Button {
     public function fixSnippets() {
         parent::fixSnippets();
-        $this->_replaces['{INPUT-CLASS}'] = 'btn btn-primary btn-danger';
+        $this->_macros['{INPUT-CLASS}'] = 'btn btn-primary btn-danger';
     }
 }
 
@@ -142,8 +142,8 @@ abstract class US_FormField_Recaptcha extends FormField {
     }
     public function fixSnippets() {
         parent::fixSnippets();
-        $this->_replaces['{RECAPTCHA-CLASS}'] = 'g-recaptcha';
-        $this->_replaces['{RECAPTCHA-PUBLIC}'] = configGet('recaptcha_public');
+        $this->_macros['{RECAPTCHA-CLASS}'] = 'g-recaptcha';
+        $this->_macros['{RECAPTCHA-PUBLIC}'] = configGet('recaptcha_public');
     }
 }
 
@@ -165,7 +165,7 @@ abstract class US_FormField_Select extends FormField {
              </div>
              ';
 }
-abstract class US_FormField_table extends FormField {
+abstract class US_FormField_Table extends FormField {
     protected $_fieldType = "table";
     public
         $HTMLPre =
@@ -180,6 +180,57 @@ abstract class US_FormField_table extends FormField {
             '</table>
              </div>
              ';
+}
+
+abstract class US_FormField_TabToC extends FormField {
+    protected $_fieldType = "tabtoc"; // tabbed table of contents
+    protected $tocType = "tab";
+    protected $tocClass = "nav nav-tabs";
+    public
+        $HTMLPre = '
+            <ul class="{TAB-UL-CLASS}" id="myTab">
+            ',
+        $HTMLInput = '
+            <li class="{TAB-ACTIVE}"><a href="#{TAB-ID}" data-toggle="{TOC-TYPE}">{TITLE}</a></li>
+             ',
+        $HTMLPost = '
+             </ul>
+             ';
+    public function __construct($a, $opts) {
+        foreach ($opts as $k=>$v) {
+            switch (strtolower($k)) {
+            case 'toc-type':
+            case 'toc_type':
+                $this->tocType = $v;
+                $this->tocClass = 'nav nav-'.$v.'s'; # nav-tabs or nav-pills usually
+                break;
+            }
+        }
+        return parent::__construct($a, $opts);
+    }
+    public function getHTML($opts=[]) {
+        #dbg("getHTML: _macros=<pre>".print_r($this->_macros,true)."</pre><br />");
+        #dbg("tocType=".$this->tocType);
+        $this->_macros['{TAB-UL-CLASS}'] = $this->tocClass;
+        return parent::getHTML($opts);
+    }
+    public function setRepeatValues($opts=[]) {
+        // typically getting an array from Form::getFields()
+        $tmp = [];
+        $active = 'active'; // first one active
+        $toc_type = (isset($opts['toc-type']) ? : $this->tocType);
+        foreach ($opts as $k=>$o) {
+            #dbg('Class Name: '.get_class($o));
+            $tmp[] = [
+                'title'=>$o->getTitle(),
+                'tab-id'=>$k,
+                'tab-active'=>$active,
+                'toc-type'=>$toc_type,
+            ];
+            $active = '';
+        }
+        $this->_repeatValues = $tmp;
+    }
 }
 
 abstract class US_FormField_Text extends FormField {

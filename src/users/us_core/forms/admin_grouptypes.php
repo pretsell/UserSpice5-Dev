@@ -67,7 +67,6 @@ $myForm = new Form([
                     'label' => lang('SAVE_GROUP_TYPE_LABEL')
                 ]),
         'grouptype_list' => new FormField_Table('grouptype_list', [
-            'table-head-row' => '<th>'.lang('DELETE_LABEL').'</th><th>'.lang('GROUPTYPE_NAME_LABEL').'</th><th>'.lang('GROUPTYPE_SHORT_NAME_LABEL').'</th>',
             'fields' => [
                 '<input type="checkbox" name="delete[]" value="{ID}"/>'=>lang('DELETE_GROUP_TYPE_LABEL'),
                 'name'=>lang('GROUPTYPE_NAME_LABEL'),
@@ -88,7 +87,7 @@ if (Input::exists('post')) {
         if ($myForm->checkFieldValidation()) {
             $fields = $myForm->fieldListNewValues();
             if ($db->insert('grouptypes', $fields)) {
-                $successes[] = lang('GROUPTYPE_ADD_SUCCESS', $myForm->getField('name')->getNewValue());
+                $successes[] = lang('GROUPTYPE_ADD_SUCCESSFUL', $myForm->getField('name')->getNewValue());
             } else {
                 $errors[] = lang(SQL_ERROR);
             }
@@ -104,7 +103,7 @@ if (Input::exists('post')) {
 #
 # Prepare all data for displaying the form
 #
-$myForm->getField('grouptype_list')->setRepeatValues($db->findAll('grouptypes', 'name')->results());
+$myForm->getField('grouptype_list')->setRepeatValues($db->queryAll('grouptypes', 'name')->results());
 
 #
 # Display the form

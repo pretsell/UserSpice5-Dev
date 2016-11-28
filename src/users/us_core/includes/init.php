@@ -65,8 +65,16 @@ using PHP autoloader conflicts with Google and Facebook autoloader
 spl_autoload_register('us_classloader');
 function us_classloader($class_name) {
     # FormField_Text and FormField_Select and etc are contained in FormFieldTypes.php
-    if (preg_match('/^FormField_/', $class_name)) {
-        $class_name = 'FormFieldTypes';
+    # FormTab_Contents and FormTab_Pane are contained in FormTab.php
+    $classMap = [
+        'FormField_' => 'FormFieldTypes',
+        'FormTab_'   => 'FormTab',
+    ];
+    foreach ($classMap as $k=>$c) {
+        if (strncmp($k, $class_name, strlen($k)) === 0) {
+            $class_name = $c;
+            break;
+        }
     }
     include_once US_ROOT_DIR.'us_core/classes/'.$class_name . '.php';
     include_once US_ROOT_DIR.'local/classes/'.$class_name . '.php';
@@ -134,7 +142,7 @@ if(Cookie::exists(configGet('remember/cookie_name')) && !Session::exists(configG
 	$hashCheck = $db->query("SELECT * FROM $T[users_session] WHERE hash = ? AND uagent = ?",array($hash,Session::uagent_no_version()));
 
 	if ($hashCheck->count()) {
-		$user = new User($hashCheck->first()->user_id);
+		$user = new User($hashCheck->first()->user_id, 'id');
 		$user->login();
 	}
 }

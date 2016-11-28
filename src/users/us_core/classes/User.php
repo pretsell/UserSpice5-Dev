@@ -21,7 +21,7 @@ class US_User
 {
     private $_db, $_data, $_sessionName, $_isLoggedIn, $_cookieName;
 
-    public function __construct($user = null)
+    public function __construct($user=null, $field=null)
     {
         $this->_db = DB::getInstance();
         $this->_sessionName = configGet('session/session_name');
@@ -31,14 +31,14 @@ class US_User
             if (Session::exists($this->_sessionName)) {
                 $user = Session::get($this->_sessionName);
 
-                if ($this->find($user)) {
+                if ($this->findById($user)) {
                     $this->_isLoggedIn = true;
                 } else {
                     //process Logout
                 }
             }
         } else {
-            $this->find($user);
+            $this->find($user, $field);
         }
     }
 
@@ -56,18 +56,21 @@ class US_User
         return $user_id;
     }
 
-    public function find($user = null)
+    public function findById($user) {
+        return $this->find($user, 'id');
+    }
+    public function find($user=null, $field=null)
     {
         if ($user) {
-            if (is_numeric($user)) {
-                $field = 'id';
-            } elseif (!filter_var($user, FILTER_VALIDATE_EMAIL) === false) {
-                $field = 'email';
-            } else {
-                $field = 'username';
+            if ($field == null) {
+                if (!filter_var($user, FILTER_VALIDATE_EMAIL) === false) {
+                    $field = 'email';
+                } else {
+                    $field = 'username';
+                }
             }
 
-            $data = $this->_db->get('users', array($field, '=', $user));
+            $data = $this->_db->queryAll('users', array($field, '=', $user));
 
             if ($data->count()) {
                 $this->_data = $data->first();

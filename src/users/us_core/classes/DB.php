@@ -48,15 +48,14 @@ class US_DB {
 		return self::$_instance;
 	}
 
-	public function query($sql, $params = array()) {
+	public function query($sql, $params=array()) {
 		$this->_queryCount++;
 		$this->_error = false;
 		if ($this->_query = $this->_pdo->prepare($sql)) {
 			$x = 1;
 			if (count($params)) {
 				foreach ($params as $param) {
-					$this->_query->bindValue($x, $param);
-					$x++;
+					$this->_query->bindValue($x++, $param);
 				}
 			}
 
@@ -64,7 +63,7 @@ class US_DB {
 				if ($this->_query->columnCount() > 0) {
 					$this->_results = $this->_query->fetchALL(PDO::FETCH_OBJ);
                     # Since we rarely use this associative array, calculate it only in results() and first()
-					#$this->_resultsArray = json_decode(json_encode($this->_results),true);
+					#$this->_resultsArray = json_decode(json_encode($this->_results), true);
 				}
 				$this->_count = $this->_query->rowCount();
 				$this->_lastId = $this->_pdo->lastInsertId();
@@ -76,67 +75,66 @@ class US_DB {
 		return $this;
 	}
 
-	public function findAll($table, $orderBy=null) {
-		return $this->action('SELECT *',$table, array(), $orderBy);
+    public function queryAll($table, $where=[], $orderBy=null) {
+		return $this->action('SELECT *', $table, $where, $orderBy);
+    }
+	public function findAll($table, $where=[], $orderBy=null) {
+		if (!$this->queryAll($table, $where, $orderBy)->error()) {
+            return $this;
+        }
+        var_dump($this);
 	}
 
-	public function findById($table,$id) {
-		return $this->action('SELECT *',$table,array('id','=',$id));
+    public function queryById($table, $id) {
+		return $this->queryAll($table, ['id', '=', $id]);
+    }
+	public function findById($table, $id) {
+		if ($this->queryById($table, $id)->error()) {
+            return $this;
+        }
+		return false;
 	}
 
 	public function get($table, $where, $orderBy=null) {
-		return $this->action('SELECT *', $table, $where, $orderBy);
+        return $this->findAll($table, $where, $orderBy);
 	}
 
 	public function delete($table, $where) {
-		return $this->action('DELETE', $table, $where);
+		if ($this->action('DELETE', $table, $where)->error()) {
+			return $this;
+        }
+		return false;
 	}
 
-	public function deleteById($table,$id) {
-		return $this->action('DELETE',$table,array('id','=',$id));
+	public function deleteById($table, $id) {
+		return $this->delete($table, array('id', '=', $id));
 	}
 
 	public function action($action, $table, $where=array(), $orderBy=null) {
         global $T;
 		$sql = "{$action} FROM ".$T[$table];
 		$value = '';
-		if (count($where) === 3) {
-			$operators = array('=', '>', '<', '>=', '<=');
-
+		if (count($where) == 3) {
 			$field = $where[0];
 			$operator = $where[1];
 			$value = $where[2];
 
-			if(in_array($operator, $operators)) {
+			if (in_array($operator, ['=', '>', '<', '>=', '<='])) {
 				$sql .= " WHERE {$field} {$operator} ?";
 			}
 		}
         if ($orderBy) {
             $sql .= " ORDER BY " . implode(",", (array)$orderBy);
         }
-		if (!$this->query($sql, array($value))->error()) {
-			return $this;
-		}
-		return false;
+        return $this->query($sql, [$value]);
 	}
 
 	public function insert($table, $fields = array()) {
         global $T;
-
-		$keys = array_keys($fields);
-		$values = null;
-		$x = 1;
-
-		foreach ($fields as $field) {
-			$values .= "?";
-			if ($x < count($fields)) {
-				$values .= ', ';
-			}
-			$x++;
-		}
-
-		$sql = "INSERT INTO ".$T[$table]." (`". implode('`,`', $keys)."`) VALUES ({$values})";
-
+        $values = '?'.str_repeat(',?', sizeof($fields)-1);
+		$sql = "INSERT INTO ".$T[$table].
+            " (`". implode('`,`', array_keys($fields))."`) ".
+            "VALUES ({$values})";
 		if (!$this->query($sql, $fields)->error()) {
 			return true;
 		}
@@ -145,29 +143,20 @@ class US_DB {
 
 	public function update($table, $id, $fields) {
         global $T;
-
-		$set = '';
-		$x = 1;
-
+		$set = $comma = '';
 		foreach ($fields as $name => $value) {
-			$set .= "{$name} = ?";
-			if ($x < count($fields)) {
-				$set .= ', ';
-			}
-			$x++;
+			$set .= "{$comma}{$name} = ?";
+            $comma = ', ';
 		}
 
-		$sql = "UPDATE ".$T[$table]." SET {$set} WHERE id = {$id}";
-
-		if (!$this->query($sql, $fields)->error()) {
-			return true;
-		}
-		return false;
+		$sql = "UPDATE ".$T[$table]." SET {$set} WHERE id = ?";
+        $fields[] = $id; // add final bind value
+		return !$this->query($sql, $fields)->error();
 	}
 
 	public function results($assoc = false) {
 		if ($assoc) {
-            return json_decode(json_encode($this->_results),true);
+            return json_decode(json_encode($this->_results), true);
         }
 		return $this->_results;
 	}
@@ -182,6 +171,10 @@ class US_DB {
 		} else {
 			return false;
         }
+	}
+
+	public function found() {
+		return $this->_count; // 0=false, non-zero=true
 	}
 
 	public function count() {
@@ -212,22 +205,4 @@ class US_DB {
 	public function getAttribute($attributeValue=null) {
 		return $this->_pdo->getAttribute(constant($attributeValue));
 	}
-
-	//Add a condition allowing either an individual value or an array
-	// arrays will result with "fieldname IN (?,?,?)"
-	// values will result with "fieldname = ?"
-	// with the $bindvals updated appropriately
-	public function calcInOrEqual($fieldnm, $val, &$bindvals) {
-		if (!$val) return '';
-		$rtn = $fieldnm.' ';
-		if (is_array($val)) {
-			$rtn .= 'IN ('.str_repeat('?,', count($val) - 1). '?)';
-			$bindvals = array_merge($bindvals, $val);
-		} else {
-			$rtn .= '= ? ';
-			$bindvals[] = $val;
-		}
-		return $rtn;
-	}
-
 }
