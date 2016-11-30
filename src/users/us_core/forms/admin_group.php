@@ -1,21 +1,60 @@
 <?php
 /*
-UserSpice 4
+UserSpice
 An Open Source PHP User Management System
 by the UserSpice Team at http://UserSpice.com
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+/*
+ * FORM: admin_group.php
+ *  - always called with ?id=n to identify the row to view/modify
+ *
+ * This script makes possible:
+ * - modifying/deleting existing rows in table `groups`
+ * - adding/deleting rows in table `groups_users_raw`
+ * - adding/deleting rows in table `groups_pages`
+ *
+ * "Roles" are a special kind of "Group" and are accessed via a special
+ * $mode=='role' mode of operation. If there is no $mode=='role' then
+ * "normal groups" are acted upon; if there is a $mode=='role' then the
+ * special "role groups" are acted upon. Typically $mode='role' is executed
+ * from admin_role.php which then includes this file.
+ *
+ * If you are coming from UserSpice4 or before then you are used to calling
+ * "groups" by their old name, "permissions". All references, table names,
+ * column names have been changed from "permissions" to "groups".
+ *
+ * Groups are very similar to user-groups in many operating systems. Authorizations
+ * are granted to groups and all members of that group are granted that authorization.
+ * Groups can be members of other groups (nested to 4 levels deep) and all members
+ * of a child group are considered to be members of the parent group.
+ *
+ * For a description of the difference between "normal groups" and "role groups"
+ * please see the comments at the top of us_core/forms/admin_role.php
+ *
+ * This script (that you are viewing) is included by users/forms/master_form.php.
+ * All securePage() calls and other includes are executed prior to this script being
+ * included. Thus in this script we just handle the work of the form itself.
+ *
+ * DO NOT CHANGE THIS SCRIPT. If you wish to customize it, COPY IT TO users/local/forms
+ * and then modify it. users/forms/master_form.php will automatically detect your customized
+ * version and load that copy rather than this one.
+ */
 
-require_once 'init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
-
-//Secures the page...required for page group/permission management
-if (!securePage($_SERVER['PHP_SELF'])) {
-    die();
-}
 checkToken();
 
-
-$errors = $successes = [];
 if (isset($mode) && $mode == 'role') {
     $modeName = 'Group Role';
     $parentScript = 'admin_roles.php';
@@ -26,55 +65,82 @@ if (isset($mode) && $mode == 'role') {
 }
 
 // If requested group does not exist, redirect to $parentScript (admin_groups.php or admin_roles.php)
-if (!($group_id = @$_GET['id']) || !groupIdExists($group_id)) {
+if (!($group_id = Input::get('id')) || !groupIdExists($group_id)) {
     Redirect::to($parentScript, "?mode=$mode");
-    die();
 }
 
-$validation = new Validate([
-    'groupname' => ['alias' => 'name',
-         'action' => 'update',
-         'update_id' => $group_id, ],
-    'groupshortname' => ['alias' => 'short_name',
-         'action' => 'update',
-         'update_id' => $group_id, ],
-]);
-//Fetch information specific to this group
-$groupDetails = fetchGroupDetails($group_id);
-//Forms posted
+$grouptypesData = $db->queryAll('grouptypes')->results();
+$myForm = new Form([
+    'toc' => new FormField_TabToc('toc', []),
+    'tabs' => new FormTab_Contents ([
+        'groupInfo' => new FormTab_Pane ([
+            'name' => new FormField_Text ('groups.name', [
+                'new_valid' => [
+                    'action' => 'update',
+                    'update_id' => $group_id,
+                ],
+            ]),
+            'short_name' => new FormField_Text ('groups.short_name', [
+                'new_valid' => [
+                    'action' => 'update',
+                    'update_id' => $group_id,
+                ],
+            ]),
+            'grouptype_id' => new FormField_Select('groups.grouptype_id', [
+                'repeatvalue' => $grouptypesData,
+                'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_FROM_LIST_BELOW')],
+                'new_valid' => [], // in case they make it required
+            ]),
+            'deleteRoles' => new FormField_Table ('deleteRoles', [
+                    'fields' => [
+                        '<input type="checkbox" name="{FIELD-NAME}[]" value="{ID}"/>'=>lang('DELETE_ROLE_ASSIGNMENT_LABEL'),
+                        '{NAME} ({SHORT_NAME}): {FNAME} {LNAME} ({USERNAME})'=>lang('GROUP_ROLE_NAME_USER'),
+                    ],
+                    'nodata' => '<p>(No Roles Assigned Yet)</p>',
+            ]),
+        ], [
+            'active_tab'=>'active',
+            'tab_id'=>'groupInfo',
+            'title'=>lang('GROUP_INFORMATION_TITLE'),
+            'conditional_fields'=>[
+                'grouptype_id'=>(boolean)$grouptypesData,
+            ],
+        ]),
+        'groupMembers'=> new FormTab_Pane ([
+            '<h1>Group Members TEST</h2>',
+        ], ['tab_id'=>'groupMembers', 'title'=>lang('GROUP_MEMBERS_TITLE')]),
+        'groupAccess' => new FormTab_Pane ([
+            '<h1>Group Access TEST</h2>',
+        ], ['tab_id'=>'groupAccess', 'title'=>lang('GROUP_ACCESS_TITLE')]),
+    ]),
+    'save' => new FormField_ButtonSubmit('save', [
+            'label' => lang('GROUP_SAVE')
+        ]),
+    'delete' => new FormField_ButtonDelete('delete', [
+            'label' => lang('GROUP_DELETE'),
+            'value' => $group_id,
+        ]),
+], ['table' => 'groups']);
+$myForm->getField('toc')->setRepeatValues(
+    $myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true])
+);
+
+// Update data in the database for any changes on the form
 if (Input::exists('post')) {
+    $myForm->setFieldValues($db->queryById('groups', $group_id)->first());
+    $myForm->setNewValues($_POST);
     //Delete selected group
     if ($deletions = Input::get('deleteGroup', 'post')) {
         if ($deletion_count = deleteGroups($deletions)) {
             $successes[] = lang('GROUP_DELETIONS_SUCCESSFUL', array($deletion_count));
             Redirect::to($parentScript);
         } else {
-            $errors[] = 'SQL Error';
+            $errors[] = lang('SQL_ERROR');
         }
     } else {
         //Update group columns
-        $changed = false;
-        foreach (['name', 'short_name', 'grouptype_id'] as $f) {
-            $fields[$f] = Input::get($f);
-            if ($fields[$f] != $groupDetails->$f) {
-                $changed = true;
-            }
-        }
-        if ($changed) {
-            $msg['name'] = 'GROUP_NAME_UPDATE';
-            $msg['short_name'] = 'GROUP_NAME_UPDATE';
-            $msg['grouptype_id'] = 'GROUP_TYPE_UPDATE';
-            $validation->check($fields);
-            if ($validation->passed()) {
-                $db->update('groups', $group_id, $fields);
-                foreach ($msg as $f=>$const) {
-                    if ($groupDetails->$f != $fields[$f]) {
-                        $successes[] = lang($const, $fields[$f]);
-                    }
-                }
-            } else {
-                $errors = $validation->stackErrorMessages($errors);
-            }
+        if ($myForm->updateIfChangedAndValid($group_id, $errors)) {
+            $successes[] = lang('GROUP_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
         }
 
         //Add new roles
@@ -152,9 +218,11 @@ if (Input::exists('post')) {
                 $errors[] = lang('SQL_ERROR');
             }
         }
-        $groupDetails = fetchGroupDetails($group_id);
     }
 }
+$myForm->setFieldValues($db->queryById('groups', $group_id)->first());
+$groupDetails = fetchGroupDetails($group_id);
+$myForm->getField('deleteRoles')->setRepeatValues(fetchRolesByGroup($group_id));
 
 //Retrieve list of accessible pages
 $groupPages = fetchPagesByGroup($group_id);
@@ -173,11 +241,14 @@ $groupRoleData = fetchRolesByType($groupDetails->grouptype_id, true);
 $groupRoles = fetchRolesByGroup($groupDetails->id);
 $groupUsers = fetchUsersByGroup($groupDetails->id);
 
+echo $myForm->getHTML(['errors'=>$errors, 'successes'=>$successes]);
+
+echo "\n\n\n\n\n\n\n\n<!-- END OF NEW STUFF -->\n\n";
 ?>
     <div class="row">
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
+	<?php require_once pathFinder('includes/admin_nav.php'); ?>
 	</div>
 	<div class="col-xs-12">
 		<?php resultBlock($errors, $successes); ?>
@@ -201,12 +272,12 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
             </div>
         	<div class="form-group">
 			<label>Name:</label>
-			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('name') ?>"></span>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $myForm->getField('name')->describeValidation() ?>"></span>
 			<input class='form-control' type='text' name='name' value='<?=$groupDetails->name?>' />
             </div>
         	<div class="form-group">
 			<label>Short Name:</label>
-			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('short_name') ?>"></span>
+			<span class="glyphicon glyphicon-info-sign" title="<?= $myForm->getField("short_name")->describeValidation() ?>"></span>
 			<input class='form-control' type='text' name='short_name' value='<?=$groupDetails->short_name?>' />
             </div>
             <?php
@@ -252,6 +323,8 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                         <th>Delete&nbsp;&nbsp;</th><th>Role Name / User</th>
                     </tr>
                     <?php
+                    echo $myForm->getHTMLFields(['deleteRoles']);
+                    /*
                     foreach ($groupRoles as $gru) {
                     ?>
                     <tr>
@@ -265,6 +338,7 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
                     </tr>
                     <?php
                     }
+                    */
                     ?>
                     </table>
                     </div>
@@ -422,7 +496,7 @@ $groupUsers = fetchUsersByGroup($groupDetails->id);
     </div>
     <!-- /.row -->
     <!-- footers -->
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls?>
+<?php require_once pathFinder('includes/page_footer.php'); // the final html footer copyright row + the external js calls?>
 
     <!-- Place any per-page javascript here -->
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html?>
+<?php require_once pathFinder('includes/html_footer.php'); // currently just the closing /body and /html?>

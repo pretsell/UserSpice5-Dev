@@ -3,7 +3,7 @@
 
 */
 class US_Form {
-    private $_db = null;
+    protected $_db = null;
 	protected $_formName,
         $_formAction='',
         $_fields=[],
@@ -86,6 +86,11 @@ class US_Form {
         if (!$this->getTitle()) {
             $this->setTitleByPage();
         }
+        foreach ($this->getFields() as $fieldName=>$fieldObj) {
+            if ($fieldObj->deleteMe()) {
+                $this->deleteField($fieldName);
+            }
+        }
 	}
     public function setOpts($opts) {
         foreach ($opts as $k=>$v) {
@@ -104,6 +109,7 @@ class US_Form {
                 case 'conditional_fields':
                     foreach ($v as $fn=>$cond) {
                         if (!$cond) {
+                            dbg("Deleting conditional field $fn<br />\n");
                             $this->deleteField($fn);
                         }
                     }
@@ -424,8 +430,13 @@ class US_Form {
                     $this->getField($f)->setFieldValue($vals[$f]);
                 }
             } else { # presumably it is an object
-                if (isset($vals->$f)) {
-                    $this->getField($f)->setFieldValue($vals->$f);
+                $curObj = $this->getField($f);
+                // handle nested forms (like for tabs)
+                if (method_exists($curObj, 'setFieldValues')) {
+                    $curObj->setFieldValues($vals, $fieldFilter);
+                } elseif (isset($vals->$f)) {
+                    #if (!method_exists($curObj, 'setFieldValue')) { dbg( 'class='.get_class($curObj).', parent='.get_parent_class($curObj)); var_dump($curObj); }
+                    $curObj->setFieldValue($vals->$f);
                 }
             }
         }
@@ -452,7 +463,7 @@ class US_Form {
         return $rtn;
     }
     # If someone wants a sub-set of fields, make sure they are all in the form
-    private function _fixFieldList($fieldFilter, $onlyFields=true) {
+    protected function _fixFieldList($fieldFilter, $onlyFields=true) {
         if ($fieldFilter) {
             return array_intersect($this->listFields($onlyFields), $fieldFilter);
         } else {
@@ -538,4 +549,7 @@ class US_Form {
 	public function setAllFields($fields, $opts) {
 		$this->_fields=$fields;
 	}
+    public function deleteMe() {
+        return false; // forms don't delete themselves
+    }
 }

@@ -58,7 +58,7 @@ abstract class US_FormField_Checkbox extends FormField {
             ',
         $HTMLPost =
 		    '<label class="{LABEL-CLASS}" for="{FIELD-ID}">{LABEL-TEXT}</label>
-        	 </div>
+        	 </div> <!-- {DIV-CLASS} -->
              ';
 }
 
@@ -93,7 +93,7 @@ abstract class US_FormField_Radio extends FormField {
 			</div> <!-- radio -->
             ',
         $HTMLPost =
-            '</div>
+            '</div> <!-- {DIV-CLASS} -->
             ';
 }
 
@@ -108,7 +108,7 @@ abstract class US_FormField_Recaptcha extends FormField {
             '<div class="{RECAPTCHA-CLASS}" name="{RECAPTCHA-PUBLIC}"></div>
             ',
         $HTMLPost =
-            '</div>
+            '</div> <!-- {DIV-CLASS} -->
             ',
         $HTMLScript = '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
     public function dataIsValid($data) {
@@ -147,7 +147,7 @@ abstract class US_FormField_Recaptcha extends FormField {
     }
 }
 
-abstract class US_FormField_Select extends FormField {
+abstract class US_FormField_Select extends FormFieldRepeat {
     protected $_fieldType = "select";
     public
         $HTMLPre =
@@ -158,15 +158,57 @@ abstract class US_FormField_Select extends FormField {
              <select class="{INPUT-CLASS}" id="{FIELD-ID}" name="{FIELD-NAME}">
              ',
         $HTMLInput =
-            '<option value="{ID}">{OPTION-LABEL}</option>
+            '<option value="{ID}" {SELECTED}>{OPTION-LABEL}</option>
              ',
         $HTMLPost =
             '</select>
-             </div>
+             </div> <!-- {DIV-CLASS} -->
              ';
+    protected
+        $_placeholderRow = [],
+        $_selected = 'selected="selected"';
+    public function handleOpts($dbFieldnm, $opts) {
+        parent::handleOpts($dbFieldnm, $opts);
+        foreach ($opts as $k=>$v) {
+            switch (strtolower($k)) {
+                case 'placeholder_row':
+                    $this->setPlaceholderRow($v);
+                    break;
+            }
+        }
+    }
+    public function setPlaceholderRow($v) {
+        $this->_placeholderRow = $v;
+    }
+    public function getRepeatValues() {
+        return array_merge([$this->_placeholderRow], $this->_repeatValues);
+    }
+    public function jitMacrosPerRow($row, &$macros) {
+        parent::jitMacrosPerRow($row, $macros);
+        # Look for match, but be careful because null==0 in PHP and 0 is
+        # a very normal value for id fields. But === doesn't suffice because
+        # a "blank" (unset) value might be null in data but '' in select statement
+        # for the first "Choose below" item
+        $fv = $this->getFieldValue();
+        $rowVal = $row[$this->_valueField];
+        if (($fv === $rowVal) ||
+                ($fv !== 0 && $rowVal !== 0 && $fv == $rowVal)) {
+            $macros['{SELECTED}'] = $this->_selected;
+        } else {
+            $macros['{SELECTED}'] = '';
+        }
+    }
 }
-abstract class US_FormField_Table extends FormField {
-    protected $_fieldType = "table";
+abstract class US_FormField_Table extends FormFieldRepeat {
+    protected $_fieldType = "table",
+        $_tableClass = "table table-hover",
+        $_tableHeadCellClass = "",
+        $_tableDataCellClass = "",
+        $_tableHeadRowClass = "",
+        $_tableDataRowClass = "",
+        $_tableDataColClass = "",
+        $_dataFields = [],
+        $_dataFieldLabels = [];
     public
         $HTMLPre =
             '<div class="{DIV-CLASS}">
@@ -178,11 +220,82 @@ abstract class US_FormField_Table extends FormField {
              ',
         $HTMLPost =
             '</table>
-             </div>
+             </div> <!-- {DIV-CLASS} -->
              ';
+
+    public function __construct($fn, $opts=[]) {
+        parent::__construct($fn, $opts);
+        foreach ($opts as $f=>$v) {
+            switch ($f) {
+                case 'fields':
+                case 'datafields':
+                    $this->setDataFields($v);
+                    #dbg("Setting Data Fields<br />\n");
+                    #dbg("_dataFields=".print_r($this->_dataFields,true));
+                    #dbg("_dataFieldLabels=".print_r($this->_dataFieldLabels,true));
+                    break;
+            }
+        }
+    }
+    public function jitMacrosPerRow($row, &$macros) {
+        parent::jitMacrosPerRow($row, $macros);
+        $dataRow = '';
+        foreach ($this->getDataFields() as $fld) {
+            if (isset($repeatVal[$fld])) {
+                $val = $repeatVal[$fld];
+            } else {
+                $val = $fld;
+            }
+            $dataRow .= '<td>'.$val.'</td>';
+        }
+        $macros['{TABLE-DATA-CELLS}'] = $dataRow;
+    }
+    public function jitMacros(&$macros) {
+        parent::jitMacros($macros);
+        $macros = array_merge($macros, [
+            '{TABLE-CLASS}'    => $this->getTableClass(),
+            '{TABLE-HEAD-CELLS}'=> $this->getTableHeadCells(),
+            '{TD-ROW-CLASS}'   => $this->getTableDataRowClass(),
+            '{TH-ROW-CLASS}'   => $this->getTableHeadRowClass(),
+            '{TD-CLASS}'       => $this->getTableDataCellClass(),
+            '{TH-CLASS}'       => $this->getTableHeadCellClass(),
+        ]);
+        #var_dump($macros);
+    }
+    public function getTableHeadCellClass() {
+        return $this->_tableHeadCellClass;
+    }
+    public function getTableDataCellClass() {
+        return $this->_tableDataCellClass;
+    }
+    public function getTableHeadRowClass() {
+        return $this->_tableHeadRowClass;
+    }
+    public function getTableDataRowClass() {
+        return $this->_tableDataRowClass;
+    }
+    public function getTableClass() {
+        return $this->_tableClass;
+    }
+    public function getTableHeadCells() {
+        $html = '';
+        foreach ($this->_dataFieldLabels as $label) {
+            #dbg("label=$label");
+            $html .= '<th>'.$label.'</th>';
+        }
+        #dbg(htmlentities($html));
+        return $html;
+    }
+    public function getDataFields() {
+        return $this->_dataFields;
+    }
+    public function setDataFields($val) {
+        $this->_dataFieldLabels = array_values($val);
+        $this->_dataFields = array_keys($val);
+    }
 }
 
-abstract class US_FormField_TabToC extends FormField {
+abstract class US_FormField_TabToC extends FormFieldRepeat {
     protected $_fieldType = "tabtoc"; // tabbed table of contents
     protected $tocType = "tab";
     protected $tocClass = "nav nav-tabs";
@@ -196,7 +309,7 @@ abstract class US_FormField_TabToC extends FormField {
         $HTMLPost = '
              </ul>
              ';
-    public function __construct($a, $opts) {
+    public function __construct($a, $opts=[]) {
         foreach ($opts as $k=>$v) {
             switch (strtolower($k)) {
             case 'toc-type':

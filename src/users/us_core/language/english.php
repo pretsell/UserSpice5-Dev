@@ -145,6 +145,10 @@ $lang = array_merge($lang, array(
   'NO_ACCESS'                            => 'You do not have privilege to access that page.',
 
 //Groups
+  'ADMIN_GROUP_TITLE'                    => 'Administrate Group',
+  'GROUP_INFORMATION_TITLE'              => 'Group Information',
+  'GROUP_MEMBERS_TITLE'                  => 'Group Membership',
+  'GROUP_ACCESS_TITLE'                   => 'Group Access',
   'GROUP_NAME_LABEL'                     => 'Group Name',
   'GROUP_SHORT_NAME_LABEL'               => 'Short Name',
   'GROUP_CHAR_LIMIT'                     => 'Group names must be between %m1% and %m2% characters in length',
@@ -156,6 +160,7 @@ $lang = array_merge($lang, array(
   'GROUP_SNAME_UPDATE'                   => 'Group short name changed to `%m1%`',
   'GROUP_TYPE_UPDATE'                  => 'Group Type changed',
   'GROUP_NEED_ROLE_AND_USER'           => 'Must specify BOTH role AND user to add a role',
+  'GROUP_ROLE_NAME_USER'               => 'Role Name (Short Name): Name of User (Username)',
   'GROUP_ROLE_ADD_SUCCESSFUL'          => 'Group role added successfully',
   'GROUP_ROLE_DELETE_SUCCESSFUL'       => 'Group role deleted successfully',
   'GROUP_ROLE_DELETE_FAILED'           => 'Attempted deletion of Group role FAILED',
