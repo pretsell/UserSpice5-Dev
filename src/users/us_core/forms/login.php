@@ -8,42 +8,52 @@ by the UserSpice Team at http://UserSpice.com
 ini_set("allow_url_fopen", 1);
 
 $reCaptchaValid=FALSE;
+        $MACRO_Value = '';
 $fieldList = [
-    'username' => new FormField_Text('users.username', [
+    'username' => new FormField_Text([
+        'dbfield' => 'users.username',
         'placeholder' => lang('USERNAME_OR_EMAIL'),
         'new_valid' => ['unique'=>'unset'], // don't require unique in users
         'extra'     => 'autofocus',
     ]),
-    'password' => new FormField_Password('users.password', [
+    'password' => new FormField_Password([
+        'dbfield' => 'users.password',
         'new_valid' => [ ], // accept all defaults
         'extra'     => 'autocomplete="off"',
     ]),
-    'recaptcha' => new FormField_Recaptcha('recaptcha', [
-        'label' => lang('COMPLETE_RECAPTCHA'),
+    'recaptcha' => new FormField_Recaptcha([
+        'dbfield' => 'recaptcha',
+        'display' => lang('COMPLETE_RECAPTCHA'),
+        'keep_if' => configGet('recaptcha'),
     ]),
-    'remember' => new FormField_Checkbox('remember', [
-        'label' => lang('REMEMBER_ME'),
+    'remember' => new FormField_Checkbox([
+        'dbfield' => 'remember',
+        'display' => lang('REMEMBER_ME'),
+        'keep_if' => configGet('allow_remember_me'),
     ]),
     '<div class="text-center">'."\n",
-    'sign_in' => new FormField_ButtonSubmit('sign_in', [
-        'label' => lang('SIGN_IN'),
-        '{BUTTON-ICON}' => 'fa fa-sign-in',
+    'sign_in' => new FormField_ButtonSubmit([
+        'dbfield' => 'sign_in',
+        'display' => lang('SIGN_IN'),
+        'Button_Icon' => 'fa fa-sign-in',
     ]),
-    'forgot_password' => new FormField_ButtonAnchor('forgot_password', [
-        'label' => lang('FORGOT_PASSWD'),
-        '{HREF}' => 'forgot_password.php',
-        '{BUTTON-ICON}' => 'fa fa-wrench',
+    'forgot_password' => new FormField_ButtonAnchor([
+        'dbfield' => 'forgot_password',
+        'display' => lang('FORGOT_PASSWD'),
+        'Link' => 'forgot_password.php',
+        'Button_Icon' => 'fa fa-wrench',
     ]),
-    'join' => new FormField_ButtonAnchor('join', [
-        'label' => lang('SIGN_UP'),
-        '{HREF}' => 'join.php',
-        '{BUTTON-ICON}' => 'fa fa-plus-square',
+    'join' => new FormField_ButtonAnchor([
+        'dbfield' => 'join',
+        'display' => lang('SIGN_UP'),
+        'Link' => 'join.php',
+        'Button_Icon' => 'fa fa-plus-square',
     ]),
     '</div>'."\n",
 ];
 $myForm = new Form($fieldList, [
-    'title' => 'SIGN_IN',
-    'conditional_fields' => ['recaptcha'=>configGet('recaptcha'), 'remember'=>configGet('allow_remember_me')]]);
+    'title' => lang('SIGN_IN'),
+    ]);
 
 /*
 If enabled, insert google and facebook auth url generators

@@ -44,10 +44,11 @@ if (!$grouptype_id = Input::get('id')) {
 
 # Initialize the form with form fields and HTML snippets
 $myForm = new Form([
-        'toc' => new FormField_TabToc('toc', ['toc-type'=>'pill']),
+        'toc' => new FormField_TabToc(['TocType'=>'tab']),
         'tab' => new FormTab_Contents([
             'tab1' => new FormTab_Pane([
-                'name' => new FormField_Text('grouptypes.name', [
+                'name' => new FormField_Text([
+                                'dbfield' => 'grouptypes.name',
                                 'new_valid' => [
                                             'action'=>'update',
                                             'update_id'=>$grouptype_id,
@@ -55,7 +56,8 @@ $myForm = new Form([
                             ]),
             ], ['active_tab'=>'active', 'tab_id'=>'tab1']),
             'tab2' => new FormTab_Pane([
-                'short_name' => new FormField_Text('grouptypes.short_name', [
+                'short_name' => new FormField_Text([
+                                'dbfield' => 'grouptypes.short_name',
                                 'new_valid' => [
                                             'action'=>'update',
                                             'update_id'=>$grouptype_id,
@@ -63,18 +65,20 @@ $myForm = new Form([
                             ]),
             ], ['tab_id'=>'tab2']),
         ]),
-        'save' => new FormField_ButtonSubmit('save', [
-                    'label' => lang('SAVE_GROUP_TYPE_LABEL')
+        'save' => new FormField_ButtonSubmit([
+                    'field' => 'save',
+                    'display' => lang('SAVE_GROUP_TYPE_LABEL')
                 ]),
-        'delete' => new FormField_ButtonDelete('delete', [
-                    'label' => lang('DELETE_GROUP_TYPE_LABEL'),
+        'delete' => new FormField_ButtonDelete([
+                    'field' => 'delete',
+                    'display' => lang('DELETE_GROUP_TYPE_LABEL'),
                     'value' => $grouptype_id,
                 ]),
     ],
     [
         'table'=>'grouptypes'
     ]);
-$myForm->getField('toc')->setRepeatValues($myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]));
+$myForm->getField('toc')->setRepData($myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]));
 #
 # Update the database with any form data in $_POST
 #

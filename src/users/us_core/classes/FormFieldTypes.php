@@ -13,63 +13,52 @@
  */
 
 
-# Unfortunately FormField_Button cannot be customized without more work
-# (to do that we would have to have a special script just for this one
-# in order to get the order of the script-loading to work - a 3rd level)
+# To modify FormField_Button, find the definitions of FormField_ButtonAnchor,
+# FormField_ButtonSubmit, etc. in local/Classes/FormFieldTypes.php
 abstract class FormField_Button extends FormField {
     protected $_fieldType = "submit";
     protected $_isDBField = false; // more appropriate default for most buttons
     protected $_fieldValue = "pressed";
-    public $HTMLPre = '',
-        $HTMLInput =
-            '<button class="{INPUT-CLASS}" name="{FIELD-NAME}" value="{VALUE}" /><span class="{BUTTON-ICON}"></span> {LABEL-TEXT}</button>
+    public $elementList = ['Input'], // no Pre or Post
+        $HTML_Input = '
+            <button class="{INPUT_CLASS}" name="{FIELD_NAME}" value="{VALUE}" /><span class="{BUTTON_ICON}"></span> {LABEL_TEXT}</button>
             ',
-        $HTMLPost = '';
-    public function fixSnippets() {
-        parent::fixSnippets();
-        $this->_macros['{INPUT-CLASS}'] = 'btn btn-primary';
-        $this->_macros['{BUTTON-ICON}'] = '';
-    }
+        $MACRO_Button_Icon = '',
+        $MACRO_Input_Class = 'btn btn-primary';
 }
 abstract class US_FormField_ButtonAnchor extends FormField_Button {
     protected $_fieldType = "button";
-    public $HTMLPre = '',
-        $HTMLInput =
-            '<a href="{HREF}" class="{INPUT-CLASS}" type="{TYPE}"><span class="{BUTTON-ICON}"></span> {LABEL-TEXT}</a>
+    public $HTML_Input = '
+            <a href="{LINK}" class="{INPUT_CLASS}" type="{TYPE}"><span class="{BUTTON_ICON}"></span> {LABEL_TEXT}</a>
             ',
-        $HTMLPost = '';
+        $MACRO_Link = '';
 }
 abstract class US_FormField_ButtonSubmit extends FormField_Button {
 }
 abstract class US_FormField_ButtonDelete extends FormField_Button {
-    public function fixSnippets() {
-        parent::fixSnippets();
-        $this->_macros['{INPUT-CLASS}'] = 'btn btn-primary btn-danger';
-    }
+    public $MACRO_Input_Class = 'btn btn-primary btn-danger';
 }
 
 abstract class US_FormField_Checkbox extends FormField {
     protected $_fieldType = "checkbox";
-	public $HTMLPre =
-            '<div class="{DIV-CLASS}">
+	public $HTML_Pre =
+            '<div class="{DIV_CLASS}">
             ',
-        $HTMLInput =
-    		'<input type="{TYPE}" name="{FIELD-NAME}" id="{FIELD-ID}" >
+        $HTML_Input =
+    		'<input type="{TYPE}" name="{FIELD_NAME}" id="{FIELD_ID}" >
             ',
-        $HTMLPost =
-		    '<label class="{LABEL-CLASS}" for="{FIELD-ID}">{LABEL-TEXT}</label>
-        	 </div> <!-- {DIV-CLASS} -->
+        $HTML_Post =
+		    '<label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}</label>
+        	 </div> <!-- {DIV_CLASS} -->
              ';
 }
 
 abstract class US_FormField_Hidden extends FormField {
     protected $_fieldType = "hidden";
-    # Leave just the standard <input ...>
-    public $HTMLPre = '',
-        $HTMLInput =
-            '<input type="{TYPE}" name="{FIELD-NAME}" value="{VALUE}">
-            ',
-        $HTMLPost = '';
+    public $elementList = ['Input'], // no Pre or Post
+        $HTML_Input = '
+            <input type="{TYPE}" name="{FIELD_NAME}" value="{VALUE}">
+            ';
 }
 
 abstract class US_FormField_Password extends FormField {
@@ -79,38 +68,41 @@ abstract class US_FormField_Password extends FormField {
 abstract class US_FormField_Radio extends FormField {
     protected $_fieldType = "radio";
     public
-        $HTMLPre =
-            '<div class="{DIV-CLASS}">
-             <label class="{LABEL-CLASS}" for="{FIELD-ID}">{LABEL-TEXT}
-             <span class="{HINT-CLASS}" title="{HINT-TEXT}"></span></label>
-             ',
-        $HTMLInput =
-            '<div class="radio">
-				<label for="{FIELD-ID}-{ID}">
-					<input type="{TYPE}" name="{FIELD-NAME}" id="{FIELD-ID}-{ID}" class="{INPUT-CLASS}" value="{ID}">
-					{OPTION-LABEL}
+        $HTML_Pre = '
+            <div class="{DIV_CLASS}">
+            <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
+            <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
+            ',
+        $HTML_Input = '
+            <div class="radio">
+				<label for="{FIELD_ID}-{ID}">
+					<input type="{TYPE}" name="{FIELD_NAME}" id="{FIELD_ID}-{ID}" class="{INPUT_CLASS}" value="{ID}">
+					{OPTION_LABEL}
 				</label>
 			</div> <!-- radio -->
             ',
-        $HTMLPost =
-            '</div> <!-- {DIV-CLASS} -->
-            ';
+        $HTML_Post = '
+            </div> <!-- {DIV_CLASS} -->
+            ',
+        $repElement = 'HTML_Input';
 }
 
 abstract class US_FormField_Recaptcha extends FormField {
     protected $_fieldType = "recaptcha"; // not used
     protected $_validateErrors = [];
-    public $HTMLPre =
-            '<div class="{DIV-CLASS}">
-    		 <label>{LABEL-TEXT}</label>
+    public $MACRO_Recaptcha_Class = 'g-recaptcha',
+        $MACRO_Recaptcha_Public = '';
+    public $HTML_Pre = '
+            <div class="{DIV_CLASS}">
+    		<label>{LABEL_TEXT}</label>
              ',
-        $HTMLInput =
-            '<div class="{RECAPTCHA-CLASS}" name="{RECAPTCHA-PUBLIC}"></div>
+        $HTML_Input = '
+            <div class="{RECAPTCHA_CLASS}" name="{RECAPTCHA_PUBLIC}"></div>
             ',
-        $HTMLPost =
-            '</div> <!-- {DIV-CLASS} -->
+        $HTML_Post = '
+            </div> <!-- {DIV_CLASS} -->
             ',
-        $HTMLScript = '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
+        $HTML_Script = '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
     public function dataIsValid($data) {
 		$remoteIp=$_SERVER["REMOTE_ADDR"];
 		$gRecaptchaResponse=Input::sanitize($data['g-recaptcha-response']);
@@ -140,39 +132,40 @@ abstract class US_FormField_Recaptcha extends FormField {
     public function hasValidation() {
         return true; // just a different kind of validation
     }
-    public function fixSnippets() {
-        parent::fixSnippets();
-        $this->_macros['{RECAPTCHA-CLASS}'] = 'g-recaptcha';
-        $this->_macros['{RECAPTCHA-PUBLIC}'] = configGet('recaptcha_public');
+    public function getMacros($opts) {
+        $this->MACRO_Recaptcha_Public = configGet('recaptcha_public');
+        return parent::getMacros($opts);
     }
 }
 
-abstract class US_FormField_Select extends FormFieldRepeat {
+abstract class US_FormField_Select extends FormField {
     protected $_fieldType = "select";
     public
-        $HTMLPre =
-            '<div class="{DIV-CLASS}">
-             <label class="{LABEL-CLASS}" for="{FIELD-ID}">{LABEL-TEXT}
-             <span class="{HINT-CLASS}" title="{HINT-TEXT}"></span></label>
-             <br />
-             <select class="{INPUT-CLASS}" id="{FIELD-ID}" name="{FIELD-NAME}">
-             ',
-        $HTMLInput =
-            '<option value="{ID}" {SELECTED}>{OPTION-LABEL}</option>
-             ',
-        $HTMLPost =
-            '</select>
-             </div> <!-- {DIV-CLASS} -->
-             ';
+        $HTML_Pre = '
+            <div class="{DIV_CLASS}">
+            <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
+            <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
+            <br />
+            <select class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}">
+            <option value="{PLACEHOLDER_ID}" {SELECTED}>{PLACEHOLDER_OPTION_LABEL}</option>
+            ',
+        $HTML_Input = '
+            <option value="{ID}" {SELECTED}>{OPTION_LABEL}</option>
+            ',
+        $HTML_Post = '
+            </select>
+            </div> <!-- {DIV_CLASS} -->
+            ',
+        $repElement = 'HTML_Input';
     protected
         $_placeholderRow = [],
         $_selected = 'selected="selected"';
-    public function handleOpts($dbFieldnm, $opts) {
-        parent::handleOpts($dbFieldnm, $opts);
-        foreach ($opts as $k=>$v) {
-            switch (strtolower($k)) {
+    public function handle1Opt($name, $val) {
+        if (!parent::handle1Opt($name, $val)) {
+            switch (strtolower($name)) {
                 case 'placeholder_row':
-                    $this->setPlaceholderRow($v);
+                    $this->setPlaceholderRow($val);
+                    return true;
                     break;
             }
         }
@@ -180,17 +173,18 @@ abstract class US_FormField_Select extends FormFieldRepeat {
     public function setPlaceholderRow($v) {
         $this->_placeholderRow = $v;
     }
-    public function getRepeatValues() {
-        return array_merge([$this->_placeholderRow], $this->_repeatValues);
+    public function getRepData() {
+        return array_merge([$this->_placeholderRow], $this->_repData);
     }
-    public function jitMacrosPerRow($row, &$macros) {
-        parent::jitMacrosPerRow($row, $macros);
+    public function specialRowMacros(&$macros, $row) {
+        parent::specialRowMacros($macros, $row);
         # Look for match, but be careful because null==0 in PHP and 0 is
         # a very normal value for id fields. But === doesn't suffice because
         # a "blank" (unset) value might be null in data but '' in select statement
         # for the first "Choose below" item
         $fv = $this->getFieldValue();
-        $rowVal = $row[$this->_valueField];
+        #if ($this->getIdField() != 'id') var_dump($row);
+        $rowVal = $row[$this->getIdField()];
         if (($fv === $rowVal) ||
                 ($fv !== 0 && $rowVal !== 0 && $fv == $rowVal)) {
             $macros['{SELECTED}'] = $this->_selected;
@@ -199,7 +193,7 @@ abstract class US_FormField_Select extends FormFieldRepeat {
         }
     }
 }
-abstract class US_FormField_Table extends FormFieldRepeat {
+abstract class US_FormField_Table extends FormField {
     protected $_fieldType = "table",
         $_tableClass = "table table-hover",
         $_tableHeadCellClass = "",
@@ -210,18 +204,19 @@ abstract class US_FormField_Table extends FormFieldRepeat {
         $_dataFields = [],
         $_dataFieldLabels = [];
     public
-        $HTMLPre =
-            '<div class="{DIV-CLASS}">
-             <table class="{TABLE-CLASS}">
-             <tr class="{TH-ROW-CLASS}">{TABLE-HEAD-CELLS}</tr>
-             ',
-        $HTMLInput =
-            '<tr class="{TD-ROW-CLASS}">{TABLE-DATA-CELLS}</tr>
-             ',
-        $HTMLPost =
-            '</table>
-             </div> <!-- {DIV-CLASS} -->
-             ';
+        $HTML_Pre = '
+            <div class="{DIV_CLASS}">
+            <table class="{TABLE_CLASS}">
+            <tr class="{TH_ROW_CLASS}">{TABLE_HEAD_CELLS}</tr>
+            ',
+        $HTML_Input = '
+            <tr class="{TD_ROW_CLASS}">{TABLE_DATA_CELLS}</tr>
+            ',
+        $HTML_Post = '
+            </table>
+            </div> <!-- {DIV_CLASS} -->
+            ',
+        $repElement = 'HTML_Input';
 
     public function __construct($fn, $opts=[]) {
         parent::__construct($fn, $opts);
@@ -248,17 +243,17 @@ abstract class US_FormField_Table extends FormFieldRepeat {
             }
             $dataRow .= '<td>'.$val.'</td>';
         }
-        $macros['{TABLE-DATA-CELLS}'] = $dataRow;
+        $macros['{TABLE_DATA_CELLS}'] = $dataRow;
     }
     public function jitMacros(&$macros) {
         parent::jitMacros($macros);
         $macros = array_merge($macros, [
-            '{TABLE-CLASS}'    => $this->getTableClass(),
-            '{TABLE-HEAD-CELLS}'=> $this->getTableHeadCells(),
-            '{TD-ROW-CLASS}'   => $this->getTableDataRowClass(),
-            '{TH-ROW-CLASS}'   => $this->getTableHeadRowClass(),
-            '{TD-CLASS}'       => $this->getTableDataCellClass(),
-            '{TH-CLASS}'       => $this->getTableHeadCellClass(),
+            '{TABLE_CLASS}'    => $this->getTableClass(),
+            '{TABLE_HEAD_CELLS}'=> $this->getTableHeadCells(),
+            '{TD_ROW_CLASS}'   => $this->getTableDataRowClass(),
+            '{TH_ROW_CLASS}'   => $this->getTableHeadRowClass(),
+            '{TD_CLASS}'       => $this->getTableDataCellClass(),
+            '{TH_CLASS}'       => $this->getTableHeadCellClass(),
         ]);
         #var_dump($macros);
     }
@@ -295,54 +290,48 @@ abstract class US_FormField_Table extends FormFieldRepeat {
     }
 }
 
-abstract class US_FormField_TabToC extends FormFieldRepeat {
+# Tab Table-of-Contents
+abstract class US_FormField_TabToC extends FormField {
     protected $_fieldType = "tabtoc"; // tabbed table of contents
-    protected $tocType = "tab";
+    protected $tocType = "tab"; // "pill" is an alternative
     protected $tocClass = "nav nav-tabs";
+    public $repElement = 'HTML_Input';
     public
-        $HTMLPre = '
-            <ul class="{TAB-UL-CLASS}" id="myTab">
+        $HTML_Pre = '
+            <ul class="{TAB_UL_CLASS}" id="myTab">
             ',
-        $HTMLInput = '
-            <li class="{TAB-ACTIVE}"><a href="#{TAB-ID}" data-toggle="{TOC-TYPE}">{TITLE}</a></li>
+        $HTML_Input = '
+            <li class="{TAB_ACTIVE}"><a href="#{TAB_ID}" data-toggle="{TOC_TYPE}">{TITLE}</a></li>
              ',
-        $HTMLPost = '
+        $HTML_Post = '
              </ul>
              ';
-    public function __construct($a, $opts=[]) {
-        foreach ($opts as $k=>$v) {
-            switch (strtolower($k)) {
-            case 'toc-type':
-            case 'toc_type':
-                $this->tocType = $v;
-                $this->tocClass = 'nav nav-'.$v.'s'; # nav-tabs or nav-pills usually
-                break;
-            }
-        }
-        return parent::__construct($a, $opts);
+    public function getTocType() {
+        return $this->tocType;
     }
-    public function getHTML($opts=[]) {
-        #dbg("getHTML: _macros=<pre>".print_r($this->_macros,true)."</pre><br />");
-        #dbg("tocType=".$this->tocType);
-        $this->_macros['{TAB-UL-CLASS}'] = $this->tocClass;
-        return parent::getHTML($opts);
+    public function setTocType($val) {
+        $this->tocType = $val;
     }
-    public function setRepeatValues($opts=[]) {
+    public function getMacros($opts) {
+        $this->MACRO_Tab_UL_Class = 'nav nav-'.$this->getTocType().'s'; # nav-tabs or nav-pills usually
+        return parent::getMacros($opts);
+    }
+    public function setRepData($opts=[]) {
         // typically getting an array from Form::getFields()
         $tmp = [];
         $active = 'active'; // first one active
-        $toc_type = (isset($opts['toc-type']) ? : $this->tocType);
+        $toc_type = (isset($opts['toc-type']) ? $opts['toc-type'] : $this->tocType);
         foreach ($opts as $k=>$o) {
             #dbg('Class Name: '.get_class($o));
             $tmp[] = [
                 'title'=>$o->getTitle(),
-                'tab-id'=>$k,
-                'tab-active'=>$active,
-                'toc-type'=>$toc_type,
+                'tab_id'=>$k,
+                'tab_active'=>$active,
+                'toc_type'=>$toc_type,
             ];
             $active = '';
         }
-        $this->_repeatValues = $tmp;
+        $this->repData = $tmp;
     }
 }
 
