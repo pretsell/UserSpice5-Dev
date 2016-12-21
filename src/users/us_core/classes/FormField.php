@@ -149,7 +149,7 @@ abstract class US_FormField extends Element {
         }
     }
 
-    public function getMacros($opts) {
+    public function getMacros($s, $opts) {
         $this->MACRO_Type = $this->getFieldType();
         $this->MACRO_Field_Name = $this->getFieldName();
         $this->MACRO_Field_ID = $this->getFieldId();
@@ -158,7 +158,7 @@ abstract class US_FormField extends Element {
         $this->MACRO_Value = $this->getFieldValue();
         $this->MACRO_Required_Attrib = ($this->getRequired() ? 'required' : '');
         $this->MACRO_Hint_Class = $this->getHintClass();
-        return parent::getMacros($opts);
+        return parent::getMacros($s, $opts);
     }
     # $opts is a hash which can have the following indexed values:
     #  'replaces' => ['{search}'=>'replace',...]

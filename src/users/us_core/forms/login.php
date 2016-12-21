@@ -53,6 +53,11 @@ $fieldList = [
 ];
 $myForm = new Form($fieldList, [
     'title' => lang('SIGN_IN'),
+    'elements' => ['Header', 'openContainer', 'openRow', 'openCol',
+                    'TitleAndResults',
+                    'openForm', 'Fields', 'closeForm',
+                    'closeCol', 'closeRow', 'closeContainer',
+                    'PageFooter', 'Footer'],
     ]);
 
 /*
@@ -92,19 +97,7 @@ if (Input::exists()) {
 	}
 }
 
-echo $myForm->getHTMLHeader();
-echo $myForm->getHTMLOpenContainer();
-echo $myForm->getHTMLOpenRowCol();
-echo $myForm->getHTMLTitleAndResults(['errors'=>$errors, 'successes'=>$successes]);
-echo $myForm->getHTMLCloseColRow();
-echo $myForm->getHTMLOpenForm();
-echo $myForm->getHTMLOpenRowCol();
-echo $myForm->getHTMLFields();
-echo $myForm->getHTMLCloseColRow();
-echo $myForm->getHTMLCloseForm();
-echo $myForm->getHTMLCloseContainer();
-echo $myForm->getHTMLPageFooter();
-echo $myForm->getHTMLFooter();
+echo $myForm->getHTML(['errors'=>$errors, 'successes'=>$successes]);
 
 if (configGet('recaptcha') == 1) { ?>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>

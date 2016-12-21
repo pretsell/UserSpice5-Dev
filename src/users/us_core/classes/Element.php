@@ -55,6 +55,7 @@
  *   alternate.
  */
 abstract class US_Element {
+    protected $_db=null;
     public $elementList = [];
     public $repElement = null;
     public $repData = [];
@@ -63,6 +64,7 @@ abstract class US_Element {
     # public $HTML_x = '<input type="{TYPE}" name="{NAME}"' ... />';
     # public $MACRO_type = 'hidden';
     public function __construct($opts=[]) {
+        $this->_db = DB::getInstance();
         if (isset($opts['elements'])) {
             $this->setElementList($opts['elements']);
         }
@@ -120,7 +122,9 @@ abstract class US_Element {
         $elementList = $this->getElementList($opts);
         $html = '';
         foreach ((array)$elementList as $e) {
+            #dbg(substr($this->getHTMLElement($e, $opts), 0, 30));
             $html .= $this->getHTMLElement($e, $opts);
+            #echo "\n\n===$e (".get_class($this).")===\n\n$html\n\n";
         }
         return $this->processMacros($html, $opts);
     }
@@ -137,38 +141,59 @@ abstract class US_Element {
         $this->elementList = $elementList;
     }
     public function getHTMLElement($element, $opts) {
+        #dbg("getHTMLElement($element, \$opts)");
         if (is_string($element)) {
             $methodName = 'getHTML'.$element;
             $propName = 'HTML_'.$element;
+            $prop2Name = $element;
             if (method_exists($this, $methodName)) {
+                #dbg("getHTMLElement(): Method");
                 $html = $this->$methodName($opts);
-            } elseif (isset($this->$propName)) {
-                if ($propName === $this->repElement) {
-                    # repeating element
-                    $html = $this->getHTMLRepElement($this->$propName, $opts);
-                } else {
-                    $html = $this->$propName;
+            } elseif (in_array($this->repElement, [$propName, $prop2Name])) {
+                # repeating element
+                $propName = $this->repElement;
+                $elem = isset($this->$propName) ? $this->$propName : $propName;
+                $html = $this->getHTMLRepElement($elem, $opts);
+            } elseif (isset($this->$propName) || isset($this->$prop2Name)) {
+                #dbg("getHTMLElement(): Prop");
+                if (!isset($this->$propName)) {
+                    $propName = $prop2Name; // esp 'Fields'
                 }
+                $html = $this->$propName;
             } else {
+                #dbg("getHTMLElement(): String");
                 $html = $element;
             }
         } elseif (method_exists($element, 'getHTML')) {
             $html = $element->getHTML($opts);
         }
+        #dbg("getHTMLElement(<pre>".substr($html, 0, 30)."</pre>...): Entering (".get_class($this).")");
         return $html;
     }
     public function getHTMLRepElement($element, $opts) {
-        #dbg("getHTMLRepElement(): Entering");
+        #dbg("getHTMLRepElement(<pre>".substr($element, 0, 20)."</pre>...): Entering (".get_class($this).")");
         if ($this->repDataIsEmpty()) {
             return $this->getRepEmptyAlternate();
         }
         #dbg("getHTMLRepElement(): Not empty");
         $html = '';
-        foreach ($this->getRepData() as $row) {
+        foreach ($this->getRepData() as $k=>$row) {
+            #dbg(get_class($this).'==>'.$k);
             #var_dump($row);
             if (is_object($row)) {
-                #dbg("OBJECT<br />");
-                $rowMacros = $row->getRowMacros();
+                #dbg("OBJECT==>".get_class($row));
+                if (method_exists($row, 'getHTML')) {
+                    $element = $row->getHTML();
+                }
+                if (method_exists($row, 'getRowMacros')) {
+                    $rowMacros = $row->getRowMacros();
+                } else {
+                    $rowMacros = [];
+                }
+            } elseif (is_string($row)) {
+                #dbg("SIMPLE STRING");
+                $element = $row;
+                $rowMacros = [];
             } else {
                 #dbg("PRESUMABLY ASSOCIATIVE ARRAY");
                 $rowMacros = [];
@@ -202,15 +227,19 @@ abstract class US_Element {
         if (in_array('nomacros', $opts)) {
             return $html;
         }
-        $macros = $this->getMacros($opts);
+        $macros = $this->getMacros($html, $opts);
         #var_dump($macros);
         return str_ireplace(array_keys($macros), array_values($macros), $html);
     }
-    public function getMacros($opts) {
+    public function getMacros($s, $opts) {
         foreach ($this->_getPropsByPrefix("MACRO_") as $k=>$v) {
             $macros['{'.$k.'}'] = $v;
         }
         return $macros;
+    }
+    public function getMacro($name) {
+        $prop = 'MACRO_'.$name;
+        return $this->$prop;
     }
     public function setMacro($name, $val) {
         $prop = 'MACRO_'.$name;

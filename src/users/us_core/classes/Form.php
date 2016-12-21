@@ -2,363 +2,167 @@
 /*
 
 */
-class US_Form {
-    protected $_db = null;
+class US_Form extends Element {
 	protected $_formName,
-        $_formAction='',
         $_fields=[],
         $_validateObject=null,
         $_validatePassed=false,
-        $_dbTable=null,
-        $_browserTitle=null;
+        $_dbTable=null;
     # These flags determine whether the corresponding blocks
     # are used for this form. They do not have get...() or
     # set...() functions and can be set directly.
-    public
-        $useCSRF=true,
-        $useHeader=true,
-        $useNavigation=true,
-        $useContainer=true,
-        $useTab=false, // used for class "FormTab"
-        $useAdminDashboard=true,
-        $useTitle=false, // see TitleAndResult below
-        $useTitleAndResults=true,
-        $useForm=true,
-        $useRowCol=true,
-        $usePageFooter=true,
-        $useHTMLFooter=true;
-    protected $_formTitle='';
-    protected $_tabIsActive='';
-    protected $_tabId='';
-    protected $_openContainerBlock = '<div class="container {CONTAINER-CLASS}">'."\n";
-    protected $_openRowBlock = '<div class="row {ROW-CLASS}">'."\n";
-    protected $_openColBlock = '<div class="{COL-CLASS}">'."\n";
-    protected $_openForm = '<form name="{FORM-NAME}" action="{FORM-ACTION}" method="{FORM-METHOD}">'."\n";
-    protected $_csrfToken = '<input type="hidden" name="csrf" value="{GENERATE-CSRF-TOKEN}">'."\n";
-    protected $_closeForm = '</form>'."\n";
-    protected $_closeContainerBlock = '</div> <!-- container -->'."\n";
-    protected $_closeRowBlock = '</div> <!-- row -->'."\n";
-    protected $_closeColBlock = '</div> <!-- col -->'."\n";
-    protected $_openTabBlock = '
-        <div class="tab-pane {TAB-PANE-ACTIVE} {TAB-PANE-CLASS}" id="{TAB-ID}">
-        ';
-    protected $_closeTabBlock = '
-        </div> <!-- tab-pane -->
-        ';
-    protected $_titleBlock = '
-        <div class="{COL-CLASS}">
-            <h2>{FORM-TITLE}</h2>
+    public $elementList = [
+        'Header', 'openContainer', 'AdminDashboard',
+        'TitleAndResults', 'openForm', 'CSRF', 'openRow', 'openCol',
+        'Fields',
+        'closeCol', 'closeRow', 'closeForm',
+        'PageFooter', 'Footer',
+    ];
+    public $repElement = 'Fields';
+    protected $HTML_openContainer = '<div class="container {CONTAINER_CLASS}">'."\n";
+    protected $HTML_openRow = '<div class="row {ROW_CLASS}">'."\n";
+    protected $HTML_openCol = '<div class="{COL_CLASS}">'."\n";
+    protected $HTML_openForm = '<form name="{FORM_NAME}" action="{FORM_ACTION}" method="{FORM_METHOD}">'."\n";
+    protected $HTML_CSRF = '<input type="hidden" name="csrf" value="{GENERATE_CSRF_TOKEN}">'."\n";
+    protected $HTML_closeForm = '</form>'."\n";
+    protected $HTML_closeContainer = '</div> <!-- container -->'."\n";
+    protected $HTML_closeRow = '</div> <!-- row -->'."\n";
+    protected $HTML_closeCol = '</div> <!-- col -->'."\n";
+    protected $HTML_openWell = '<div class="well {WELL_CLASS}">'."\n";
+    protected $HTML_closeWell = '</div> <!-- well -->'."\n";
+    protected $HTML_Title = '
+        <div class="{COL_CLASS}">
+            <h2>{FORM_TITLE}</h2>
         </div> <!-- title col -->
         ';
-    protected $_titleAndResultBlock = '
-        <div class="{COL-CLASS}">
-            <h2>{FORM-TITLE}</h2>
-    		{RESULT-BLOCK}
+    protected $HTML_Well_Title = '
+        <div class="{COL_CLASS}">
+            <h2>{FORM_TITLE}</h2>
+        </div> <!-- title col -->
+        ';
+    protected $HTML_TitleAndResults = '
+        <div class="{COL_CLASS}">
+            <h2>{FORM_TITLE}</h2>
+    		{RESULT_BLOCK}
         </div> <!-- title & result col -->
         ';
-    protected $_adminDashboardBlock = '
+    protected $HTML_AdminDashboard = '
         <div class="xs-col-12">
-            {INCLUDE-ADMIN-DASHBOARD}
+            {INCLUDE_ADMIN_DASHBOARD}
         </div> <!-- admin dashboard col -->
         ';
     # others will be added - these are just the static, known ones
-    protected $_macros = [
-        '{CONTAINER-CLASS}' => '',
-        '{TAB-CLASS}'       => '',
-        '{TAB-CONTENT-CLASS}'=> '',
-        '{TAB-PANE-CLASS}'  => 'xs-col-12',
-        '{ROW-CLASS}'       => '',
-        '{COL-CLASS}'       => 'xs-col-12',
-        '{FORM-NAME}'       => 'usForm',
-        '{FORM-METHOD}'     => 'post',
-        '{FORM-ACTION}'     => '',
-    ];
+    public $MACRO_Container_Class = '',
+        $MACRO_Tab_Class = '',
+        $MACRO_Tab_Content_Class = '',
+        $MACRO_Tab_Pane_Class = 'xs-col-12',
+        $MACRO_Row_Class = '',
+        $MACRO_Col_Class = 'xs-col-12',
+        $MACRO_Form_Name = 'usForm',
+        $MACRO_Form_Method = 'post',
+        $MACRO_Form_Action = '',
+        $MACRO_Browser_Title = '',
+        $MACRO_Form_Title = '',
+        $MACRO_Tab_Pane_Active = '',
+        $MACRO_Tab_Id = '';
 
 	public function __construct($fields=[], $opts=[]){
-        $this->_db = DB::getInstance();
-		$this->setAllFields($fields, $opts);
-        $this->setOpts($opts);
+        $opts = array_merge([$this->repElement=>$fields], $opts);
+        parent::__construct($opts);
+        // $formName is usually set prior to master_form.php
         if (!$this->_formName) {
             if ($GLOBALS['formName']) {
                 $this->_formName = $GLOBALS['formName'];
             }
         }
-        if (!$this->getTitle()) {
+        if (!$this->getMacro('Form_Title')) {
             $this->setTitleByPage();
         }
+        // delete conditional fields (keep_if or delete_if logic in $opts)
         foreach ($this->getFields() as $fieldName=>$fieldObj) {
             if ($fieldObj->deleteMe()) {
                 $this->deleteField($fieldName);
             }
         }
 	}
-    public function setOpts($opts) {
-        foreach ($opts as $k=>$v) {
-            switch ($k) {
-                case 'titleToken':
-                    $v = lang($v);
-                    # no break - falling through with new $v
-                case 'title':
-                    # NOTE: may fall through from above
-                    $this->setTitle($v);
-                    break;
-                case 'table':
-                case 'dbtable':
-                    $this->setDBTable($v);
-                    break;
-                case 'conditional_fields':
-                    foreach ($v as $fn=>$cond) {
-                        if (!$cond) {
-                            dbg("Deleting conditional field $fn<br />\n");
-                            $this->deleteField($fn);
-                        }
-                    }
-                    break;
-                case 'active_tab':
-                    $this->setTabIsActive($v);
-                    break;
-                case 'tab_id':
-                    $this->setTabId($v);
-                    break;
-                # default - do nothing - this $opt is for elsewhere
-            }
+    public function handle1Opt($name, $val) {
+        switch (strtolower($name)) {
+            case 'titletoken':
+            case 'title_lang':
+                $val = lang($val);
+                # no break - falling through with new $val
+            case 'title':
+                # NOTE: may fall through from above
+                $this->setMacro('Form_Title', $val);
+                return true;
+                break;
+            case 'table':
+            case 'dbtable':
+                $this->setDBTable($val);
+                return true;
+                break;
+            case 'active_tab':
+                $this->setTabIsActive($val);
+                return true;
+                break;
+            case 'tab_id':
+                $this->setTabId($val);
+                return true;
+                break;
         }
+        if (parent::handle1Opt($name, $val)) {
+            return true;
+        }
+        return false;
     }
     public function setTitleByPage() {
         $page = $this->_db->query("SELECT * FROM pages WHERE page = ?", [$this->_formName]);
         if ($page->count() > 0) {
             $pageRow = $page->first();
-            $this->setTitle(lang($pageRow->title_lang));
+            $this->setMacro('Form_Title', lang($pageRow->title_lang));
         }
     }
 
-    public function getHTML($opts=[]) {
-        $html = '';
-        $html .= $this->getHTMLStart($opts, true);
-        $html .= $this->getHTMLOpenRowCol($opts, true);
-        $html .= $this->getHTMLOpenForm($opts, true);
-        $html .= $this->getHTMLOpenTab($opts, true);
-        $html .= $this->getHTMLFields([], false, $opts, true);
-        $html .= $this->getHTMLCloseTab($opts, true);
-        $html .= $this->getHTMLCloseForm($opts, true);
-        $html .= $this->getHTMLCloseColRow($opts, true);
-        $html .= $this->getHTMLCloseContainer($opts, true);
-        $html .= $this->getHTMLPageFooter($opts, true);
-        $html .= $this->getHTMLFooter($opts, true);
-        return $this->fillHTML($html, $opts);
-    }
-
-    public function getHTMLFields($fieldFilter=[], $onlyFields=false, $opts=[], $noFill=false) {
-        $fieldList = $this->_fixFieldList($fieldFilter, $onlyFields);
-        $html = "\n";
-        foreach ($fieldList as $f) {
-            if (is_object($fld = $this->getField($f))) {
-                $html .= $fld->getHTML()."\n";
-            } else {
-                $html .= $fld; // just additional HTML
-            }
-        }
-        $html .= "\n";
-        return $this->fillHTML($html, $opts, $noFill);
-    }
-
-    public function wantBlock($flag, $optIdx, $opts) {
-        if ($flag) {
-            return (!isset($opts['no'.$optIdx]) && !in_array('no'.$optIdx, $opts));
-        } else {
-            return (isset($opts[$optIdx]) || in_array($optIdx, $opts));
-        }
-    }
     public function getHTMLHeader($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useHeader, 'header', $opts)) {
-            return $this->fillHTML(getInclude(pathFinder('includes/header.php')), $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLOpenContainer($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useContainer, 'container', $opts)) {
-            return $this->fillHTML($this->_openContainerBlock, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLCloseContainer($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useContainer, 'container', $opts)) {
-            return $this->fillHTML($this->_closeContainerBlock, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLOpenTab($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useTab, 'tab', $opts)) {
-            return $this->fillHTML($this->_openTabBlock, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLCloseTab($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useTab, 'tab', $opts)) {
-            return $this->fillHTML($this->_closeTabBlock, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLTitleAndResults($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useTitleAndResults, 'title_and_result', $opts)) {
-            return $this->fillHTML($this->_titleAndResultBlock, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    # You probably want TitleAndResults above... Typically this (title by itself)
-    # is disabled by $this->useTitle
-    public function getHTMLTitle($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useTitle, 'title', $opts)) {
-            return $this->fillHTML($this->_titleBlock, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLAdminDashboard($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useAdminDashboard, 'admin_dashboard', $opts)) {
-            return $this->fillHTML($this->_adminDashboardBlock, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-
-    public function getHTMLStart($opts=[], $noFill=false) {
-        $html = $this->getHTMLHeader($opts, true);
-        $html .= $this->getHTMLOpenContainer($opts, true);
-        $i = $this->wantBlock($this->useTitle, 'title', $opts) ||
-            $this->wantBlock($this->useTitle, 'title_and_result', $opts) ||
-            $this->wantBlock($this->useAdminDashboard, 'admin_dashboard', $opts);
-        if ($i) {
-            $html .= $this->getHTMLOpenRowCol($opts, true);
-        }
-        # By default this (Title by itself) is not included
-        $html .= $this->getHTMLTitle($opts, true);
-        # This (TitleAndResults) is preferred
-        $html .= $this->getHTMLTitleAndResults($opts, true);
-        $html .= $this->getHTMLAdminDashboard($opts, true);
-        if ($i) {
-            $html .= $this->getHTMLCloseColRow($opts, true);
-        }
-        return $this->fillHTML($html, $opts, $noFill);
-    }
-    public function getHTMLOpenRowCol($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useRowCol, 'rowcol', $opts)) {
-            $html = $this->_openRowBlock . $this->_openColBlock;
-            return $this->fillHTML($html, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLCloseColRow($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useRowCol, 'rowcol', $opts)) {
-            $html = $this->_closeColBlock . $this->_closeRowBlock;
-            return $this->fillHTML($html, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLOpenForm($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useForm, 'form', $opts)) {
-            $html = $this->_openForm;
-            if ($this->wantBlock($this->useCSRF, 'csrf', $opts)) {
-                $html .= $this->_csrfToken;
-            }
-            return $this->fillHTML($html, $opts, $noFill);
-        } else {
-            return '';
-        }
-    }
-    public function getHTMLCloseForm($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useForm, 'form', $opts)) {
-            return $this->fillHTML($this->_closeForm, $opts, $noFill);
-        } else {
-            return '';
-        }
+        return getInclude(pathFinder('includes/header.php'));
     }
     public function getHTMLNavigation($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useNavigation, 'navigation', $opts)) {
-            $html = getInclude(pathFinder('includes/navigation.php'));
-            return $this->fillHTML($html, $opts, $noFill);
-        } else {
-            return '';
-        }
+        return getInclude(pathFinder('includes/navigation.php'));
     }
     public function getHTMLPageFooter($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->usePageFooter, 'page_footer', $opts)) {
-            $html = getInclude(pathFinder('includes/page_footer.php'));
-            return $this->fillHTML($html, $opts, $noFill);
-        } else {
-            return '';
-        }
+        return getInclude(pathFinder('includes/page_footer.php'));
     }
     public function getHTMLFooter($opts=[], $noFill=false) {
-        if ($this->wantBlock($this->useHTMLFooter, 'html_footer', $opts)) {
-            $html = getInclude(pathFinder('includes/html_footer.php'));
-            foreach ($this->getAllFields() as $field) {
-                if (method_exists($field, 'getHTMLScripts')) {
-                    $html .= $field->getHTMLScripts();
-                }
+        $html = getInclude(pathFinder('includes/html_footer.php'));
+        foreach ($this->getAllFields() as $field) {
+            if (method_exists($field, 'getHTML_Scripts')) {
+                $html .= $field->getHTMLScripts();
             }
-            return $this->fillHTML($html, $opts, $noFill);
-        } else {
-            return '';
         }
+        return $html;
     }
 
-    # This "Form" class is based on replacing {MACROS} in the various
-    # blocks. This method (fillHTML()) does the actual find/replace
-    # of those {MACROS}.
-    public function fillHTML($s, $opts, $noFill=false) {
-        if ($noFill) {
-            return $s;
-        }
-        #dbg("fillHTML: $s<br />\n");
-        $optMacros = (isset($opts['replaces']) ? $opts['replaces'] : (isset($opts['macros']) ? $opts['macros'] : []));
-        $repl = array_merge($this->_macros,
-                    [
-                        '{BROWSER-TITLE}'=>$this->_browserTitle,
-                        '{FORM-TITLE}'=>$this->getTitle(),
-                        '{TAB-PANE-ACTIVE}'=>$this->getTabIsActive(),
-                        '{TAB-ID}'=>$this->getTabId(),
-                    ],
-                    $optMacros);
+    public function getMacros($s, $opts) {
+        $macros = parent::getMacros($s, $opts);
         # These macros are "expensive" to evaluate and so are only
         # evaluated if they actually exist in the $s string
-        if (strpos($s, "{RESULT-BLOCK}") !== false) {
-            $repl['{RESULT-BLOCK}'] = ResultBlock((array)@$opts['errors'], (array)@$opts['successes']);
+        if (strpos($s, "{RESULT_BLOCK}") !== false) {
+            $macros['{RESULT_BLOCK}'] = ResultBlock((array)@$opts['errors'], (array)@$opts['successes']);
         }
-        if (strpos($s, "{GENERATE-CSRF-TOKEN}") !== false) {
-            $repl['{GENERATE-CSRF-TOKEN}'] = Token::generate();
+        if (strpos($s, "{GENERATE_CSRF_TOKEN}") !== false) {
+            $macros['{GENERATE_CSRF_TOKEN}'] = Token::generate();
         }
-        if (strpos($s, "{INCLUDE-ADMIN-DASHBOARD}") !== false) {
-            $repl['{INCLUDE-ADMIN-DASHBOARD}'] = getInclude(pathFinder('includes/admin_dashboard.php'));
+        if (strpos($s, "{INCLUDE_ADMIN_DASHBOARD}") !== false) {
+            $macros['{INCLUDE_ADMIN_DASHBOARD}'] = getInclude(pathFinder('includes/admin_dashboard.php'));
         }
-        return str_replace(array_keys($repl), array_values($repl), $s);
+        return $macros;
     }
 
-    public function setTitle($title) {
-        $this->_formTitle = $title;
-    }
-    public function getTitle() {
-        return $this->_formTitle;
-    }
     public function setTabIsActive($val) {
-        $this->_tabIsActive = $val;
-    }
-    public function getTabIsActive() {
-        return $this->_tabIsActive;
+        $this->MACRO_Tab_Pane_Active = $val;
     }
     public function setTabId($val) {
-        $this->_tabId = $val;
-    }
-    public function getTabId() {
-        return $this->_tabId;
+        $this->MACRO_Tab_Id = $val;
     }
     public function setDBTable($table) {
         $this->_dbTable = $table;
@@ -367,7 +171,7 @@ class US_Form {
         return $this->_dbTable;
     }
 	public function setAction($action) {
-		$this->_formAction=$action;
+		$this->MACRO_Form_Action=$action;
 	}
     public function getAllFields($fieldFilter=[], $opts=[]) {
         $opts = array_merge($opts, ['recursive'=>true]);
@@ -398,12 +202,12 @@ class US_Form {
         return $rtn;
     }
     public function getField($fieldName) {
-        if (isset($this->_fields[$fieldName])) {
+        if (isset($this->repData[$fieldName])) {
             # normal field
-            return $this->_fields[$fieldName];
+            return $this->repData[$fieldName];
         } else {
             # perhaps it's in a FormTab_Contents or other form-section class
-            foreach ($this->_fields as $k=>$v) {
+            foreach ($this->repData as $k=>$v) {
                 if (method_exists($v, 'getField') && ($f = $v->getField($fieldName))) {
                     return $f;
                 }
@@ -411,11 +215,11 @@ class US_Form {
         }
     }
     public function deleteField($fieldName) {
-        unset($this->_fields[$fieldName]);
+        unset($this->repData[$fieldName]);
     }
     public function listFields($onlyFields=true) {
         #dbg("listFields($onlyFields): entering");
-        $rtn = array_keys($this->_fields);
+        $rtn = array_keys($this->repData);
         if ($onlyFields) {
             $rtn = array_filter($rtn, 'is_string'); // get rid of numeric keys (HTML snippets)
         }
@@ -504,6 +308,7 @@ class US_Form {
             }
         }
     }
+    # Delete rows identified by $ids in the DB table for this form
     public function delete($ids, &$errors) {
         if (!$ids) {
             return true;
@@ -533,6 +338,8 @@ class US_Form {
         return $this->_validatePassed;
 	}
 
+    # must be called AFTER checkFieldValidation() - tells whether the last validation
+    # was successfully passed or not
 	public function passedFieldValidation() {
 		return $this->_validatePassed;
 	}
@@ -544,11 +351,8 @@ class US_Form {
 	}
 
     public function addField($fieldName, $formFieldObj) {
-        $this->_fields[$fieldName] = $formFieldObj;
+        $this->repData[$fieldName] = $formFieldObj;
     }
-	public function setAllFields($fields, $opts) {
-		$this->_fields=$fields;
-	}
     public function deleteMe() {
         return false; // forms don't delete themselves
     }

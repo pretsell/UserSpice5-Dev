@@ -132,7 +132,7 @@ abstract class US_FormField_Recaptcha extends FormField {
     public function hasValidation() {
         return true; // just a different kind of validation
     }
-    public function getMacros($opts) {
+    public function getMacros($s, $opts) {
         $this->MACRO_Recaptcha_Public = configGet('recaptcha_public');
         return parent::getMacros($opts);
     }
@@ -312,9 +312,9 @@ abstract class US_FormField_TabToC extends FormField {
     public function setTocType($val) {
         $this->tocType = $val;
     }
-    public function getMacros($opts) {
+    public function getMacros($s, $opts) {
         $this->MACRO_Tab_UL_Class = 'nav nav-'.$this->getTocType().'s'; # nav-tabs or nav-pills usually
-        return parent::getMacros($opts);
+        return parent::getMacros($s, $opts);
     }
     public function setRepData($opts=[]) {
         // typically getting an array from Form::getFields()
@@ -324,7 +324,7 @@ abstract class US_FormField_TabToC extends FormField {
         foreach ($opts as $k=>$o) {
             #dbg('Class Name: '.get_class($o));
             $tmp[] = [
-                'title'=>$o->getTitle(),
+                'title'=>$o->getMacro('Form_Title'),
                 'tab_id'=>$k,
                 'tab_active'=>$active,
                 'toc_type'=>$toc_type,
