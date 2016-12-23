@@ -70,58 +70,182 @@ if (!($group_id = Input::get('id')) || !groupIdExists($group_id)) {
 }
 
 $grouptypesData = $db->queryAll('grouptypes')->results();
+#var_dump($grouptypesData);
+$groupDetails = fetchGroupDetails($group_id);
+$groupRoleData = fetchRolesByType($groupDetails->grouptype_id, true);
+$groupRoles = fetchRolesByGroup($groupDetails->id);
+$groupUsers = fetchUsersByGroup($groupDetails->id);
 $myForm = new Form([
-    'toc' => new FormField_TabToc('toc', []),
+    'toc' => new FormField_TabToc(['field' => 'toc', ]),
     'tabs' => new FormTab_Contents ([
         'groupInfo' => new FormTab_Pane ([
-            'name' => new FormField_Text ('groups.name', [
+            'name' => new FormField_Text ([
+                'dbfield' => 'groups.name',
                 'new_valid' => [
                     'action' => 'update',
                     'update_id' => $group_id,
                 ],
             ]),
-            'short_name' => new FormField_Text ('groups.short_name', [
+            'short_name' => new FormField_Text ([
+                'dbfield' => 'groups.short_name',
                 'new_valid' => [
                     'action' => 'update',
                     'update_id' => $group_id,
                 ],
             ]),
-            'grouptype_id' => new FormField_Select('groups.grouptype_id', [
-                'repeatvalue' => $grouptypesData,
+            'grouptype_id' => new FormField_Select([
+                'dbfield' => 'groups.grouptype_id',
+                'repeat' => $grouptypesData,
                 'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_FROM_LIST_BELOW')],
                 'new_valid' => [], // in case they make it required
+                'keep_if' => (boolean)$grouptypesData,
             ]),
-            'deleteRoles' => new FormField_Table ('deleteRoles', [
-                    'fields' => [
-                        '<input type="checkbox" name="{FIELD-NAME}[]" value="{ID}"/>'=>lang('DELETE_ROLE_ASSIGNMENT_LABEL'),
-                        '{NAME} ({SHORT_NAME}): {FNAME} {LNAME} ({USERNAME})'=>lang('GROUP_ROLE_NAME_USER'),
-                    ],
+            'deleteRolesWell' => new Form_Well([
+                'deleteRoles' => new FormField_Table ([
+                    'field' => 'deleteRoles',
+                    'table_head_cells' => '<th>'.lang('DELETE_SELECTED').'</th><th>'.lang('GROUP_ROLE_NAME_USER').'</th>',
+                    'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME} ({SHORT_NAME}): {FNAME} {LNAME} ({USERNAME})</td>',
                     'nodata' => '<p>(No Roles Assigned Yet)</p>',
-            ]),
+                ]),
+            ], ['Well_Class'=>'well-sm', 'title'=>lang('DELETE_ROLE_ASSIGNMENTS')]),
+            'newRoleWell' => new Form_Well([
+                'newRole' => new FormField_Select([
+                    'field' => 'newRole',
+                    'display' => lang('CHOOSE_ROLE'),
+                    'repeat' => $groupRoleData,
+                    'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_ROLE')],
+                    'nodata' => '<p>(No roles set up for this group type)</p>',
+                    'isdbfield' => false,
+                    'Hint_Text' => lang('GROUP_NEED_ROLE_AND_USER'),
+                ]),
+                'newRoleUser' => new FormField_Select([
+                    'field' => 'newRoleUser',
+                    'display' => lang('CHOOSE_GROUP_MEMBER'),
+                    'repeat' => $groupUsers,
+                    'idfield' => 'user_id',
+                    'placeholder_row' => ['user_id'=>null, 'name'=>lang('CHOOSE_GROUP_MEMBER')],
+                    'nodata' => '<p>(No members of this group yet)</p>',
+                    'isdbfield' => false,
+                    'Hint_Text' => lang('GROUP_NEED_ROLE_AND_USER'),
+                ]),
+            ], ['Well_Class'=>'well-sm', 'title'=>lang('ASSIGN_NEW_ROLE_TO_GROUP')]),
         ], [
             'active_tab'=>'active',
             'tab_id'=>'groupInfo',
             'title'=>lang('GROUP_INFORMATION_TITLE'),
-            'conditional_fields'=>[
-                'grouptype_id'=>(boolean)$grouptypesData,
-            ],
         ]),
         'groupMembers'=> new FormTab_Pane ([
-            '<h1>Group Members TEST</h2>',
+            '<h2>Group Membership</h2>',
+            '<h3>'.lang('SELECT_USER_DEL_MEMBERS').'</h3>',
+            'removeGroupUsers' => new FormField_Table ([
+                'field' => 'removeGroupUsers',
+                'isdbfield' => false,
+                'debug' => 0,
+                'table_head_cells' => '<th>'.
+                    lang('SELECT_USER_BELOW').'</th><th>'.
+                    lang('NAME_USERS_MEMBERS').'</th>',
+                'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME}</td>',
+                'nodata' => '<p>(This group has no user members yet)</p>',
+                # repeating data set below
+            ]),
+            '<h3>'.lang('SELECT_GROUP_DEL_MEMBERS').'</h3>',
+            'removeGroupGroups' => new FormField_Table ([
+                'field' => 'removeGroupGroups',
+                'isdbfield' => false,
+                'debug' => 0,
+                'table_head_cells' => '<th>'.
+                    lang('SELECT_GROUP_BELOW').'</th><th>'.
+                    lang('NAME_GROUPS_MEMBERS').'</th>',
+                'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME}</td>',
+                'nodata' => '<p>(This group has no nested group members yet)</p>',
+                # repeating data set below
+            ]),
+            '<h3>'.lang('SELECT_USER_ADD_MEMBERS').'</h3>',
+            'addGroupUsers' => new FormField_Table ([
+                'field' => 'addGroupUsers',
+                'isdbfield' => false,
+                'debug' => 0,
+                'table_head_cells' => '<th>'.
+                    lang('SELECT_USER_BELOW').'</th><th>'.
+                    lang('NAME_USERS_NON_MEMBERS').'</th>',
+                'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME}</td>',
+                'nodata' => '<p>(No users available to be added)</p>',
+                # repeating data will be set below
+            ]),
+            '<h3>'.lang('SELECT_GROUP_ADD_MEMBERS').'</h3>',
+            'addGroupGroups' => new FormField_Table ([
+                'field' => 'addGroupGroups',
+                'isdbfield' => false,
+                'debug' => 0,
+                'table_head_cells' => '<th>'.
+                    lang('SELECT_GROUP_BELOW').'</th><th>'.
+                    lang('NAME_GROUPS_NON_MEMBERS').'</th>',
+                'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME}</td>',
+                'nodata' => '<p>(No groups available to be added)</p>',
+                # repeating data will be set below
+            ]),
         ], ['tab_id'=>'groupMembers', 'title'=>lang('GROUP_MEMBERS_TITLE')]),
         'groupAccess' => new FormTab_Pane ([
-            '<h1>Group Access TEST</h2>',
+            '<h2>'.lang('GROUP_ACCESS_PAGES').'</h2>',
+            new Form_Row ([
+            new Form_Col ([
+                '<h3>'.lang('REMOVE_PAGE_ACCESS_GROUP').'</h3>',
+                'removePage' => new FormField_Table ([
+                    'field' => 'removePage',
+                    'Table_Class' => 'table-condensed',
+                    'isdbfield' => false,
+                    'debug' => 0,
+                    'table_head_cells' => '<th>'.
+                        lang('SELECT_PAGE_BELOW').'</th><th>'.
+                        lang('NAME_ACCESSIBLE_PAGES').'</th>',
+                    'table_data_cells' => '<td>{CHECKBOX}</td><td>{PAGE}</td>',
+                    'nodata' => '<p>(This group does not have access to any pages currently)</p>',
+                    # repeating data will be set below
+                ]),
+            ],  ['Col_Class'=>'col-xs-12 col-md-6 col-lg-4']),
+            new Form_Col ([
+                '<h3>'.lang('ADD_PAGE_ACCESS_GROUP').'</h3>',
+                'addPage' => new FormField_Table ([
+                    'field' => 'addPage',
+                    'Table_Class' => 'table-condensed',
+                    'isdbfield' => false,
+                    'debug' => 0,
+                    'table_head_cells' => '<th>'.
+                        lang('SELECT_PAGE_BELOW').'</th><th>'.
+                        lang('NAME_INACCESSIBLE_PAGES').'</th>',
+                    'table_data_cells' => '<td>{CHECKBOX}</td><td>{PAGE}</td>',
+                    'nodata' => '<p>(There are no pages which can be added to this group)</p>',
+                    # repeating data will be set below
+                ]),
+            ],  ['Col_Class'=>'col-xs-12 col-md-6 col-lg-4']),
+            new Form_Col ([
+                '<h3>'.lang('PUBLIC_PAGES').'</h3>',
+                'publicPages' => new FormField_Table ([
+                    'field' => 'publicPages',
+                    'Table_Class' => 'table-condensed',
+                    'isdbfield' => false,
+                    'debug' => 0,
+                    'table_head_cells' => '<th>'.
+                        lang('PUBLIC_PAGES').'</th>',
+                    'table_data_cells' => '<td>{PAGE}</td>',
+                    'nodata' => '<p>(There are no public pages)</p>',
+                    # repeating data will be set below
+                ]),
+            ],  ['Col_Class'=>'col-xs-12 col-md-6 col-lg-4']),
+            ]),
         ], ['tab_id'=>'groupAccess', 'title'=>lang('GROUP_ACCESS_TITLE')]),
     ]),
-    'save' => new FormField_ButtonSubmit('save', [
-            'label' => lang('GROUP_SAVE')
+    'save' => new FormField_ButtonSubmit([
+            'field' => 'save',
+            'display' => lang('GROUP_SAVE')
         ]),
-    'delete' => new FormField_ButtonDelete('delete', [
-            'label' => lang('GROUP_DELETE'),
+    'delete' => new FormField_ButtonDelete([
+            'field' => 'delete',
+            'display' => lang('GROUP_DELETE'),
             'value' => $group_id,
         ]),
 ], ['table' => 'groups']);
-$myForm->getField('toc')->setRepeatValues(
+$myForm->getField('toc')->setRepData(
     $myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true])
 );
 
@@ -138,7 +262,7 @@ if (Input::exists('post')) {
             $errors[] = lang('SQL_ERROR');
         }
     } else {
-        //Update group columns
+        //Update group info columns
         if ($myForm->updateIfChangedAndValid($group_id, $errors)) {
             $successes[] = lang('GROUP_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
         }
@@ -153,6 +277,7 @@ if (Input::exists('post')) {
         } elseif (@$_POST['newRole'] || @$_POST['newRoleUser']) {
             $errors[] = lang('GROUP_NEED_ROLE_AND_USER');
         }
+        Input::delete(['newRole', 'newRoleUser']);
 
         //Delete roles
         if ($deletes = Input::get('deleteRoles')) {
@@ -166,7 +291,7 @@ if (Input::exists('post')) {
         }
 
         //Remove user(s) from group
-        if ($remove = Input::get('removeUsers', 'post')) {
+        if ($remove = Input::get('removeGroupUsers', 'post')) {
             if ($deletion_count = deleteGroupsUsers_raw($group_id, $remove)) {
                 $successes[] = lang('GROUP_REMOVE_USERS', array($deletion_count));
             } else {
@@ -184,7 +309,7 @@ if (Input::exists('post')) {
         }
 
         //Add users to group
-        if ($add = Input::get('addUsers', 'post')) {
+        if ($add = Input::get('addGroupUsers', 'post')) {
             if ($addition_count = addGroupsUsers_raw($group_id, $add)) {
                 $successes[] = lang('GROUP_ADD_USERS', array($addition_count));
             } else {
@@ -222,16 +347,26 @@ if (Input::exists('post')) {
 }
 $myForm->setFieldValues($db->queryById('groups', $group_id)->first());
 $groupDetails = fetchGroupDetails($group_id);
-$myForm->getField('deleteRoles')->setRepeatValues(fetchRolesByGroup($group_id));
+$myForm->getField('deleteRoles')->setRepData(fetchRolesByGroup($group_id));
 
 //Retrieve list of accessible pages
 $groupPages = fetchPagesByGroup($group_id);
 
 //Retrieve list of users with and without membership
-$groupMembers = fetchGroupMembers_raw($group_id);
-$nonGroupMembers = fetchGroupMembers_raw($group_id, true);
-// dump($groupMembers);
-// dump($nonGroupMembers);
+$groupMembers_users = fetchGroupMembers_raw($group_id, false, true);
+$myForm->getField('removeGroupUsers')->setRepData($groupMembers_users);
+$groupMembers_groups = fetchGroupMembers_raw($group_id, true, false);
+$myForm->getField('removeGroupGroups')->setRepData($groupMembers_groups);
+$nonGroupMembers_users = fetchNonGroupMembers_raw($group_id, false, true);
+$myForm->getField('addGroupUsers')->setRepData($nonGroupMembers_users);
+$nonGroupMembers_groups = fetchNonGroupMembers_raw($group_id, true, false);
+$myForm->getField('addGroupGroups')->setRepData($nonGroupMembers_groups);
+$groupPages = fetchPagesByGroup($group_id);
+$myForm->getField('removePage')->setRepData($groupPages);
+$nonGroupPages = fetchPagesNotByGroup($group_id, true);
+$myForm->getField('addPage')->setRepData($nonGroupPages);
+$publicPages = fetchPublicPages();
+$myForm->getField('publicPages')->setRepData($publicPages);
 
 $userData = fetchAllUsers();
 $pageData = fetchAllPages();
@@ -242,6 +377,10 @@ $groupRoles = fetchRolesByGroup($groupDetails->id);
 $groupUsers = fetchUsersByGroup($groupDetails->id);
 
 echo $myForm->getHTML(['errors'=>$errors, 'successes'=>$successes]);
+
+
+
+
 
 echo "\n\n\n\n\n\n\n\n<!-- END OF NEW STUFF -->\n\n";
 ?>
@@ -254,16 +393,16 @@ echo "\n\n\n\n\n\n\n\n<!-- END OF NEW STUFF -->\n\n";
 		<?php resultBlock($errors, $successes); ?>
           <h1>Configure Details for <?= $modeName ?> `<?= $groupDetails->name ?>`</h1>
 
-        <ul class="nav nav-tabs" id="myTab">
-          <li class="active"><a href="#groupInfo" data-toggle="tab">Group Information</a></li>
-          <li><a href="#groupMembers" data-toggle="tab">Group Membership</a></li>
-          <li><a href="#groupAccess" data-toggle="tab">Page Access</a></li>
+        <ul class="nav nav-tabs" id="myTabx">
+          <li class="active"><a href="#groupInfox" data-toggle="tab">Group Information</a></li>
+          <li><a href="#groupMembersx" data-toggle="tab">Group Membership</a></li>
+          <li><a href="#groupAccessx" data-toggle="tab">Page Access</a></li>
         </ul>
 			<form name='adminGroup' method='post'>
                 <input type="hidden" name="id" value="<?=$group_id?>" />
     			<input type="hidden" name="csrf" value="<?=Token::generate(); ?>" >
     <div class="tab-content">
-      <div class="tab-pane active col-xs-12 col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6" id="groupInfo">
+      <div class="tab-pane active col-xs-12 col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6" id="groupInfox">
 			<h3><?= $modeName ?> Information</h3>
 			<div id='regbox'>
         	<div class="form-group">
@@ -382,7 +521,7 @@ echo "\n\n\n\n\n\n\n\n<!-- END OF NEW STUFF -->\n\n";
 			</p>
 			</div>
         </div>
-        <div class="tab-pane col-xs-12" id="groupMembers">
+        <div class="tab-pane col-xs-12" id="groupMembersx">
 			<h3>Group Membership</h3>
 			<div id='regbox'>
           <div class="col-xs-12 col-sm-6">
@@ -444,7 +583,7 @@ echo "\n\n\n\n\n\n\n\n<!-- END OF NEW STUFF -->\n\n";
 
 			</div>
         </div>
-        <div class="tab-pane col-xs-12" id="groupAccess">
+        <div class="tab-pane col-xs-12" id="groupAccessx">
 			<h3>Page Access</h3>
 			<div id='regbox'>
             <div class="col-xs-12 col-sm-4">

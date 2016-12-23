@@ -140,6 +140,9 @@ abstract class US_FormField_Recaptcha extends FormField {
 
 abstract class US_FormField_Select extends FormField {
     protected $_fieldType = "select";
+    public $MACRO_Selected = '';
+    public $idField = 'id';
+    public $repMacroAliases = ['{OPTION_VALUE}', '{OPTION_LABEL}'];
     public
         $HTML_Pre = '
             <div class="{DIV_CLASS}">
@@ -147,7 +150,6 @@ abstract class US_FormField_Select extends FormField {
             <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
             <br />
             <select class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}">
-            <option value="{PLACEHOLDER_ID}" {SELECTED}>{PLACEHOLDER_OPTION_LABEL}</option>
             ',
         $HTML_Input = '
             <option value="{ID}" {SELECTED}>{OPTION_LABEL}</option>
@@ -158,23 +160,30 @@ abstract class US_FormField_Select extends FormField {
             ',
         $repElement = 'HTML_Input';
     protected
-        $_placeholderRow = [],
-        $_selected = 'selected="selected"';
+        $placeholderRow = [],
+        $selected = 'selected="selected"';
     public function handle1Opt($name, $val) {
-        if (!parent::handle1Opt($name, $val)) {
-            switch (strtolower($name)) {
-                case 'placeholder_row':
-                    $this->setPlaceholderRow($val);
-                    return true;
-                    break;
-            }
+        switch (strtolower($name)) {
+            case 'placeholder_row':
+                $this->setPlaceholderRow($val);
+                return true;
+                break;
+            case 'idfield':
+                $this->setIdField($val);
+                return true;
+                break;
         }
+        return parent::handle1Opt($name, $val);
     }
     public function setPlaceholderRow($v) {
-        $this->_placeholderRow = $v;
+        $this->placeholderRow = $v;
     }
     public function getRepData() {
-        return array_merge([$this->_placeholderRow], $this->_repData);
+        if ($this->placeholderRow) {
+            return array_merge([$this->placeholderRow], $this->repData);
+        } else {
+            return $this->repData;
+        }
     }
     public function specialRowMacros(&$macros, $row) {
         parent::specialRowMacros($macros, $row);
@@ -183,26 +192,32 @@ abstract class US_FormField_Select extends FormField {
         # a "blank" (unset) value might be null in data but '' in select statement
         # for the first "Choose below" item
         $fv = $this->getFieldValue();
-        #if ($this->getIdField() != 'id') var_dump($row);
+        #if (!@$row[$this->getIdField()]) var_dump($row);
         $rowVal = $row[$this->getIdField()];
         if (($fv === $rowVal) ||
                 ($fv !== 0 && $rowVal !== 0 && $fv == $rowVal)) {
-            $macros['{SELECTED}'] = $this->_selected;
+            $macros['{SELECTED}'] = $this->selected;
         } else {
             $macros['{SELECTED}'] = '';
         }
     }
+    public function getIdField() {
+        return $this->idField;
+    }
+    public function setIdField($val) {
+        $this->idField = $val;
+    }
 }
 abstract class US_FormField_Table extends FormField {
     protected $_fieldType = "table",
-        $_tableClass = "table table-hover",
-        $_tableHeadCellClass = "",
-        $_tableDataCellClass = "",
-        $_tableHeadRowClass = "",
-        $_tableDataRowClass = "",
-        $_tableDataColClass = "",
         $_dataFields = [],
         $_dataFieldLabels = [];
+    public
+        $MACRO_Table_Class = "table table-hover",
+        $MACRO_TH_Row_Class = "",
+        $MACRO_TH_Cell_Class = "",
+        $MACRO_TD_Row_Class = "",
+        $MACRO_TD_Cell_Class = "";
     public
         $HTML_Pre = '
             <div class="{DIV_CLASS}">
@@ -216,77 +231,34 @@ abstract class US_FormField_Table extends FormField {
             </table>
             </div> <!-- {DIV_CLASS} -->
             ',
+        $HTML_Checkbox = '<input type="checkbox" name="{FIELD_NAME}[]" value="{ID}"/>',
         $repElement = 'HTML_Input';
 
-    public function __construct($fn, $opts=[]) {
-        parent::__construct($fn, $opts);
-        foreach ($opts as $f=>$v) {
-            switch ($f) {
-                case 'fields':
-                case 'datafields':
-                    $this->setDataFields($v);
-                    #dbg("Setting Data Fields<br />\n");
-                    #dbg("_dataFields=".print_r($this->_dataFields,true));
-                    #dbg("_dataFieldLabels=".print_r($this->_dataFieldLabels,true));
-                    break;
-            }
+    public function handle1Opt($name, $val) {
+        switch (strtolower($name)) {
+            case 'table_data_cells':
+            case 'td_row':
+                #dbg('setting table_data_cells');
+                $this->HTML_Input = $this->processMacros(
+                    ['{TABLE_DATA_CELLS}'=>$val,
+                        '{CHECKBOX}' => $this->HTML_Checkbox],
+                    $this->HTML_Input);
+                #dbg('AFTER: HTML_Input='.htmlentities($this->HTML_Input));
+                return true;
+                break;
+            case 'table_head_cells':
+            case 'th_row':
+                #dbg('setting table_head_cells');
+                $this->HTML_Pre = $this->processMacros(
+                    ['{TABLE_HEAD_CELLS}'=>$val], $this->HTML_Pre);
+                #dbg("Setting Data Fields<br />\n");
+                #dbg("_dataFields=".print_r($this->_dataFields,true));
+                #dbg("_dataFieldLabels=".print_r($this->_dataFieldLabels,true));
+                #dbg('AFTER: HTML_Pre='.htmlentities($this->HTML_Pre));
+                return true;
+                break;
         }
-    }
-    public function jitMacrosPerRow($row, &$macros) {
-        parent::jitMacrosPerRow($row, $macros);
-        $dataRow = '';
-        foreach ($this->getDataFields() as $fld) {
-            if (isset($repeatVal[$fld])) {
-                $val = $repeatVal[$fld];
-            } else {
-                $val = $fld;
-            }
-            $dataRow .= '<td>'.$val.'</td>';
-        }
-        $macros['{TABLE_DATA_CELLS}'] = $dataRow;
-    }
-    public function jitMacros(&$macros) {
-        parent::jitMacros($macros);
-        $macros = array_merge($macros, [
-            '{TABLE_CLASS}'    => $this->getTableClass(),
-            '{TABLE_HEAD_CELLS}'=> $this->getTableHeadCells(),
-            '{TD_ROW_CLASS}'   => $this->getTableDataRowClass(),
-            '{TH_ROW_CLASS}'   => $this->getTableHeadRowClass(),
-            '{TD_CLASS}'       => $this->getTableDataCellClass(),
-            '{TH_CLASS}'       => $this->getTableHeadCellClass(),
-        ]);
-        #var_dump($macros);
-    }
-    public function getTableHeadCellClass() {
-        return $this->_tableHeadCellClass;
-    }
-    public function getTableDataCellClass() {
-        return $this->_tableDataCellClass;
-    }
-    public function getTableHeadRowClass() {
-        return $this->_tableHeadRowClass;
-    }
-    public function getTableDataRowClass() {
-        return $this->_tableDataRowClass;
-    }
-    public function getTableClass() {
-        return $this->_tableClass;
-    }
-    public function getTableHeadCells() {
-        $html = '';
-        foreach ($this->_dataFieldLabels as $label) {
-            #dbg("label=$label");
-            $html .= '<th>'.$label.'</th>';
-        }
-        #dbg(htmlentities($html));
-        return $html;
-    }
-    public function getDataFields() {
-        return $this->_dataFields;
-    }
-    public function setDataFields($val) {
-        $this->_dataFieldLabels = array_values($val);
-        $this->_dataFields = array_keys($val);
+        return parent::handle1Opt($name, $val);
     }
 }
 

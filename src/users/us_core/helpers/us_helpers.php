@@ -114,22 +114,58 @@ function fetchUserGroups($user_id) {
 
 
 //Retrieve list of users/groups who are members of a given group (NO NESTING)
-// or (if $reverse_logic == true) who are NOT members of a given group
-function fetchGroupMembers_raw($group_id, $reverse_logic=false) {
+function fetchGroupMembers_raw($group_id, $include_groups=true, $include_users=true) {
     global $T;
 	$db = DB::getInstance();
-	if ($reverse_logic) {
-		$sql = "SELECT users.id as id, username AS name, 'user' AS group_or_user
-						FROM $T[users] users
-						WHERE NOT EXISTS (
-							SELECT *
-							FROM $T[groups_users_raw]
-							WHERE users.id = user_id
-							AND user_is_group = 0
-							AND group_id = ?
-						)
-						UNION
-						SELECT groups.id as id, groups.name as name, 'group' AS group_or_user
+    $sql = '';
+    $bindvals = [];
+    if ($include_users) {
+		$sql .= "SELECT user_id as id, CONCAT(fname, ' ', lname, ' (', username, ')') AS name, 'user' AS group_or_user
+    			 FROM $T[groups_users_raw]
+    			 JOIN $T[users] users ON (user_id = users.id)
+    			 WHERE user_is_group = 0
+    			 AND group_id = ?";
+        $bindvals[] = $group_id;
+    }
+    if ($include_groups && $include_users) {
+        $sql .= " UNION ";
+    }
+    if ($include_groups) {
+		$sql .= "SELECT user_id AS id, `name` AS `name`, 'group' AS group_or_user
+			     FROM $T[groups_users_raw]
+			     JOIN $T[groups] groups ON (user_id = groups.id)
+			     WHERE user_is_group = 1
+			     AND group_id = ? ";
+    	$bindvals[] = $group_id;
+    }
+	#dbg("group_id = $group_id, sql=$sql<br />\n");
+	$query = $db->query($sql,$bindvals);
+	#echo "DEBUG: count=".$query->count()."<br />\n";
+	return $query->results();
+}
+//Retrieve list of users/groups who are NOT members of a given group (NO NESTING)
+function fetchNonGroupMembers_raw($group_id, $include_groups=true, $include_users=true) {
+    global $T;
+	$db = DB::getInstance();
+    $sql = '';
+    $bindvals = [];
+	if ($include_users) {
+		$sql .= "SELECT users.id as id, CONCAT(fname, ' ', lname, ' (', username, ')') AS name, 'user' AS group_or_user
+					FROM $T[users] users
+					WHERE NOT EXISTS (
+						SELECT *
+						FROM $T[groups_users_raw]
+						WHERE users.id = user_id
+						AND user_is_group = 0
+						AND group_id = ?
+					) ";
+        $bindvals[] = $group_id;
+    }
+    if ($include_users && $include_groups) {
+        $sql .= " UNION ";
+    }
+    if ($include_groups) {
+		$sql .= "SELECT groups.id as id, groups.name as name, 'group' AS group_or_user
 						FROM $T[groups] groups
 						WHERE id != ?
 						AND NOT EXISTS (
@@ -138,23 +174,9 @@ function fetchGroupMembers_raw($group_id, $reverse_logic=false) {
 							WHERE groups.id = user_id
 							AND user_is_group = 1
 							AND group_id = ?
-						)
-						";
-		$bindvals = array($group_id,$group_id,$group_id);
-	} else {
-		$sql = "SELECT user_id as id, username AS name, 'user' AS group_or_user
-						FROM $T[groups_users_raw]
-						JOIN $T[users] users ON (user_id = users.id)
-						WHERE user_is_group = 0
-						AND group_id = ?
-						UNION
-						SELECT user_id as id, name AS name, 'group' AS group_or_user
-						FROM $T[groups_users_raw]
-						JOIN $T[groups] groups ON (user_id = groups.id)
-						WHERE user_is_group = 1
-						AND group_id = ?
-						";
-		$bindvals = array($group_id,$group_id);
+						) ";
+		$bindvals[] = $group_id;
+		$bindvals[] = $group_id;
 	}
 	#echo "DEBUG: group_id = $group_id, sql=$sql<br />\n";
 	$query = $db->query($sql,$bindvals);
@@ -266,19 +288,22 @@ function deletePages($pages) {
     return $count;
 }
 
+function fetchResults($sql, $bindvals=[]) {
+    $db = DB::getInstance();
+    return $db->query($sql, $bindvals)->results();
+}
+
 //Fetch information on all pages
 function fetchAllPages() {
     global $T;
+    return fetchResults("SELECT id, page, private FROM $T[pages] ORDER BY page ASC");
 	$db = DB::getInstance();
 	$query = $db->query("SELECT id, page, private FROM $T[pages] ORDER BY page ASC");
-	$pages = $query->results();
-	//return $pages;
-
-	if (isset($row)) {
-		return ($row);
-	} else {
-		return $pages;
-	}
+	return $query->results();
+}
+function fetchPublicPages() {
+    global $T;
+    return fetchResults("SELECT id, page FROM $T[pages] WHERE private = 0 ORDER BY page ASC");
 }
 
 //Fetch information for a specific page
@@ -289,7 +314,6 @@ function fetchPageDetails($id) {
 	$row = $query->first();
 	return $row;
 }
-
 
 //Check if a page ID exists
 function pageIdExists($id) {
@@ -358,10 +382,26 @@ function fetchPagesByGroup($group_id) {
     global $T;
 	$db = DB::getInstance();
 	$query = $db->query(
-        "SELECT gp.id as id, gp.page_id as page_id, p.page as page, p.private as private
+        "SELECT p.id, p.page, p.private
          FROM $T[groups_pages] gp
          INNER JOIN $T[pages] p ON (gp.page_id = p.id)
          WHERE gp.group_id = ?",[$group_id]);
+	return $query->results();
+}
+//Retrieve list of pages that a group can NOT access
+function fetchPagesNotByGroup($group_id, $onlyPrivate=false) {
+    global $T;
+	$db = DB::getInstance();
+    $sql = "SELECT id, page, private
+            FROM $T[pages] p
+            WHERE NOT EXISTS
+              (SELECT * FROM $T[groups_pages] gp
+               WHERE gp.group_id = ?
+               AND p.id = gp.page_id)";
+    if ($onlyPrivate) {
+        $sql .= ' AND p.private != 0';
+    }
+	$query = $db->query($sql,[$group_id]);
 	return $query->results();
 }
 
@@ -373,7 +413,7 @@ function deleteGroupsPages($pages, $groups) {
 	$sql = "DELETE FROM $T[groups_pages] WHERE group_id = ? AND page_id = ?";
     foreach ((array)$pages as $p) {
         foreach ((array)$groups as $g) {
-        	$q = $db->query($sql, [$p, $g]);
+        	$q = $db->query($sql, [$g, $p]);
             $count++;
         }
     }

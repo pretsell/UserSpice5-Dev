@@ -35,19 +35,20 @@ abstract class US_FormField extends Element {
         $_fieldType=null, // should be set by inheriting classes
         $_deleteMe=false,
         $_isDBField=true; // whether this is a field in the DB
+    public $repEmptyAlternateReplacesAll = true;
     public
-        $HTML_Pre =
-            '<div class="{DIV_CLASS}">
-             <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
-             <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
-             <br />',
-        $HTML_Input =
-            '<input class="{INPUT_CLASS}" type="{TYPE}" id="{FIELD_ID}" '
+        $HTML_Pre = '
+            <div class="{DIV_CLASS}">
+              <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
+              <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
+              <br />',
+        $HTML_Input = '
+              <input class="{INPUT_CLASS}" type="{TYPE}" id="{FIELD_ID}" '
             .'name="{FIELD_NAME}" placeholder="{PLACEHOLDER}" value="{VALUE}" '
             .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB}>',
-        $HTML_Post =
-            '<br />
-             </div> <!-- {DIV_CLASS} -->',
+        $HTML_Post = '
+              <br />
+            </div> <!-- {DIV_CLASS} -->',
         $HTML_Script = '',
         $elementList = ['Pre', 'Input', 'Post'];
     # Commented-out values below are added just-in-time prior to replacement
@@ -62,6 +63,7 @@ abstract class US_FormField extends Element {
         $MACRO_Hint_Class = '',
         $MACRO_Hint_Class_Not_Required = 'fa fa-info-circle',
         $MACRO_Hint_Class_Required = 'fa fa-asterisk',
+        $MACRO_Hint_Text = '',
         $MACRO_TH_Class = '',
         $MACRO_Placeholder = '',
         $MACRO_Extra_Attrib = '',
@@ -77,8 +79,10 @@ abstract class US_FormField extends Element {
                 $fn = $field_def['alias'];
             }
             $this->setDBFieldName($dbFieldnm);
+            unset($opts['dbfield']); // don't need anymore
         } else {
             $fn = @$opts['field']; // grab it if it's there
+            unset($opts['field']); // don't need anymore
             $field_def = []; // no field-def to work with
         }
         if ($fn) {
@@ -144,9 +148,7 @@ abstract class US_FormField extends Element {
                 return true;
                 break;
         }
-        if (parent::handle1Opt($name, $val)) {
-            return true;
-        }
+        return parent::handle1Opt($name, $val);
     }
 
     public function getMacros($s, $opts) {
@@ -154,48 +156,32 @@ abstract class US_FormField extends Element {
         $this->MACRO_Field_Name = $this->getFieldName();
         $this->MACRO_Field_ID = $this->getFieldId();
         $this->MACRO_Label_Text = $this->getFieldLabel();
-        $this->MACRO_Placeholder = $this->getPlaceholder();
         $this->MACRO_Value = $this->getFieldValue();
         $this->MACRO_Required_Attrib = ($this->getRequired() ? 'required' : '');
         $this->MACRO_Hint_Class = $this->getHintClass();
+        if (!$this->MACRO_Hint_Text && $this->getValidator()) {
+            $this->MACRO_Hint_Text = $this->getValidator()->describe($this->_fieldName);
+        } else {
+            $this->MACRO_Hint_Text = '';
+        }
         return parent::getMacros($s, $opts);
     }
-    # $opts is a hash which can have the following indexed values:
-    #  'replaces' => ['{search}'=>'replace',...]
-    public function xgetHTML($opts=[]) {
-        # Start by calculating $this->HTMLInput.
-        $html = $this->getHTMLElements($opts);
-        # Now we will calculate an array of macros for search/replace.
-        # Static values are already in $this->_macros but others have
-        # to be set "just in time"...
-        $justInTimeRepl = [
-                    '{TYPE}'           => $this->getFieldType(),
-                    '{FIELD_NAME}'     => $this->getFieldName(),
-                    '{FIELD_ID}'       => $this->getFieldId(),
-                    '{LABEL_TEXT}'     => $this->getFieldLabel(),
-                    '{PLACEHOLDER}'    => $this->getPlaceholder(),
-                    '{VALUE}'          => $this->getFieldValue(),
-                    '{REQUIRED_ATTRIB}'=> ($this->getRequired() ? 'required' : ''),
-                    '{HINT_CLASS}'     => $this->getHintClass(),
-        ];
-        $this->jitMacros($justInTimeRepl);
-        $repl = array_merge($this->_macros, $justInTimeRepl, (array)@$opts['replaces']);
-        # since this is slightly "expensive" we won't evaluate unless it is needed
-        if (!isset($repl['{HINT_TEXT}']) && $this->getValidator()) {
-            $repl['{HINT_TEXT}'] = $this->getValidator()->describe($this->_fieldName);
-        }
-        $html = str_replace(array_keys($repl), array_values($repl), $html);
-        return $html;
-    }
-    public function getHTMLElements($opts) {
-        return $this->HTMLPre . $this->HTMLInput . $this->HTMLPost;
-    }
-    // these are overall just-in-time replacement macros
-    public function jitMacros(&$macros) {
-        // don't do anything by default - each field type may
-        // have something to do...
-    }
 
+    public function setRepData($val) {
+        # convert from object ($data->id, $data->name) to associative array
+        # ($data['id'], $data['name']) if needed
+        if (sizeof($val)>0 && is_object($val[0])) {
+            $tmp = [];
+            foreach ((array)$val as $k=>$o) {
+                $tmp[$k] = (array)$o;
+            }
+            $this->repData = $tmp;
+        } else {
+            $this->repData = $val;
+        }
+        #dbg("setRepData(): values follow (class=".get_class($this).")");
+        #var_dump($this->repData);
+    }
     public function describeValidation() {
         return $this->getValidator()->describe($this->_fieldName);
     }
@@ -208,17 +194,14 @@ abstract class US_FormField extends Element {
     }
 
     public function isChanged() {
-        return ($this->_fieldNewValue == $this->_fieldValue);
+        return ($this->_fieldNewValue != $this->_fieldValue);
     }
 	public function getPlaceholder(){
-		return $this->_fieldPlaceholder;
+		return $this->MACRO_Placeholder;
 	}
 	public function setPlaceholder($placeholder){
-		$this->_fieldPlaceholder = $placeholder;
+		$this->MACRO_Placeholder = $placeholder;
 	}
-    public function setReplace($search, $replace) {
-        $this->_macros[$search] = $replace;
-    }
     # Does the validation for this field say it is a required field?
 	public function getRequired() {
         if ($valid = $this->getValidator()) {
@@ -287,7 +270,9 @@ abstract class US_FormField extends Element {
         return $this->_fieldNewValue;
     }
     public function setNewValue($val) {
-        $this->_fieldNewValue = Input::sanitize($val);
+        if ($this->getIsDBField()) {
+            $this->_fieldNewValue = Input::sanitize($val);
+        }
     }
 
     # methods related to validation

@@ -46,42 +46,62 @@
  *   but will be converted to an assoc array internally.
  * $repMacroAliases
  *   Sometimes it is convenient to have aliases based on the position within
- *   the record of $repData. For instance, {OPTION-VALUE} and {OPTION-LABEL}
+ *   the record of $repData. For instance, {OPTION_VALUE} and {OPTION_LABEL}
  *   rather than having to adjust the macro for {ID} and {NAME} one time and
  *   {ID} and {SHORT_NAME} the next time. The values of this array will become
  *   aliases for the first n fields within the records of $repData.
  * $HTML_RepEmptyAlternate
  *   If a repeating element has no data, this value will be used as the
  *   alternate.
+ * $repEmptyAlternateReplacesAll
+ *   In some cases (forms) the $HTML_RepEmptyAlternate should replace just
+ *   the $repElement (set to false) whereas in other cases (fields) it should
+ *   replace ALL elements (set to true).
  */
 abstract class US_Element {
     protected $_db=null;
+    public $debug = -1;
     public $elementList = [];
     public $repElement = null;
     public $repData = [];
     public $repMacroAliases = [];
+    public $repEmptyAlternateReplacesAll = false;
     public $HTML_RepEmptyAlternate = '';
     # public $HTML_x = '<input type="{TYPE}" name="{NAME}"' ... />';
     # public $MACRO_type = 'hidden';
     public function __construct($opts=[]) {
+        $this->debug(1, '::__construct(): Entering');
         $this->_db = DB::getInstance();
-        if (isset($opts['elements'])) {
-            $this->setElementList($opts['elements']);
-        }
-        if ($reps = $this->getRepDataOpt($opts)) {
-            $this->setRepData($reps);
-        }
         $this->handleOpts($opts);
     }
     public function handleOpts($opts) {
+        $this->debug(1, '::handleOpts(): Entering');
+        #if (!is_array($opts)) var_dump($opts)   ;
+        if ($reps = $this->getRepDataOpt($opts)) {
+            $this->setRepData($reps);
+        }
         foreach ($opts as $k=>$v) {
-            $this->handle1Opt($k, $v);
+            if (!$this->handle1Opt($k, $v) && configGet('debug_mode')) {
+                if (!in_array($k, ['id', 'name', 'alias', 'min', 'max', 'unique_in_table', 'match_field', 'is_numeric', 'valid_email', 'regex', 'regex_display', 'keep_if', 'nodata', $this->repElement, ])) {
+                    dbg("Unknown option $k for class=".get_class($this)." (value=".print_r($v, true).")");
+                }
+            }
         }
     }
     // when this method is overridden you probably want to call
     // parent::handle1Opt() to get the benefit of parent option handling
     public function handle1Opt($name, $val) {
-        if (strtolower($name) == 'repemptyalternate') {
+        switch (strtolower($name)) {
+            case 'elements':
+                $this->setElementList($opts['elements']);
+                return true;
+                break;
+            case 'debug':
+                $this->debug = $val;
+                return true;
+                break;
+        }
+        if (in_array(strtolower($name), ['repemptyalternate', 'nodata'])) {
             $this->setRepEmptyAlternate($val);
             return true;
         }
@@ -104,29 +124,39 @@ abstract class US_Element {
         }
         return false;
     }
-    protected function getRepDataOpt($opts) {
-        $repDataNames = ['repData', 'repeats'];
-        if ($this->repElement) {
-            $repDataNames[] = $this->repElement;
-            if (substr($this->repElement, 0, strlen('HTML_')) == 'HTML_') {
-                $repDataNames[] = substr($this->repElement, strlen('HTML_'));
+    protected function getRepDataOpt(&$opts) {
+        $repDataNames = ['repData', 'repeat', 'repeats', 'repeatvalue'];
+        if ($this->getRepElement()) {
+            $repDataNames[] = $this->getRepElement(); // i.e., 'fields'
+            if (substr($this->getRepElement(), 0, strlen('HTML_')) == 'HTML_') {
+                $repDataNames[] = substr($this->getRepElement(), strlen('HTML_'));
             }
         }
         foreach ($repDataNames as $i) {
             if (isset($opts[$i])) {
-                return $opts[$i];
+                $rtn = $opts[$i];
+                unset($opts[$i]); // don't need anymore
+                return $rtn;
             }
         }
     }
     public function getHTML($opts=[]) {
+        $this->debug(1, '::getHTML(): Entering');
         $elementList = $this->getElementList($opts);
         $html = '';
-        foreach ((array)$elementList as $e) {
-            #dbg(substr($this->getHTMLElement($e, $opts), 0, 30));
-            $html .= $this->getHTMLElement($e, $opts);
-            #echo "\n\n===$e (".get_class($this).")===\n\n$html\n\n";
+        if ($this->isRepeating() && $this->getRepEmptyAlternateReplacesAll() && $this->repDataIsEmpty()) {
+            $this->debug(2, '::getHTML(): calling getRepEmptyAlternate()');
+            $html = $this->getRepEmptyAlternate();
+        } else {
+            foreach ((array)$elementList as $e) {
+                #dbg(substr($this->getHTMLElement($e, $opts), 0, 30));
+                $this->debug(2, "::getHTML(): e=$e, calling getHTMLElement()");
+                $html .= $this->getHTMLElement($e, $opts);
+                #echo "\n\n===$e (".get_class($this).")===\n\n$html\n\n";
+            }
         }
-        return $this->processMacros($html, $opts);
+        $macros = $this->getMacros($html, $opts);
+        return $this->processMacros($macros, $html, $opts);
     }
     public function getElementList($opts=[]) {
         if (isset($opts['elements'])) {
@@ -141,7 +171,8 @@ abstract class US_Element {
         $this->elementList = $elementList;
     }
     public function getHTMLElement($element, $opts) {
-        #dbg("getHTMLElement($element, \$opts)");
+        $this->debug(1, "::getHTMLElement('$element', \$opts): Entering");
+        #dbg("getHTMLElement($element, \$opts) -->".get_class($this));
         if (is_string($element)) {
             $methodName = 'getHTML'.$element;
             $propName = 'HTML_'.$element;
@@ -149,9 +180,9 @@ abstract class US_Element {
             if (method_exists($this, $methodName)) {
                 #dbg("getHTMLElement(): Method");
                 $html = $this->$methodName($opts);
-            } elseif (in_array($this->repElement, [$propName, $prop2Name])) {
+            } elseif (in_array($this->getRepElement(), [$propName, $prop2Name])) {
                 # repeating element
-                $propName = $this->repElement;
+                $propName = $this->getRepElement();
                 $elem = isset($this->$propName) ? $this->$propName : $propName;
                 $html = $this->getHTMLRepElement($elem, $opts);
             } elseif (isset($this->$propName) || isset($this->$prop2Name)) {
@@ -171,6 +202,8 @@ abstract class US_Element {
         return $html;
     }
     public function getHTMLRepElement($element, $opts) {
+        $this->debug(1, "::getHTMLRepElement(): Entering");
+        $this->debug(2, "::getHTMLRepElement(): element=$element");
         #dbg("getHTMLRepElement(<pre>".substr($element, 0, 20)."</pre>...): Entering (".get_class($this).")");
         if ($this->repDataIsEmpty()) {
             return $this->getRepEmptyAlternate();
@@ -178,27 +211,27 @@ abstract class US_Element {
         #dbg("getHTMLRepElement(): Not empty");
         $html = '';
         foreach ($this->getRepData() as $k=>$row) {
-            #dbg(get_class($this).'==>'.$k);
-            #var_dump($row);
-            if (is_object($row)) {
+            $this->debug(2, "::getHTMLRepElement(): k=$k, row=".print_r($row,true));
+            #dbg('REP ELEMENT class='.get_class($this).'==>'.$k);
+            #if ($k == 'grouptype_id') var_dump($row);
+            if (is_object($row) && (method_exists($row, 'getHTML') || method_exists($row, 'getRowMacros'))) {
                 #dbg("OBJECT==>".get_class($row));
                 if (method_exists($row, 'getHTML')) {
                     $element = $row->getHTML();
                 }
                 if (method_exists($row, 'getRowMacros')) {
                     $rowMacros = $row->getRowMacros();
-                } else {
-                    $rowMacros = [];
                 }
             } elseif (is_string($row)) {
                 #dbg("SIMPLE STRING");
                 $element = $row;
                 $rowMacros = [];
             } else {
-                #dbg("PRESUMABLY ASSOCIATIVE ARRAY");
+                #dbg("PRESUMABLY ASSOCIATIVE ARRAY (or iterable object)");
                 $rowMacros = [];
                 $idx = 0;
                 foreach ($row as $k=>$v) {
+                    $this->debug(2, "::getHTMLRepElement(): k=$k, v=$v");
                     $rowMacros['{'.$k.'}'] = $v;
                     if (isset($this->repMacroAliases[$idx])) {
                         $rowMacros[$this->repMacroAliases[$idx]] = $v;
@@ -208,8 +241,10 @@ abstract class US_Element {
                 // additional macros may be added to $rowMacros here
                 $this->specialRowMacros($rowMacros, $row);
             }
-            #var_dump($rowMacros);
+            if ($this->debug>1) var_dump($rowMacros);
+            $this->debug(4, "::getHTMLRepElement(): element=$element");
             $html .= str_ireplace(array_keys($rowMacros), array_values($rowMacros), $element);
+            $this->debug(4, "::getHTMLRepElement(): html=$html");
         }
         return $html;
     }
@@ -223,13 +258,44 @@ abstract class US_Element {
     public function repDataIsEmpty() {
         return !(boolean)$this->repData;
     }
-    public function processMacros($html, $opts) {
+    public function processMacros($macros, $html, $opts=[]) {
         if (in_array('nomacros', $opts)) {
             return $html;
         }
-        $macros = $this->getMacros($html, $opts);
+        #$macros = $this->getMacros($html, $opts);
         #var_dump($macros);
-        return str_ireplace(array_keys($macros), array_values($macros), $html);
+        $rtn = str_ireplace(array_keys($macros), array_values($macros), $html);
+        #
+        # DEBUGGING
+        #
+        if (false && configGet('debug_mode')) {
+            $matches = [];
+            $empties = '';
+            if (true) {
+                preg_match_all('/{[^{}]+}/', $rtn, $matches);
+            }
+            if (true) {
+                foreach ($macros as $m=>$v) {
+                    if (!$v && strpos($html, $m) !== false) {
+                        $empties .= "<li>Empty macro $m ($v)</li>";
+                    }
+                }
+            }
+            if (@$matches[0] || $empties) {
+                dbg("Debugging Macros: (".get_class($this).")");
+                echo "<br>\nBEFORE = <pre>".htmlentities($html)."</pre>\n<br>\n";
+                echo "<br>\nAFTER = <pre>".htmlentities($rtn)."</pre>\n<br>\n";
+            }
+            if (@$matches[0]) {
+                dbg("\nHere are the non-matching MACROs from above\n");
+                var_dump($matches);
+            }
+            if ($empties) {
+                dbg("Empty Macros (may be valid)");
+                echo "<ul>$empties</ul>";
+            }
+        }
+        return $rtn;
     }
     public function getMacros($s, $opts) {
         foreach ($this->_getPropsByPrefix("MACRO_") as $k=>$v) {
@@ -259,11 +325,23 @@ abstract class US_Element {
     public function setRepEmptyAlternate($val) {
         $this->HTML_RepEmptyAlternate = $val;
     }
+    public function getRepEmptyAlternateReplacesAll() {
+        return $this->repEmptyAlternateReplacesAll;
+    }
     public function setRepData($val) {
         $this->repData = $val;
     }
     public function getRepData() {
         return $this->repData;
+    }
+    public function getRepElement() {
+        return $this->repElement;
+    }
+    public function isRepeating() {
+        return (boolean)$this->getRepElement();
+    }
+    public function getIsDBField() {
+        return false; // only FormField and descendants can be DB Fields
     }
     private function _getPropsByPrefix($prefix) {
         $props = get_object_vars($this);
@@ -280,5 +358,13 @@ abstract class US_Element {
             array_values($props));
         #var_dump($props);
         return $props;
+    }
+    public function debug($lev, $str) {
+        if ($lev <= $this->debug) {
+            if (substr($str, 0 ,2) == '::') {
+                $str = get_class($this).$str;
+            }
+            dbg($str);
+        }
     }
 }

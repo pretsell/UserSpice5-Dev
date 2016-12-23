@@ -28,26 +28,24 @@ class US_Form extends Element {
     protected $HTML_closeContainer = '</div> <!-- container -->'."\n";
     protected $HTML_closeRow = '</div> <!-- row -->'."\n";
     protected $HTML_closeCol = '</div> <!-- col -->'."\n";
-    protected $HTML_openWell = '<div class="well {WELL_CLASS}">'."\n";
-    protected $HTML_closeWell = '</div> <!-- well -->'."\n";
     protected $HTML_Title = '
         <div class="{COL_CLASS}">
             <h2>{FORM_TITLE}</h2>
         </div> <!-- title col -->
         ';
     protected $HTML_Well_Title = '
-        <div class="{COL_CLASS}">
+        <div class="{COL_CLASS}"> <!-- title col -->
             <h2>{FORM_TITLE}</h2>
         </div> <!-- title col -->
         ';
     protected $HTML_TitleAndResults = '
-        <div class="{COL_CLASS}">
+        <div class="{COL_CLASS}"> <!-- title & results col -->
             <h2>{FORM_TITLE}</h2>
     		{RESULT_BLOCK}
         </div> <!-- title & result col -->
         ';
     protected $HTML_AdminDashboard = '
-        <div class="xs-col-12">
+        <div class="xs-col-12"> <!-- admin dashboard col -->
             {INCLUDE_ADMIN_DASHBOARD}
         </div> <!-- admin dashboard col -->
         ';
@@ -81,6 +79,7 @@ class US_Form extends Element {
         // delete conditional fields (keep_if or delete_if logic in $opts)
         foreach ($this->getFields() as $fieldName=>$fieldObj) {
             if ($fieldObj->deleteMe()) {
+                dbg("Deleting field=$fieldName");
                 $this->deleteField($fieldName);
             }
         }
@@ -146,13 +145,13 @@ class US_Form extends Element {
         $macros = parent::getMacros($s, $opts);
         # These macros are "expensive" to evaluate and so are only
         # evaluated if they actually exist in the $s string
-        if (strpos($s, "{RESULT_BLOCK}") !== false) {
+        if (stripos($s, "{RESULT_BLOCK}") !== false) {
             $macros['{RESULT_BLOCK}'] = ResultBlock((array)@$opts['errors'], (array)@$opts['successes']);
         }
-        if (strpos($s, "{GENERATE_CSRF_TOKEN}") !== false) {
+        if (stripos($s, "{GENERATE_CSRF_TOKEN}") !== false) {
             $macros['{GENERATE_CSRF_TOKEN}'] = Token::generate();
         }
-        if (strpos($s, "{INCLUDE_ADMIN_DASHBOARD}") !== false) {
+        if (stripos($s, "{INCLUDE_ADMIN_DASHBOARD}") !== false) {
             $macros['{INCLUDE_ADMIN_DASHBOARD}'] = getInclude(pathFinder('includes/admin_dashboard.php'));
         }
         return $macros;
@@ -183,7 +182,7 @@ class US_Form extends Element {
         # default to $onlyFields==true unless override
         $onlyFields = !(@$opts['not_only_fields'] || in_array('not_only_fields', $opts));
         $recursive = (@$opts['recursive'] || in_array('recursive', $opts));
-        $fieldList = $this->_fixFieldList($fieldFilter, $onlyFields);
+        $fieldList = $this->fixFieldList($fieldFilter, $onlyFields);
         $rtn = [];
         foreach ($fieldList as $f) {
             $field = $this->getField($f);
@@ -219,15 +218,20 @@ class US_Form extends Element {
     }
     public function listFields($onlyFields=true) {
         #dbg("listFields($onlyFields): entering");
-        $rtn = array_keys($this->repData);
-        if ($onlyFields) {
-            $rtn = array_filter($rtn, 'is_string'); // get rid of numeric keys (HTML snippets)
+        $rtn = [];
+        foreach ($this->repData as $k=>$v) {
+            if (!$onlyFields || is_a($v, 'US_FormField')) {
+                $rtn[] = $k;
+            }
+            if (method_exists($v, 'listFields')) {
+                $rtn = array_merge($rtn, $v->listFields($onlyFields));
+            }
         }
         #dbg("listFields(): Returning <pre>".print_r($rtn,true)."</pre><br />");
         return $rtn;
     }
     public function setFieldValues($vals, $fieldFilter=array()) {
-        $fieldList = $this->_fixFieldList($fieldFilter);
+        $fieldList = $this->fixFieldList($fieldFilter);
         foreach ($fieldList as $f) {
             if (is_array($vals)) {
                 if (isset($vals[$f])) {
@@ -246,7 +250,7 @@ class US_Form extends Element {
         }
     }
     public function setNewValues($vals, $fieldFilter=array()) {
-        $fieldList = $this->_fixFieldList($fieldFilter);
+        $fieldList = $this->fixFieldList($fieldFilter);
         foreach ($fieldList as $f) {
             if (isset($vals[$f])) {
                 $this->getField($f)->setNewValue($vals[$f]);
@@ -254,7 +258,7 @@ class US_Form extends Element {
         }
     }
     public function fieldListNewValues($fieldFilter=array(), $onlyDB=true) {
-        $fieldList = $this->_fixFieldList($fieldFilter);
+        $fieldList = $this->fixFieldList($fieldFilter);
         $rtn = [];
         #var_dump($fieldList);
         foreach ($fieldList as $f) {
@@ -267,7 +271,7 @@ class US_Form extends Element {
         return $rtn;
     }
     # If someone wants a sub-set of fields, make sure they are all in the form
-    protected function _fixFieldList($fieldFilter, $onlyFields=true) {
+    protected function fixFieldList($fieldFilter, $onlyFields=true) {
         if ($fieldFilter) {
             return array_intersect($this->listFields($onlyFields), $fieldFilter);
         } else {
@@ -275,7 +279,7 @@ class US_Form extends Element {
         }
     }
     public function isChanged($fieldFilter=array()) {
-        $fieldList = $this->_fixFieldList($fieldFilter);
+        $fieldList = $this->fixFieldList($fieldFilter);
         foreach ($fieldList as $f) {
             if ($this->getField($f)->isChanged()) {
                 return true;
@@ -324,7 +328,7 @@ class US_Form extends Element {
         return $count;
     }
 	public function checkFieldValidation($data=[], &$errors, $fieldFilter=array()) {
-        $fieldList = $this->_fixFieldList($fieldFilter);
+        $fieldList = $this->fixFieldList($fieldFilter);
         $this->_validatePassed = true; // assume it passes unless we get errors
         $errors = [];
         foreach ($fieldList as $f) {
