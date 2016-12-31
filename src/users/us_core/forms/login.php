@@ -81,7 +81,7 @@ if (Input::exists()) {
 		if ($login) {
             # If the user tried to go to a given page (other than login.php) and redirect_referrer_login
             # is turned on, then now that we are logged in go to that page.
-			if ($_SESSION['securePageRequest'] && basename($_SESSION['securePageRequest']) != 'login.php' && configGet('redirect_referrer_login')) {
+			if (@$_SESSION['securePageRequest'] && basename($_SESSION['securePageRequest']) != 'login.php' && configGet('redirect_referrer_login')) {
 				//bold('HERE');
 				$securePageRequest=$_SESSION['securePageRequest'];
 				unset($_SESSION['securePageRequest']);
