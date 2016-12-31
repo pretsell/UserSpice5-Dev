@@ -19,7 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 ?>
 <?php
-require_once 'init.php';
+require_once 'c:/wamp/www/UserSpice5-Dev/src/z_us_root.php';
+if (file_exists($locali = US_ROOT_DIR.'local/includes/init.php')) {
+    require_once $locali;
+} else {
+    require_once US_ROOT_DIR.'us_core/includes/init.php';
+}
 if(isset($user) && $user->isLoggedIn()){
   Redirect::to(US_URL_ROOT.'users/profile.php');
 }else{
