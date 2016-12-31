@@ -1,7 +1,7 @@
 <?php
 require_once 'users/init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'includes/header.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'includes/navigation.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'includes/navigation.php';
 ?>
 
 <div class="jumbotron">
@@ -64,8 +64,8 @@ require_once ABS_US_ROOT.US_URL_ROOT.'includes/navigation.php';
 		but you can also secure any page. Simply add this php code to the top of your page and it will
 		perform a check to see if you've set any special permissions.<br/>
 		require_once 'users/init.php';<br/>
-		require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';<br/>
-		require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/navigation.php';<br/>
+		require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/header.php';<br/>
+		require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/navigation.php';<br/>
 		  if (!securePage($_SERVER['PHP_SELF'])){die();}
 		</div>
 	</div><!-- /panel -->
@@ -113,5 +113,5 @@ require_once ABS_US_ROOT.US_URL_ROOT.'includes/navigation.php';
 
 
 <?php
-require_once ABS_US_ROOT.US_URL_ROOT.'includes/footer.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'includes/footer.php';
 ?>
