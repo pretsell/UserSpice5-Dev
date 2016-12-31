@@ -15,10 +15,10 @@ $username = $fname = $lname = $email = '';
 If enabled, insert google and facebook auth url generators
 */
 if (configGet('glogin')) {
-	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/glogin.php';
+	require_once US_DOC_ROOT.US_URL_ROOT.'users/helpers/glogin.php';
 }
 if (configGet('fblogin')) {
-	require_once ABS_US_ROOT.US_URL_ROOT.'users/helpers/fblogin.php';
+	require_once US_DOC_ROOT.US_URL_ROOT.'users/helpers/fblogin.php';
 }
 
 checkToken();
@@ -50,7 +50,9 @@ if (Input::exists()) {
 		$gRecaptchaResponse=Input::get('g-recaptcha-response');
 		$response = null;
 
-		require_once 'includes/recaptcha.config.php';
+		#require_once 'includes/recaptcha.config.php'; // moved to Classes/ReCaptcha.php
+        $publickey = configGet('recaptcha_public'); // the Site key you received when you registered
+        $privatekey = configGet('recaptcha_private'); // the Private key you received when you registered
 
 		// check secret key
 		$reCaptcha = new ReCaptcha(configGet('recaptcha_private'));
@@ -181,18 +183,18 @@ if (!$createSuccess) {
 		<input  class="form-control" type="text" name="email" id="email" placeholder="<?=lang('EMAIL')?>" value="<?=$email;?>" required >
 	</div>
 	<div class="form-group">
-		<label for="password"><?=lang('PW')?></label>
+		<label for="password"><?=lang('PASSWORD')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('password') ?>"></span>
-		<input  class="form-control" type="password" name="password" id="password" placeholder="<?=lang('PW')?>" required aria-describedby="passwordhelp">
+		<input  class="form-control" type="password" name="password" id="password" placeholder="<?=lang('PASSWORD')?>" required aria-describedby="passwordhelp">
 		<span class="help-block" id="passwordhelp"><?=lang('PWR')?></span>
 	</div>
 	<div class="form-group">
-		<label for="confirm"><?=lang('PWC')?></label>
+		<label for="confirm"><?=lang('CONFIRM_PASSWD')?></label>
 		<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('confirm') ?>"></span>
-		<input  type="password" id="confirm" name="confirm" class="form-control" placeholder="<?=lang('PWC')?>" required >
+		<input  type="password" id="confirm" name="confirm" class="form-control" placeholder="<?=lang('CONFIRM_PASSWD')?>" required >
 	</div>
 	<div class="form-group">
-		<label for="agreement"><?=lang('TNC')?></label>
+		<label for="agreement"><?=lang('TERMS_CONDITIONS')?></label>
 		<textarea id="agreement" name="agreement" rows="5" class="form-control" disabled ><?=configGet('agreement')?></textarea>
 	</div>
 	<div class="form-group">
