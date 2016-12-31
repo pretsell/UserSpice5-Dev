@@ -67,11 +67,14 @@ if (file_exists(US_ROOT_DIR.'local/includes/init.php')) {
 }
 
 # Make sure $formName is set
-if (!isset($formName)) {
-    $formName = basename($_SERVER['PHP_SELF']);
+if (isset($formName)) {
+    $pageName = $formName;
+} else {
+    $pageName = $_SERVER['PHP_SELF'];
+    $formName = basename($pageName);
 }
-# Security - make sure $formName contains a legitimate value AND user is allowed to access this $formName
-if (!securePage($formName)) {
+# Security - make sure user is allowed to access this page
+if (!securePage($pageName)) {
     redirect::to(configGet('redirect_deny_noperm', 'index.php'));
     die();
 }
