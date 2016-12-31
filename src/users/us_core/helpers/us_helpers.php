@@ -42,7 +42,7 @@ function get_gravatar($email, $s = 120, $d = 'mm', $r = 'pg', $img = false, $att
 function groupIsAdmin($id) {
 	$db = DB::getInstance();
 	if ($g = $db->queryById('groups', $id)->first()) {
-        return ($g->is_admin);
+        return ($g->admin);
     }
     return false;
 }
@@ -221,6 +221,31 @@ function deleteGrouptypes($grouptype_ids, &$errors, &$successes) {
 //Remove user(s) from group(s)
 // $user_is_group is provided programmatically (never from a form) so doesn't
 // need to be bound
+//To maintain data integrity, also delete from groups_roles_users
+function deleteGroupsUsers($groups, $users, $user_is_group=0) {
+    global $T;
+	$db = DB::getInstance();
+    $count = 0;
+	$sql = "DELETE FROM $T[groups_users_raw]
+            WHERE user_is_group = $user_is_group
+            AND group_id = ?
+			AND user_id = ?";
+    $sql2 = "DELETE FROM $T[groups_roles_users]
+            WHERE group_id = ?
+            AND user_id = ?";
+    foreach ((array)$groups as $g) {
+        foreach ((array)$users as $u) {
+        	$count += $db->query($sql, [$g, $u])->count();
+            if ($user_is_group == 0) {
+                $db->query($sql2, [$g, $u]);
+            }
+        }
+    }
+    return $count;
+}
+
+// like deleteGroupsUsers() above except data integrity is NOT
+// enforced - no delete is done from groups_roles_users
 function deleteGroupsUsers_raw($groups, $users, $user_is_group=0) {
     global $T;
 	$db = DB::getInstance();
@@ -527,13 +552,8 @@ function pathFinder($file, $root=null, $configPathToken=null, $defaultPath=null)
 }
 
 //Check if a user has access to a page
-function securePage($uri) {
+function securePage($uri=null) {
 	global $user, $T;
-	/*
-	Write the requested $uri to the session variable.
-	This will preserve the request for a secured page.
-	*/
-	$_SESSION['securePageRequest']= $uri;
 
 	# If user is NEVER allowed or ALWAYS allowed then return that status without
 	# checking/calculating anything that requires (relatively slow) access to the DB
@@ -548,10 +568,9 @@ function securePage($uri) {
 
 	$db = DB::getInstance();
 
-	# Load site wide settings
-	$site_settings_results = $db->query("SELECT * FROM $T[settings]");
-	$site_settings = $site_settings_results->first();
-
+    if (is_null($uri)) {
+        $uri = $_SERVER['PHP_SELF'];
+    }
     if (substr($uri, 0, strlen(US_URL_ROOT)) == US_URL_ROOT) {
     	$page=substr($uri,strlen(US_URL_ROOT));
     } else {
@@ -561,8 +580,8 @@ function securePage($uri) {
 
 	//retrieve page details
 	$query = $db->query("SELECT id, page, private FROM $T[pages] WHERE page = ?",[$page]);
-	$count = $query->count();
-	if ($count==0) {
+	if ($query->count() == 0) {
+    	$_SESSION['securePageRequest']= $uri;
         bold($page);
 		bold('<br><br>You must go into the Admin Panel and click the Manage Pages button to add this page to the database. Doing so will make this error go away.');
 		die();
@@ -571,18 +590,20 @@ function securePage($uri) {
 
 	$pageID = $results->id;
 
-	if ($results->private == 0) { //If page is public, allow access
+	if (!$results->private) { //If page is public, allow access
 		return true;
 	} elseif (!$user->isLoggedIn()) { //If user is not logged in, deny access
+    	$_SESSION['securePageRequest']= $uri;
 		Redirect::to(defaultPage('nologin'));
 		return false;
 	} elseif (userHasPageAuth($pageID, $user->data()->id)) {
         return true;
+    } else {
+    	# We've tried everything - send them to the default page
+        unset($_SESSION['securePageRequest']);
+        Redirect::to(US_URL_ROOT.configGet('redirect_deny_noperm'));
+        return false;
     }
-
-	# We've tried everything - send them to the default page
-    Redirect::to(US_URL_ROOT.configGet('redirect_deny_noperm'));
-    return false;
 }
 
 function userHasPageAuth($page_id, $user_id=null) {
@@ -592,10 +613,10 @@ function userHasPageAuth($page_id, $user_id=null) {
     }
 	$db = DB::getInstance();
 	$sql = "SELECT gp.group_id
-					FROM $T[groups_pages] gp
-					JOIN $T[groups_users] gu ON (gu.group_id = gp.group_id)
-					WHERE gu.user_id = ?
-					AND gp.page_id = ?";
+			FROM $T[groups_pages] gp
+			JOIN $T[groups_users] gu ON (gu.group_id = gp.group_id)
+			WHERE gu.user_id = ?
+			AND gp.page_id = ?";
 	return $db->query($sql, [$user_id, $page_id])->count();
 }
 
@@ -629,8 +650,12 @@ function checkMenu($menu_id, $user_id=null) {
 
 //Retrieve information for all groups
 function fetchAllGroups() {
+    global $T;
 	$db = DB::getInstance();
-	return $db->queryAll('groups', ['is_role', 'name'])->results();
+    $sql = "SELECT groups.*, gt.name AS grouptype_name
+            FROM $T[groups] groups
+            LEFT JOIN $T[grouptypes] gt ON (gt.id = groups.grouptype_id)";
+	return $db->query($sql)->results();
 }
 
 function fetchRolesByType($grouptype_id, $allow_null) {
@@ -785,9 +810,9 @@ function addGroupsMenus($group_ids, $menu_ids) {
 }
 
 
-//Delete group(s) from the DB
-function deleteGroups($groups) {
-	global $errors, $T;
+//Delete group(s) from the `groups` table
+function deleteGroups($groups, &$errors) {
+	global $T;
 	$i = 0;
 	$db = DB::getInstance();
 	foreach((array)$groups as $id) {
