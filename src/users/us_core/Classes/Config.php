@@ -33,15 +33,19 @@ class US_Config {
         #var_dump($this->_site_settings);
 	}
 	private function setSiteSettings() {
+        # Note that $T is not yet defined in init.php when this script
+        # is included (and cannot be - we end up with circular requirements)
+        # Thus we manually sort out the $prefix below rather than using $T.
         $host   = $this->simpleGet('mysql/host');
         $dbName = $this->simpleGet('mysql/db');
         $user   = $this->simpleGet('mysql/username');
         $passwd = $this->simpleGet('mysql/password');
         $opts   = $this->simpleGet('mysql/opts');
+        $prefix = $this->simpleGet('mysql/prefix');
         # we cannot use normal DB class because that class relies on this class
         # to get dbHost, dbName, etc. So, instead, we use PDO() directly.
 		$dbConx = new PDO('mysql:host='.$host.';dbname='.$dbName, $user, $passwd, $opts);
-		$this->_site_settings = $dbConx->query("SELECT * FROM settings")->fetch(PDO::FETCH_OBJ);
+		$this->_site_settings = $dbConx->query("SELECT * FROM {$prefix}settings")->fetch(PDO::FETCH_OBJ);
 	}
 	public function get($path=null, $default=null) {
 		#echo "DEBUG: Config::get($path, $default): Entering<br />\n";
