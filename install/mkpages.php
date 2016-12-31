@@ -18,3 +18,16 @@ EOF;
         echo "Created $p<br />\n";
     }
 }
+
+$contents = <<<EOF
+<?php //DO NOT DELETE THIS FILE.
+define("US_DOC_ROOT", '$_SERVER[DOC_ROOT]');
+define("US_URL_ROOT", 'Some/relative/path/from/install/page.php');
+define('US_ROOT_DIR', '/absolute/path/to/users/with/trailing/slash');
+EOF;
+
+if (file_put_contents(US_ROOT_DIR.'z_us_root.php', $contents) === false) {
+    echo "ERROR creating z_us_root.php<br />\n";
+} else {
+    echo "Created z_us_root.php<br />\n";
+}

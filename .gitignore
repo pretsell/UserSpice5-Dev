@@ -12,6 +12,7 @@ users/admin_role.php
 users/admin_roles.php
 users/admin_grouptypes.php
 users/admin_grouptype.php
+users/z_us_root.php
 src/.htaccess
 *.bak
 *~
