@@ -6,7 +6,7 @@ by the UserSpice Team at http://UserSpice.com
 */
 
 require_once 'init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 #Secures the page...required for page permission management
 if (!securePage($_SERVER['PHP_SELF'])) { die(); }
@@ -15,11 +15,6 @@ if (Input::exists('get')) {
 	$itemId=Input::get('id');
 
 	$menu_title=Input::get('menu_title');
-	/*
-	*
-	* DANGER - the menu_title is passed in and can be corrupted - great source for injection!!!
-	*
-	*/
 
 	if (!empty($_GET['action'])) {
 		$action=Input::get('action');
@@ -28,19 +23,32 @@ if (Input::exists('get')) {
 			/*
 			Inserts default "dropdown" entry
 			*/
-			$fields=array('menu_title'=>$menu_title,'parent'=>'-1','dropdown'=>'1','perm_level'=>'1','logged_in'=>'1','display_order'=>'99999','label'=>'New Dropdown','link'=>'','icon_class'=>'');
+			$fields=array('menu_title'=>$menu_title,'parent'=>'-1','dropdown'=>'1','logged_in'=>'1','display_order'=>'99999','label'=>'New Dropdown','link'=>'','icon_class'=>'');
 			$db->insert('menus',$fields);
 		} elseif ($action=='newItem') {
 			/*
 			Inserts default "item" entry
 			*/
-			$fields=array('menu_title'=>$menu_title,'parent'=>'-1','dropdown'=>'0','perm_level'=>'1','logged_in'=>'1','display_order'=>'99999','label'=>'New Item','link'=>'','icon_class'=>'');
+			$fields=array('menu_title'=>$menu_title,'parent'=>'-1','dropdown'=>'0','logged_in'=>'1','display_order'=>'99999','label'=>'New Item','link'=>'','icon_class'=>'');
 			$db->insert('menus',$fields);
 		} elseif ($action=='delete') {
 			$db->deleteById('menus',$itemId);
-			Redirect::to('admin_menu.php?menu_title='.$item->menu_title);
+			Redirect::to('admin_menu.php?menu_title='.$menu_title);
+		} elseif ($action=='renumberOrder') {
+            $items = $db->query("SELECT id, display_order, parent FROM menus WHERE menu_title=? ORDER BY parent, display_order", [$menu_title])->results();
+            $seq = 10;
+            $lastParent = -1; // expected first value, OK if not
+            foreach ($items as $i) {
+                if ($lastParent !== $i->parent) {
+                    $lastParent = $i->parent;
+                    $seq = 10;
+                }
+                $db->update('menus', $i->id, ['display_order'=>$seq]);
+                $seq += 10;
+            }
+			Redirect::to('admin_menu.php?menu_title='.$menu_title);
 		} else {
-			Redirect::to('admin_menu.php?menu_title='.$item->menu_title);
+			Redirect::to('admin_menu.php?menu_title='.$menu_title);
 		}
 	}
 	/*
@@ -91,7 +99,7 @@ foreach ($allGroups as $group) {
 <div class="row"> <!-- row for Users, Groups, Pages, Email settings panels -->
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
+	<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
 
@@ -152,8 +160,8 @@ foreach ($allGroups as $group) {
 </div>
 
 <!-- footers -->
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
 
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
