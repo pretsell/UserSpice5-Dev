@@ -11,7 +11,7 @@ ini_set('max_execution_time', 600);
 ini_set('memory_limit','1024M');
 
 require_once 'init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 $errors = $successes = [];
 
@@ -31,10 +31,10 @@ if(!empty($_POST['restore'])){
 		4. Rename users/ folder to users.old/
 		5. rename backup folder to correct path for users/
 		*/
-		$restoreFile=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
+		$restoreFile=US_DOC_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
-		$restoreDest=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
+		$restoreDest=US_DOC_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
 
 		/*
 		Extract Zip File
@@ -45,13 +45,13 @@ if(!empty($_POST['restore'])){
 			/*
 			Rename original users/ to users.old/
 			*/
-			if(rename(ABS_US_ROOT.US_URL_ROOT.'users/',ABS_US_ROOT.US_URL_ROOT.'users.old/')){
+			if(rename(US_DOC_ROOT.US_URL_ROOT.'users/',US_DOC_ROOT.US_URL_ROOT.'users.old/')){
 				$successes[]='Successfully renamed existing "users/" folder to "users.old/".';
 
 				/*
 				Move the restore data to where it needs to be at users/
 				*/
-				if(rename($restoreDest.'files/users/',ABS_US_ROOT.US_URL_ROOT.'users/')){
+				if(rename($restoreDest.'files/users/',US_DOC_ROOT.US_URL_ROOT.'users/')){
 					$successes[]='Successfully copied the restore files.';
 				}else{
 					$errors[]='Could not move restore data.';
@@ -71,10 +71,10 @@ if(!empty($_POST['restore'])){
 		4. Rename users/ folder to users.old/
 		5. rename backup folder to correct path for users/
 		*/
-		$restoreFile=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
+		$restoreFile=US_DOC_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
-		$restoreDest=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
+		$restoreDest=US_DOC_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
 
 		/*
 		Extract Zip File
@@ -85,12 +85,12 @@ if(!empty($_POST['restore'])){
 			/*
 			Rename original users/ to users.old/
 			*/
-			if(rename(ABS_US_ROOT.US_URL_ROOT.'users/',ABS_US_ROOT.US_URL_ROOT.'users.old/')){
+			if(rename(US_DOC_ROOT.US_URL_ROOT.'users/',US_DOC_ROOT.US_URL_ROOT.'users.old/')){
 				$successes[]='Successfully renamed existing "users/" folder to "users.old/".';
 				/*
 				Move the restore data to where it needs to be at users/
 				*/
-				if(rename($restoreDest.'files/users/',ABS_US_ROOT.US_URL_ROOT.'users/')){
+				if(rename($restoreDest.'files/users/',US_DOC_ROOT.US_URL_ROOT.'users/')){
 					$successes[]='Successfully copied the restore files.';
 				}else{
 					$errors[]='Could not move restore data.';
@@ -122,10 +122,10 @@ if(!empty($_POST['restore'])){
 		4. Rename users/ folder to users.old/
 		5. rename backup folder to correct path for users/
 		*/
-		$restoreFile=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
+		$restoreFile=US_DOC_ROOT.US_URL_ROOT.configGet('backup_dest').Input::get('restore_file');
 		$fileObjects=explode('/',$restoreFile);
 		$restoreFilename=end($fileObjects);
-		$restoreDest=ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
+		$restoreDest=US_DOC_ROOT.US_URL_ROOT.configGet('backup_dest').substr($restoreFilename,0,strlen($restoreFilename)-4).'/';
 
 		/*
 		Extract Zip File
@@ -167,7 +167,7 @@ if(Input::exists('get')){
 /*
 Get array of existing backup zip files
 */
-$allBackupFiles=glob(ABS_US_ROOT.US_URL_ROOT.configGet('backup_dest').'backup*.zip');
+$allBackupFiles=glob(US_DOC_ROOT.US_URL_ROOT.configGet('backup_dest').'backup*.zip');
 $allBackupFilesSize=[];
 foreach($allBackupFiles as $backupFile){
 	$allBackupFilesSize[]=filesize($backupFile);
@@ -177,7 +177,7 @@ foreach($allBackupFiles as $backupFile){
 <div class="row"> <!-- row for Users, Permissions, Pages, Email settings panels -->
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
+	<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
 
@@ -225,8 +225,8 @@ foreach($allBackupFiles as $backupFile){
 </div>
 
 <!-- footers -->
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
 
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>

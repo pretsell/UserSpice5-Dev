@@ -6,7 +6,7 @@ by the UserSpice Team at http://UserSpice.com
 */
 
 require_once 'init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 clearstatcache();
 /*
@@ -19,7 +19,7 @@ checkToken();
 <div class="row "> <!-- rows for Info Panels -->
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
+	<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 	<div class="col-xs-12">
 	<h2>Server Status</h2>
@@ -39,9 +39,9 @@ checkToken();
 	<div class="panel panel-default">
 	<div class="panel-heading"><strong>General</strong></div>
 	<div class="panel-body">
-	UserSpice ABS_US_ROOT: <?=ABS_US_ROOT?><br/>
+	UserSpice US_DOC_ROOT: <?=US_DOC_ROOT?><br/>
 	UserSpice US_URL_ROOT: <?=US_URL_ROOT?><br/>
-	Config Writable: <?=((@file_exists(ABS_US_ROOT.US_URL_ROOT.'users/init.php') &&  @is_writable( ABS_US_ROOT.US_URL_ROOT.'users/init.php')) ? "Writeable" : "NOT Writable")?>
+	Config Writable: <?=((@file_exists(US_DOC_ROOT.US_URL_ROOT.'users/init.php') &&  @is_writable( US_DOC_ROOT.US_URL_ROOT.'users/init.php')) ? "Writeable" : "NOT Writable")?>
 	</div>
 	</div><!--/panel-->
 	</div> <!-- /col -->
@@ -77,8 +77,8 @@ checkToken();
 </div> <!-- /row -->
 
 <!-- footers -->
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
 
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>

@@ -11,7 +11,7 @@ ini_set('max_execution_time', 600);
 ini_set('memory_limit','1024M');
 
 require_once 'init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 $errors=[];
 $successes=[];
@@ -27,7 +27,7 @@ if(!empty($_POST['backup'])){
 	Create backup destination folder: configGet('backup_dest')
 	*/
 	$backup_dest = configGet('backup_dest', 'backup');
-	$destPath=ABS_US_ROOT.US_URL_ROOT.$backup_dest;
+	$destPath=US_DOC_ROOT.US_URL_ROOT.$backup_dest;
 	if(!file_exists($destPath)){
 		if (mkdir($destPath)){
 			$destPathSuccess=true;
@@ -44,7 +44,7 @@ if(!empty($_POST['backup'])){
 	Generate backup path
 	*/
 	$backupDateTimeString=date("Y-m-d\TH-i-s");
-	$backupPath=ABS_US_ROOT.US_URL_ROOT.$backup_dest.'backup_'.$backupDateTimeString.'/';
+	$backupPath=US_DOC_ROOT.US_URL_ROOT.$backup_dest.'backup_'.$backupDateTimeString.'/';
 
 	if(!file_exists($backupPath)){
 		if (mkdir($backupPath)){
@@ -64,15 +64,15 @@ if(!empty($_POST['backup'])){
 
 	if($backupPathSuccess && Input::get('backup_source') == 'db_all_files'){
 		/*
-		Generate list of files in ABS_US_ROOT.US_URL_ROOT including files starting with .
+		Generate list of files in US_DOC_ROOT.US_URL_ROOT including files starting with .
 		*/
-		$allFilesFolders=glob(ABS_US_ROOT.US_URL_ROOT.'{,.}*', GLOB_BRACE);
+		$allFilesFolders=glob(US_DOC_ROOT.US_URL_ROOT.'{,.}*', GLOB_BRACE);
 		$backupItems=[];
 		/*
 		Cycle through each item and check to see if it should be excluded (starting with backup, or is /. or /..)
 		*/
 		foreach ($allFilesFolders as $fileFolder) {
-			if((strpos($fileFolder, ABS_US_ROOT.US_URL_ROOT.'backup_') !== 0) && ($fileFolder != ABS_US_ROOT.US_URL_ROOT.'.') && ($fileFolder != ABS_US_ROOT.US_URL_ROOT.'..')){
+			if((strpos($fileFolder, US_DOC_ROOT.US_URL_ROOT.'backup_') !== 0) && ($fileFolder != US_DOC_ROOT.US_URL_ROOT.'.') && ($fileFolder != US_DOC_ROOT.US_URL_ROOT.'..')){
 				$backupItems[]=$fileFolder;
 			}
 		}
@@ -103,11 +103,11 @@ if(!empty($_POST['backup'])){
 
 	}elseif($backupPathSuccess && Input::get('backup_source') == 'db_us_files'){
 		/*
-		Generate list of files in ABS_US_ROOT.US_URL_ROOT including files starting with .
+		Generate list of files in US_DOC_ROOT.US_URL_ROOT including files starting with .
 		*/
 		$backupItems=[];
-		$backupItems[]=ABS_US_ROOT.US_URL_ROOT.'users';
-		$backupItems[]=ABS_US_ROOT.US_URL_ROOT.'usersc';
+		$backupItems[]=US_DOC_ROOT.US_URL_ROOT.'users';
+		$backupItems[]=US_DOC_ROOT.US_URL_ROOT.'usersc';
 
 		if(backupObjects($backupItems,$backupPath.'files/')){
 			$successes[]='Backup was successful.';
@@ -179,7 +179,7 @@ if(Input::exists('get')){
 /*
 Get array of existing backup zip files
 */
-$allBackupFiles=glob(ABS_US_ROOT.US_URL_ROOT.$backup_dest.'backup*.zip');
+$allBackupFiles=glob(US_DOC_ROOT.US_URL_ROOT.$backup_dest.'backup*.zip');
 $allBackupFilesSize=[];
 foreach($allBackupFiles as $backupFile){
 	$allBackupFilesSize[]=filesize($backupFile);
@@ -189,7 +189,7 @@ foreach($allBackupFiles as $backupFile){
 <div class="row"> <!-- row for Users, Groups, Pages, Email settings panels -->
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
+	<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
 
@@ -246,8 +246,8 @@ foreach($allBackupFiles as $backupFile){
 </div>
 
 <!-- footers -->
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
 
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>

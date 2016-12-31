@@ -6,7 +6,7 @@ by the UserSpice Team at http://UserSpice.com
 */
 
 require_once 'init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 
 /*
@@ -20,7 +20,7 @@ $successes = [];
 /*
 Get line from z_us_root.php that starts with $path
 */
-$file = fopen(ABS_US_ROOT.US_URL_ROOT."z_us_root.php","r");
+$file = fopen(US_DOC_ROOT.US_URL_ROOT."z_us_root.php","r");
 while(!feof($file)){
 	$currentLine=fgets($file);
 	if (substr($currentLine,0,5)=='$path'){
@@ -41,7 +41,7 @@ $pages=[];
 
 //Get list of php files for each $path
 foreach ($paths as $path){
-	$rows=getPathPhpFiles(ABS_US_ROOT,US_URL_ROOT,$path);
+	$rows=getPathPhpFiles(US_DOC_ROOT,US_URL_ROOT,$path);
  	foreach ($rows as $row){
 		$pages[]=$row;
 	} 
@@ -98,7 +98,7 @@ $dbpages = fetchAllPages();
 <div class="row">
 <div class="col-xs-12">
 <h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 </div>
 
 <div class="col-xs-12">
@@ -143,9 +143,9 @@ $dbpages = fetchAllPages();
 
 <!-- Content Ends Here -->
 <!-- footers -->
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- Place any per-page javascript here -->
 <script src="js/search.js" charset="utf-8"></script>
 
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>

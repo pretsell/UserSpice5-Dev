@@ -6,7 +6,7 @@ by the UserSpice Team at http://UserSpice.com
 */
 
 require_once 'init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 
 /*
@@ -82,7 +82,7 @@ if (isset($_POST['submit'])) {
 		}
 	} elseif (Input::get('method')=='file') {
 
-		$target_dir = ABS_US_ROOT.US_URL_ROOT."users/uploads/";
+		$target_dir = US_DOC_ROOT.US_URL_ROOT."users/uploads/";
 
 		if (basename($_FILES["fileselect"]["name"])=='users.csv') {
 			$target_file = $target_dir . basename($_FILES["fileselect"]["name"]);
@@ -169,7 +169,7 @@ if (isset($_POST['submit'])) {
 <div class="row">
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
+	<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 
 	<div class="col-xs-12">
@@ -240,6 +240,6 @@ echo display_successes($successes);
 
 	<!-- End of main content section -->
 
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
