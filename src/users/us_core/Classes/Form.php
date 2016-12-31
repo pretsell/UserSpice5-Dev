@@ -76,10 +76,10 @@ class US_Form extends Element {
         if (!$this->getMacro('Form_Title')) {
             $this->setTitleByPage();
         }
-        // delete conditional fields (keep_if or delete_if logic in $opts)
+        // delete conditional fields or sub-forms (keep_if or delete_if logic in $opts)
         foreach ($this->getFields() as $fieldName=>$fieldObj) {
-            if ($fieldObj->deleteMe()) {
-                dbg("Deleting field=$fieldName");
+            if ($fieldObj->getDeleteMe()) {
+                $this->debug(2,"Deleting field=$fieldName");
                 $this->deleteField($fieldName);
             }
         }
@@ -295,6 +295,21 @@ class US_Form extends Element {
 		$this->_formName=$name;
 	}
 
+    public function insertIfValid(&$errors, $fieldFilter=[]) {
+        if (!$table = $this->getDBTable()) {
+            $errors[] = 'ERROR: No table specified';
+            return false;
+        }
+        $fields = $this->fieldListNewValues($fieldFilter, true);
+        if ($this->checkFieldValidation($fields, $errors)) {
+            if ($this->_db->insert($table, $fields)) {
+                return true;
+            } else {
+                $errors[] = lang('SQL_ERROR');
+                return false;
+            }
+        }
+    }
     public function updateIfChangedAndValid($id, &$errors, $fieldFilter=[]) {
         if (!$table = $this->getDBTable()) {
             $errors[] = 'ERROR: No table specified';
@@ -356,8 +371,5 @@ class US_Form extends Element {
 
     public function addField($fieldName, $formFieldObj) {
         $this->repData[$fieldName] = $formFieldObj;
-    }
-    public function deleteMe() {
-        return false; // forms don't delete themselves
     }
 }
