@@ -60,6 +60,7 @@
  */
 abstract class US_Element {
     protected $_db=null;
+    protected $_deleteMe=false;
     public $debug = -1;
     public $elementList = [];
     public $repElement = null;
@@ -93,11 +94,25 @@ abstract class US_Element {
     public function handle1Opt($name, $val) {
         switch (strtolower($name)) {
             case 'elements':
-                $this->setElementList($opts['elements']);
+                $this->setElementList($val);
                 return true;
                 break;
             case 'debug':
                 $this->debug = $val;
+                return true;
+                break;
+            case 'keep_if':
+            case 'keepif':
+                $val = !$val;
+                # NOTE: No break - falling through to 'deleteif'
+            case 'delete_if':
+            case 'deleteif':
+                # NOTE: We could be falling through from above with no break
+                $this->setDeleteMe($val);
+                return true;
+                break;
+            case 'exclude_elements':
+                $this->deleteElements($val);
                 return true;
                 break;
         }
@@ -106,19 +121,20 @@ abstract class US_Element {
             return true;
         }
         $setMethod = 'set'.$name;
-        $propHTML = 'HTML_'.$name;
-        $propMacro = 'MACRO_'.$name;
-        #dbg("name=$name");
+        $caseName = $this->fixCase($name);
+        $propHTML = 'HTML_'.$caseName;
+        $propMacro = 'MACRO_'.$caseName;
+        $this->debug(3, "::handle1Opt(): name=$name");
         if (method_exists($this, $setMethod)) {
-            #dbg("METHOD: $setMethod");
+            $this->debug(3, "::handle1Opt(): METHOD: $setMethod, val=$val");
             $this->$setMethod($val);
             return true;
         } elseif (property_exists($this, $propHTML)) {
-            #dbg("PROP HTML: $propHTML");
+            $this->debug(3, "::handle1Opt(): PROP HTML: $propHTML");
             $this->$propHTML = $val;
             return true;
         } elseif (property_exists($this, $propMacro)) {
-            #dbg("PROP MACRO: $propMacro, val=$val");
+            $this->debug(3, "::handle1Opt(): PROP MACRO: $propMacro, val=$val");
             $this->$propMacro = $val;
             return true;
         }
@@ -166,6 +182,9 @@ abstract class US_Element {
         } else {
             return $this->elementList;
         }
+    }
+    public function deleteElements($elems) {
+        $this->elementList = array_diff($this->elementList, (array)$elems);
     }
     public function setElementList($elementList) {
         $this->elementList = $elementList;
@@ -233,7 +252,7 @@ abstract class US_Element {
                 foreach ($row as $k=>$v) {
                     $this->debug(2, "::getHTMLRepElement(): k=$k, v=$v");
                     $rowMacros['{'.$k.'}'] = $v;
-                    if (isset($this->repMacroAliases[$idx])) {
+                    if (isset($this->repMacroAliases[$idx]) && !isset($row[$this->repMacroAliases[$idx]])) {
                         $rowMacros[$this->repMacroAliases[$idx]] = $v;
                     }
                     $idx++;
@@ -247,6 +266,12 @@ abstract class US_Element {
             $this->debug(4, "::getHTMLRepElement(): html=$html");
         }
         return $html;
+    }
+    public function getDeleteMe() {
+        return $this->_deleteMe;
+    }
+    public function setDeleteMe($val) {
+        $this->_deleteMe = $val;
     }
     public function getRowMacros() {
         return [];
@@ -366,5 +391,11 @@ abstract class US_Element {
             }
             dbg($str);
         }
+    }
+    # convert this_property_here to This_Property_Here
+    # We assume that all HTML_X and MACRO_X properties use
+    # this type of case standard
+    private function fixCase($prop) {
+        return ucwords($prop, '_');
     }
 }
