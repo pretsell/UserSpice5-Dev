@@ -712,7 +712,7 @@ function resultBlock($errors,$successes) {
 function lang($key,$markers = NULL) {
 	global $lang;
 	$str = isset($lang[$key]) ? $lang[$key] : "";
-	if ($markers !== NULL) {
+	if ($str && $markers !== NULL) {
         //Replace any dynamic markers
         $iteration = 1;
 		foreach((array)$markers as $marker) {
@@ -720,13 +720,10 @@ function lang($key,$markers = NULL) {
 			$iteration++;
 		}
 	}
-	//Ensure we have something to return
-	if ($str == "") {
+	// During development give a message to help id if missing the token
+	if ($str == "" && configGet('debug') ) {
         #dbg(substr($key, -6));
-        if (substr($key, -6) == '_LABEL') {
-            return ucwords(strtolower(str_replace(['_LABEL', '_'], ['', ' '], $key)));
-        }
-		return ("No language key found: $key");
+		return ("DEBUG: No language key found: $key");
 	} else {
 		return $str;
 	}
