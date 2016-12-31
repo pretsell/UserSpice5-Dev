@@ -152,7 +152,7 @@ abstract class US_FormField_Select extends FormField {
             <select class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}">
             ',
         $HTML_Input = '
-            <option value="{ID}" {SELECTED}>{OPTION_LABEL}</option>
+            <option value="{OPTION_VALUE}" {SELECTED}>{OPTION_LABEL}</option>
             ',
         $HTML_Post = '
             </select>
