@@ -33,7 +33,7 @@ class US_Input {
 		}
 	}
 
-	public static function get($item, $method='request'){
+	public static function get($item, $method='request') {
 		switch (strtolower($method)) {
 			case 'get':
 				$src = &$_GET;
@@ -53,14 +53,33 @@ class US_Input {
 					$items[$k]=self::sanitize($item);
 				}
 				return $items;
-			}else{
+			} else {
 				return self::sanitize($src[$item]);
 			}
 		}
 		return '';
 	}
 
-	public static function sanitize($string){
+	public static function delete($items, $method='request') {
+		switch (strtolower($method)) {
+			case 'get':
+				$src = &$_GET;
+				break;
+			case 'post':
+				$src = &$_POST;
+				break;
+			default:
+				$src = &$_REQUEST;
+				break;
+		}
+        foreach ((array)$items as $item) {
+    		if (isset($src[$item])) {
+                unset($src[$item]);
+    		}
+        }
+	}
+
+	public static function sanitize($string) {
 		return trim(htmlentities($string, ENT_QUOTES, 'UTF-8'));
 	}
 }
