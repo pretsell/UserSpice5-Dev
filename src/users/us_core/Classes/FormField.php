@@ -33,7 +33,6 @@ abstract class US_FormField extends Element {
         $_fieldValue=null,
         $_fieldNewValue=null,
         $_fieldType=null, // should be set by inheriting classes
-        $_deleteMe=false,
         $_isDBField=true; // whether this is a field in the DB
     public $repEmptyAlternateReplacesAll = true;
     public
@@ -47,7 +46,6 @@ abstract class US_FormField extends Element {
             .'name="{FIELD_NAME}" placeholder="{PLACEHOLDER}" value="{VALUE}" '
             .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB}>',
         $HTML_Post = '
-              <br />
             </div> <!-- {DIV_CLASS} -->',
         $HTML_Script = '',
         $elementList = ['Pre', 'Input', 'Post'];
@@ -94,6 +92,10 @@ abstract class US_FormField extends Element {
         parent::__construct($opts);
         # Now handle what we found in $field_def, but don't let
         # values there override what was passed in $opts
+        if (isset($opts['display']) || isset($opts['display_lang'])) {
+            unset($field_def['display']);
+            unset($field_def['display_lang']);
+        }
         $this->handleOpts(array_diff_key((array)$field_def, $opts));
     }
 
@@ -123,16 +125,6 @@ abstract class US_FormField extends Element {
                 $this->setValidator($val);
                 return true;
                 break;
-            case 'keep_if':
-            case 'keepif':
-                $val = !$val;
-                # NOTE: No break - falling through to 'deleteif'
-            case 'delete_if':
-            case 'deleteif':
-                # NOTE: We could be falling through from above with no break
-                $this->setDeleteMe($val);
-                return true;
-                break;
             case 'is_dbfield':
             case 'is_db_field':
             case 'isdbfield':
@@ -159,7 +151,7 @@ abstract class US_FormField extends Element {
         $this->MACRO_Value = $this->getFieldValue();
         $this->MACRO_Required_Attrib = ($this->getRequired() ? 'required' : '');
         $this->MACRO_Hint_Class = $this->getHintClass();
-        if (!$this->MACRO_Hint_Text && $this->getValidator()) {
+        if (!$this->MACRO_Hint_Text && $this->hasValidation()) {
             $this->MACRO_Hint_Text = $this->getValidator()->describe($this->_fieldName);
         } else {
             $this->MACRO_Hint_Text = '';
@@ -211,6 +203,7 @@ abstract class US_FormField extends Element {
         }
 	}
 	public function setRequired($v){
+        $this->debug(2, "::setRequired($v) - Entering");
         if ($valid = $this->getValidator()) {
             $valid->setRequired($this->getFieldName(), $v);
         } else {
@@ -282,7 +275,10 @@ abstract class US_FormField extends Element {
     public function hasValidation() {
         return (boolean)$this->_validateObject;
     }
-    public function getValidator() {
+    public function getValidator($createIfNeeded=true) {
+        if ($createIfNeeded && !$this->_validateObject) {
+            $this->setValidator(new Validate());
+        }
         return $this->_validateObject;
     }
 
@@ -309,15 +305,6 @@ abstract class US_FormField extends Element {
 
     public function getHTMLScripts() {
         return $this->HTML_Script;
-    }
-    public function deleteMe() {
-        return $this->getDeleteMe();
-    }
-    public function getDeleteMe() {
-        return $this->_deleteMe;
-    }
-    public function setDeleteMe($val) {
-        $this->_deleteMe = $val;
     }
     // if an inheriting class needs to adjust the snippets
     // they can do it by setting any of ...
