@@ -1,5 +1,13 @@
-src/users/db_cred.php
-src/users/init.php
+src/users/local/config.php
+src/users/login.php
+src/users/logout.php
+src/users/profile.php
+src/users/admin_group.php
+src/users/admin_groups.php
+src/users/admin_role.php
+src/users/admin_roles.php
+src/users/admin_grouptypes.php
+src/users/admin_grouptype.php
 src/.htaccess
 *.bak
 *~
