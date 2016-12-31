@@ -11,31 +11,30 @@
  */
 abstract class US_FormFieldRepeat extends FormField {
     protected
-        $_valueField='id', // used to determine which repeat row is match
-        $_repeatAliases = ['{OPTION-VALUE}', '{OPTION-LABEL}'], // this will provide an alias
+        $_idField='id', // used to determine which repeat row is match
+        $_repeatAliases = ['{OPTION_VALUE}', '{OPTION_LABEL}'], // this will provide an alias
                             // replacement text for the first n values in each element of $_repeatValues
-                            // thus '{OPTION-LABEL}' will be replaced with 'label1' and then 'label2'
+                            // thus '{OPTION_LABEL}' will be replaced with 'label1' and then 'label2'
                             // using the example data below
         $_repeatValues = []; // e.g., [['id'=>1, 'name'=>'label1'], ['id'=>2, 'name'=>'label2'], ...]
                             // this will provide replace macros for {ID} and {NAME}, respectively
     public $HTMLEmptyAlternate='<p>(No Data)</p>';
 
-    public function handleOpts($dbFieldnm, $opts) {
-        parent::handleOpts($dbFieldnm, $opts);
-        foreach ($opts as $k=>$v) {
-            switch(strtolower($k)) {
-                case 'repeat':
-                case 'repeatvalue':
-                case 'repeatdata':
-                    $this->setRepeatValues($v);
-                    break;
-                case 'nodata':
-                case 'no_data':
-                case 'alternate_empty':
-                case 'empty_alternate':
-                    $this->setEmptyAlternate($v);
-                    break;
-            }
+    public function xhandle1Opt($name, $val) {
+        return parent::handle1Opt($name, $val);
+        switch(strtolower($name)) {
+            case 'repdata':
+                $this->setRepData($val);
+                break;
+            case 'nodata':
+            case 'no_data':
+            case 'alternate_empty':
+            case 'empty_alternate':
+                $this->setEmptyAlternate($val);
+                break;
+            case 'idfield':
+                $this->setIdField($val);
+                break;
         }
     }
 
@@ -96,6 +95,12 @@ abstract class US_FormFieldRepeat extends FormField {
     }
     public function addRepeatValue($opts=array()) {
         $this->_repeatValues[] = $opts;
+    }
+    public function getIdField() {
+        return $this->_idField;
+    }
+    public function setIdField($val) {
+        $this->_idField = $val;
     }
     public function setEmptyAlternate($val) {
         $this->HTMLEmptyAlternate = $val;
