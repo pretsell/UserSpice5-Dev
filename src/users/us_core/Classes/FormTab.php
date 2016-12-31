@@ -21,6 +21,11 @@ class US_FormTab_Pane extends Form {
         </div> <!-- tab-pane -->
         ';
 }
+class US_Form_Form extends Form {
+    public $elementList = [
+        'openForm', 'Fields', 'closeForm',
+    ];
+}
 class US_Form_Col extends Form {
     public $elementList = [
         'openCol', 'Fields', 'closeCol',
