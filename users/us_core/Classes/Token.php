@@ -23,7 +23,7 @@ class US_Token {
 	}
 
 	public static function check($token){
-        return true;
+        #return true; // uncomment to bypass during development
 		$tokenName = configGet('session/token_name');
 
 		if (Session::exists($tokenName) && $token === Session::get($tokenName)) {
