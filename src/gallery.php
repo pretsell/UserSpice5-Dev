@@ -1,7 +1,7 @@
 <?php
 require_once 'users/init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'includes/header.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'includes/navigation.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'includes/navigation.php';
 
 /*
 Secures the page...required for page permission management
@@ -58,5 +58,5 @@ $images=glob('images/carousel/*.jpg');
 </div>		
 
 <?php
-require_once ABS_US_ROOT.US_URL_ROOT.'includes/footer.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'includes/footer.php';
 ?>
