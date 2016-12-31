@@ -49,7 +49,7 @@ class US_Validate{
 				if ($k == 'unique' && isset($rule['action'])) {
 					$k = $k.'_'.$rule['action']; // 'unique'=='unique_add' or 'unique_update'
 				}
-                if ($k == 'display_lang') {
+                if ($k == 'display_lang' && $results) {
                     $results->$k = lang($results->$k);
                     $k = 'display';
                 }
@@ -239,7 +239,7 @@ class US_Validate{
 	}
 
     public function setRequired($fld, $val) {
-        $this->_ruleList[$fld]['required'] = true;
+        $this->_ruleList[$fld]['required'] = $val;
     }
     public function getRequired($fld) {
         return (boolean)@$this->_ruleList[$fld]['required'];
