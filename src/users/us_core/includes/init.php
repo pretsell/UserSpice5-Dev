@@ -25,13 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * DO NOT CHANGE THIS FILE. Instead, copy this file to local/includes/init.php
  * and make any needed changes there.
  *
+ * QUESTION:
  * SO IF I DON'T CHANGE INIT.PHP, HOW DO I CONFIGURE USERSPICE?!
+ * ANSWER:
  * If you are accustomed to making configuration changes in init.php (from
- * version 4 and before) then please note that a lot of configuration has been
+ * version 4 and before) then please note that most configuration has been
  * moved into the database (see DB table `settings`) and can be modified through
- * the "settings" menu on the admin dashboard (admin_redirects.php,
- * admin_general.php, etc.). Configuration that has not moved to the database
- * is now done through editing local/config.php.
+ * the "settings" menu on the admin dashboard. Configuration that has not
+ * moved to the database is now done through editing local/config.php.
  */
 
 /*
@@ -54,8 +55,8 @@ Get the values from local/config.php and make it available via the class
 us_core/Classes/Config.php and then implemented (class "Config") in
 local/Classes/Config.php).
 */
-include_once US_ROOT_DIR.'us_core/classes/Config.php';
-include_once US_ROOT_DIR.'local/classes/Config.php';
+include_once US_ROOT_DIR.'us_core/Classes/Config.php';
+include_once US_ROOT_DIR.'local/Classes/Config.php';
 include_once US_ROOT_DIR.'local/config.php';
 
 /*
@@ -64,11 +65,10 @@ using PHP autoloader conflicts with Google and Facebook autoloader
 */
 spl_autoload_register('us_classloader');
 function us_classloader($class_name) {
-    # FormField_Text and FormField_Select and etc are contained in FormFieldTypes.php
-    # FormTab_Contents and FormTab_Pane are contained in FormTab.php
     $classMap = [
-        'FormField_' => 'FormFieldTypes',
-        'FormTab_'   => 'FormTab',
+        'FormField_' => 'FormFieldTypes', #FormField_Text, #FormField_Select, etc.
+        'FormTab_'   => 'FormTab', #FormTab_Pane, FormTab_Contents
+        'Form_'   => 'FormTab', #Form_Row, Form_Col
     ];
     foreach ($classMap as $k=>$c) {
         if (strncmp($k, $class_name, strlen($k)) === 0) {
@@ -87,7 +87,8 @@ require_once US_ROOT_DIR.'us_core/social_src/Google/autoload.php';
 require_once US_ROOT_DIR.'us_core/social_src/Facebook/autoload.php';
 
 /*
-session_start() is placed after the autoloading so that class definitions are loaded before any session processing
+session_start() is placed after the autoloading so that class definitions
+are loaded before any session processing
 */
 session_start();
 #var_dump($_SESSION);
