@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 class US_Redirect {
 	public static function to($location = null,$args=''){
+        #die('WOULD HAVE REDIRECTED TO: '.$location);
 		if ($location) {
 			if (is_numeric($location)) {
 				switch ($location) {
