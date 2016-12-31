@@ -1,7 +1,11 @@
 src/users/local/config.php
 src/users/login.php
+src/users/nologin.php
 src/users/logout.php
+src/users/blocked.php
 src/users/profile.php
+src/users/verify.php
+src/users/verify_resend.php
 src/users/admin_group.php
 src/users/admin_groups.php
 src/users/admin_role.php
