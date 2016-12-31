@@ -6,7 +6,7 @@ by the UserSpice Team at http://UserSpice.com
 */
 
 require_once 'init.php';
-require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/header.php';
+require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/header.php';
 
 /*
 Secures the page...required for page permission management
@@ -46,7 +46,7 @@ if(isset($_GET['type'])){
 <div class="row">
 	<div class="col-xs-12">
 	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-	<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
+	<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/admin_nav.php'; ?>
 	</div>
 </div> <!-- /.row -->
 
@@ -80,7 +80,7 @@ if(isset($_GET['type'])){
 </div>
 
 <!-- footers -->
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/page_footer.php'; // the final html footer copyright row + the external js calls ?>
 
 <!-- If you disable this script below you will get a standard textarea with NO WYSIWYG editor. That simple -->
 <script src='//cdn.tinymce.com/4/tinymce.min.js'></script>
@@ -90,4 +90,4 @@ tinymce.init({
 });
 </script>
 
-<?php require_once ABS_US_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
+<?php require_once US_DOC_ROOT.US_URL_ROOT.'users/includes/html_footer.php'; // currently just the closing /body and /html ?>
