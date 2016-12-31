@@ -303,7 +303,7 @@ class US_Form extends Element {
         $fields = $this->fieldListNewValues($fieldFilter, true);
         if ($this->checkFieldValidation($fields, $errors)) {
             if ($this->_db->insert($table, $fields)) {
-                return true;
+                return $this->_db->lastId();
             } else {
                 $errors[] = lang('SQL_ERROR');
                 return false;

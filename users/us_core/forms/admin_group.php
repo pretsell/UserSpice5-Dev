@@ -66,15 +66,27 @@ if (isset($mode) && $mode == 'ROLE') {
 
 // If requested group does not exist, redirect to $parentScript (admin_groups.php or admin_roles.php)
 if (!($group_id = Input::get('id')) || !groupIdExists($group_id)) {
-    Redirect::to($parentScript);
+    $group_id = null;
+    $creating = true;
+    #Redirect::to($parentScript);
+} else {
+    $creating = false;
 }
 
-$grouptypesData = $db->queryAll('grouptypes')->results();
-#var_dump($grouptypesData);
 $groupDetails = fetchGroupDetails($group_id);
-$groupRoleData = fetchRolesByType($groupDetails->grouptype_id, true);
-$groupRoles = fetchRolesByGroup($groupDetails->id);
-$groupUsers = fetchUsersByGroup($groupDetails->id);
+if ($m = Input::get('msg')) {
+    if ($groupDetails && in_array($m, ['GROUP_ADD_SUCCESSFUL'])) {
+        $successes[] = lang($m, $groupDetails->name);
+    }
+}
+if ($groupDetails) {
+    $grouptype_id = $groupDetails->grouptype_id;
+} else {
+    $grouptype_id = null;
+}
+$groupRoleData = fetchRolesByType($grouptype_id, true);
+$groupUsers = fetchUsersByGroup($group_id);
+$grouptypesData = $db->queryAll('grouptypes')->results();
 $myForm = new Form([
     'toc' => new FormField_TabToc(['field' => 'toc', ]),
     'tabs' => new FormTab_Contents ([
@@ -82,14 +94,14 @@ $myForm = new Form([
             'name' => new FormField_Text ([
                 'dbfield' => 'groups.name',
                 'new_valid' => [
-                    'action' => 'update',
+                    'action' => ($creating ? 'add' : 'update'),
                     'update_id' => $group_id,
                 ],
             ]),
             'short_name' => new FormField_Text ([
                 'dbfield' => 'groups.short_name',
                 'new_valid' => [
-                    'action' => 'update',
+                    'action' => ($creating ? 'add' : 'update'),
                     'update_id' => $group_id,
                 ],
             ]),
@@ -279,13 +291,15 @@ $myForm = new Form([
         ]),
 ], [
     'table' => 'groups',
-    'title' => lang('CONFIGURE_'.$mode, $groupDetails->name),
+    'title' => ($creating ? lang('CREATING_'.$mode) :
+                    lang('CONFIGURE_'.$mode, $groupDetails->name)),
 ]);
 $myForm->getField('toc')->setRepData(
     $myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true])
 );
 
 // Update data in the database for any changes on the form
+$need_reload = false;
 if (Input::exists('post')) {
     $myForm->setFieldValues($db->queryById('groups', $group_id)->first());
     $myForm->setNewValues($_POST);
@@ -301,8 +315,16 @@ if (Input::exists('post')) {
         }
     } else {
         //Update group info columns
-        if ($myForm->updateIfChangedAndValid($group_id, $errors)) {
-            $successes[] = lang('GROUP_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
+        if ($creating) {
+            if ($group_id = $myForm->insertIfValid($errors)) {
+                $need_reload = true;
+                $reload_msg = 'GROUP_ADD_SUCCESSFUL';
+                $successes[] = lang('GROUP_ADD_SUCCESSFUL', $myForm->getField('name')->getNewValue());
+            }
+        } else {
+            if ($myForm->updateIfChangedAndValid($group_id, $errors)) {
+                $successes[] = lang('GROUP_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
+            }
         }
 
         //Add new roles
@@ -384,6 +406,11 @@ if (Input::exists('post')) {
         }
     }
 }
+# If we just created this new then we need to get the ?group_id=n into the
+# URL so that we have it preserved in a normal fashion
+if ($need_reload) {
+    Redirect::to('admin_group.php', "id=$group_id&msg=$reload_msg");
+}
 $myForm->setFieldValues($db->queryById('groups', $group_id)->first());
 $groupDetails = fetchGroupDetails($group_id);
 $myForm->getField('deleteRoles')->setRepData(fetchRolesByGroup($group_id));
@@ -413,274 +440,4 @@ $myForm->getField('addPage')->setRepData($nonGroupPages);
 $publicPages = fetchPublicPages();
 $myForm->getField('publicPages')->setRepData($publicPages);
 
-$userData = fetchAllUsers();
-$pageData = fetchAllPages();
-$groupTypeData = fetchAllGroupTypes();
-// get all roles for the current grouptype and for grouptype==null
-$groupRoleData = fetchRolesByType($groupDetails->grouptype_id, true);
-$groupRoles = fetchRolesByGroup($groupDetails->id);
-$groupUsers = fetchUsersByGroup($groupDetails->id);
-
 echo $myForm->getHTML(['errors'=>$errors, 'successes'=>$successes]);
-
-
-
-
-
-echo "\n\n\n\n\n\n\n\n<!-- END OF NEW STUFF -->\n\n";
-?>
-    <div class="row">
-	<div class="col-xs-12">
-	<h1 class="text-center">UserSpice Dashboard <?=configGet('version')?></h1>
-	<?php require_once pathFinder('includes/admin_nav.php'); ?>
-	</div>
-	<div class="col-xs-12">
-		<?php resultBlock($errors, $successes); ?>
-          <h1>Configure Details for <?= $modeName ?> `<?= $groupDetails->name ?>`</h1>
-
-        <ul class="nav nav-tabs" id="myTabx">
-          <li class="active"><a href="#groupInfox" data-toggle="tab">Group Information</a></li>
-          <li><a href="#groupMembersx" data-toggle="tab">Group Membership</a></li>
-          <li><a href="#groupAccessx" data-toggle="tab">Page Access</a></li>
-        </ul>
-			<form name='adminGroup' method='post'>
-                <input type="hidden" name="id" value="<?=$group_id?>" />
-    			<input type="hidden" name="csrf" value="<?=Token::generate(); ?>" >
-    <div class="tab-content">
-      <div class="tab-pane active col-xs-12 col-md-offset-2 col-md-8 col-lg-offset-3 col-lg-6" id="groupInfox">
-			<h3><?= $modeName ?> Information</h3>
-			<div id='regbox'>
-        	<div class="form-group">
-			<label>ID:</label>
-			<?=$groupDetails->id?>
-            </div>
-        	<div class="form-group">
-			<label>Name:</label>
-			<span class="glyphicon glyphicon-info-sign" title="<?= $myForm->getField('name')->describeValidation() ?>"></span>
-			<input class='form-control' type='text' name='name' value='<?=$groupDetails->name?>' />
-            </div>
-        	<div class="form-group">
-			<label>Short Name:</label>
-			<span class="glyphicon glyphicon-info-sign" title="<?= $myForm->getField("short_name")->describeValidation() ?>"></span>
-			<input class='form-control' type='text' name='short_name' value='<?=$groupDetails->short_name?>' />
-            </div>
-            <?php
-            if ($groupTypeData) { // don't show option if no group types set up
-            ?>
-        	<div class="form-group">
-                <label><?= ($mode == 'role') ? "Role configurable for this " :'' ?>Group Type:</label>
-    			<span class="glyphicon glyphicon-info-sign" title="Choose from the List below"></span>
-                <br />
-                <select class='form-control' name="grouptype_id" style="min-width: 90%; max-width:90%;">
-                    <?php
-                    if ($groupDetails->grouptype_id === null) {
-                        $selected = 'selected="selected"';
-                    } else {
-                        $selected = '';
-                    }
-                    $firstOpt = "<option value=\"\" $selected >No Group Type</option>\n";
-                    foreach ($groupTypeData as $idx => $gt) {
-                        $selected = ($gt->id == $groupDetails->grouptype_id) ?
-                                        $selected = 'selected="selected"' :
-                                        $selected = '';
-                        echo "$firstOpt"; ?>
-                        <option value=<?= $gt->id ?> <?= $selected ?>><?= $gt->name ?></option>
-                        <?php
-                        $firstOpt = '';
-                    } ?>
-                </select>
-            </div>
-            <?php
-            }
-            if ($groupRoleData && $mode != 'role') { // don't show option if no group roles set up
-            ?>
-                <p>
-                <label>Group Roles:</label>
-                <?php
-                if ($groupRoles) {
-                ?>
-                	<div class="form-group">
-                    <label>Remove Group Roles:</label>
-        			<span class="glyphicon glyphicon-info-sign" title="Check those you wish to delete, then update the group"></span>
-                    <table class="table table-hover">
-                    <tr>
-                        <th>Delete&nbsp;&nbsp;</th><th>Role Name / User</th>
-                    </tr>
-                    <?php
-                    echo $myForm->getHTMLFields(['deleteRoles']);
-                    /*
-                    foreach ($groupRoles as $gru) {
-                    ?>
-                    <tr>
-                        <td>
-                            <input type="checkbox" name="deleteRoles[<?=$gru->id?>]" value="<?=$gru->id?>" />
-                        </td>
-                        <td>
-                            <?=$gru->name." (".$gru->short_name.'): '?>
-                            <?=$gru->fname." ".$gru->lname.' ('.$gru->username.')'?>
-                        </td>
-                    </tr>
-                    <?php
-                    }
-                    */
-                    ?>
-                    </table>
-                    </div>
-                <?php
-                }
-                ?>
-                <?php
-                if ($groupUsers) {
-                ?>
-                	<div class="form-group">
-                    <label>Add new Role:</label>
-        			<span class="glyphicon glyphicon-info-sign" title="Choose both a role and a group member from the lists below"></span>
-                    <select class='form-control' name="newRole" style="min-width: 90%; max-width:90%;">
-                        <option value="">Choose a Role</option>
-                        <?php
-                        foreach ($groupRoleData as $gr) {
-                        ?>
-                            <option value="<?=$gr->id?>"><?=$gr->name?> (<?=$gr->short_name?>)</option>
-                        <?php
-                        }
-                        ?>
-                    </select>
-                    <select class='form-control' name="newRoleUser" style="min-width: 90%; max-width:90%;">
-                        <option value="">Choose a Group Member</option>
-                        <?php foreach ($groupUsers as $gu) { ?>
-                        <option value="<?=$gu->user_id?>"><?= $gu->fname.' '.$gu->lname.' ('.$gu->username.')' ?></option>
-                        <?php } ?>
-                    </select>
-                    </div> <!-- form-group for 'add new role' -->
-                <?php
-                } else {
-                ?>
-                    <p><i>(You must have users as group members to add new roles)</i></p>
-                <?php
-                }
-                ?>
-            </p>
-            <?php
-            }
-            ?>
-			</p>
-			</div>
-        </div>
-        <div class="tab-pane col-xs-12" id="groupMembersx">
-			<h3>Group Membership</h3>
-			<div id='regbox'>
-          <div class="col-xs-12 col-sm-6">
-			<h4>Remove Members:</h4>
-			<?php
-            //Display list of groups with access
-            $nested = false;
-            $first = true;
-            foreach ($groupMembers as $gm) {
-                if ($gm->group_or_user == 'group') {
-                    $nested = true;
-                    continue;
-                }
-                if ($first) {
-                    echo "Users:\n";
-                    $first = false;
-                }
-                echo "<br><label><input type='checkbox' name='removeUsers[]' id='removeUsers[]' value='$gm->id'> $gm->name</label>\n";
-            }
-            if ($nested) {
-                echo '<br />Nested Groups:';
-                foreach ($groupMembers as $gm) {
-                    if ($gm->group_or_user != 'group') {
-                        continue;
-                    }
-                    echo "<br><label><input type='checkbox' name='removeGroupGroups[]' id='removeGroupGroups[]' value='$gm->id'> $gm->name</label>\n";
-                }
-            }
-            ?>
-          </div>
-          <div class="tab-pane col-xs-12 col-sm-6">
-            <h4>Add Members:</h4>
-			<?php
-            //List users NOT in this group
-            $nested = false;
-            $first = true;
-            foreach ($nonGroupMembers as $ngm) {
-                if ($ngm->group_or_user == 'group') {
-                    $nested = true;
-                    continue;
-                }
-                if ($first) {
-                    echo "Users:\n";
-                    $first = false;
-                }
-                echo "<br><label><input type='checkbox' name='addUsers[]' id='addUsers[]' value='$ngm->id'> $ngm->name</label>\n";
-            }
-            if ($nested) {
-                echo '<br />Nested Groups:';
-                foreach ($nonGroupMembers as $ngm) {
-                    if ($ngm->group_or_user != 'group') {
-                        continue;
-                    }
-                    echo "<br><label><input type='checkbox' name='addGroupGroups[]' id='addGroupGroups[]' value='$ngm->id'> $ngm->name</label>\n";
-                }
-            }
-            ?>
-          </div>
-
-			</div>
-        </div>
-        <div class="tab-pane col-xs-12" id="groupAccessx">
-			<h3>Page Access</h3>
-			<div id='regbox'>
-            <div class="col-xs-12 col-sm-4">
-			<h4>Remove Access From This Group:</h4>
-			<?php
-            //Display list of pages with this group
-            $page_ids = [];
-            foreach ($groupPages as $gp) {
-                $page_ids[] = $gp->page_id;
-            }
-            foreach ($pageData as $v1) {
-                if (in_array($v1->id, $page_ids)) {
-                    ?>
-				<input type='checkbox' name='removePage[]' id='removePage[]' value='<?=$v1->id; ?>'> <?=$v1->page; ?><br />
-			  <?php
-                }
-            }  ?>
-            </div>
-            <div class="col-xs-12 col-sm-4">
-			<h4>Add Access To This Group:</h4>
-			<?php
-            //Display list of pages NOT accessible by this group
-            foreach ($pageData as $v1) {
-                if (!in_array($v1->id, $page_ids) && $v1->private == 1) {
-                    ?>
-				<input type='checkbox' name='addPage[]' id='addPage[]' value='<?=$v1->id; ?>'> <?=$v1->page; ?><br />
-			  <?php
-                }
-            }  ?>
-            </div>
-            <div class="col-xs-12 col-sm-4">
-			<h4>Public Pages:</h4>
-			<?php
-            //List public pages
-            foreach ($pageData as $v1) {
-                if ($v1->private != 1) {
-                    echo $v1->page.'<br />';
-                }
-            }
-            ?>
-			</div>
-			</div>
-      </div>
-      </div>
-    </div>
-		<input class='btn btn-primary' type='submit' value='Update <?= $modeName ?>' class='submit' />
-		<button class="btn btn-primary btn-danger" name="deleteGroup" value="<?= $group_id ?>">Delete <?= $modeName ?></button>
-		</form>
-    </div>
-    <!-- /.row -->
-    <!-- footers -->
-<?php require_once pathFinder('includes/page_footer.php'); // the final html footer copyright row + the external js calls?>
-
-    <!-- Place any per-page javascript here -->
-<?php require_once pathFinder('includes/html_footer.php'); // currently just the closing /body and /html?>
