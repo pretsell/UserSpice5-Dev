@@ -27,10 +27,11 @@ function ipCheck() {
 }
 
 function new_user_online($user_id=0) {
+    global $T;
 	$db = DB::getInstance();
 	$ip = ipCheck();
 	$timestamp = time();
-	$checkUserId = $db->query("SELECT * FROM users_online WHERE user_id = ?",array($user_id));
+	$checkUserId = $db->query("SELECT * FROM $T[users_online] WHERE user_id = ?",array($user_id));
 	$countUserId = $checkUserId->count();
 
 	if($countUserId == 0){
@@ -39,7 +40,7 @@ function new_user_online($user_id=0) {
 	}else{
 		if($user_id==0){
 			$fields =array('timestamp'=>$timestamp, 'ip'=>$ip,'user_id'=>$user_id);
-			$checkQ = $db->query("SELECT id FROM users_online WHERE user_id = 0 AND ip = ?",array($ip));
+			$checkQ = $db->query("SELECT id FROM $T[users_online] WHERE user_id = 0 AND ip = ?",array($ip));
 			if($checkQ->count()==0){
 				$db->insert('users_online',$fields);
 			}else{
@@ -51,7 +52,7 @@ function new_user_online($user_id=0) {
 			//$db->update('users_online',$to_update->id,$fields);
 		}else{
 			$fields =array('timestamp'=>$timestamp, 'ip'=>$ip,'user_id'=>$user_id);
-			$checkQ = $db->query("SELECT id FROM users_online WHERE user_id = ?",array($user_id));
+			$checkQ = $db->query("SELECT id FROM $T[users_online] WHERE user_id = ?",array($user_id));
 			$to_update = $checkQ->first();
 			$db->update('users_online',$to_update->id,$fields);
 		}
@@ -62,14 +63,14 @@ function delete_user_online() {
   $db = DB::getInstance();
   $timeout = 86400; //30 minutes - This can be changed
   $timestamp = time();
-  $delete = $db->query("DELETE FROM users_online WHERE timestamp < ($timestamp - $timeout)");
+  $delete = $db->query("DELETE FROM $T[users_online] WHERE timestamp < ($timestamp - $timeout)");
 }
 
 function count_users() {
     $db = DB::getInstance();
     $timestamp = time();
 	  $timeout = 1800; //30 minutes - This can be changed
-    $selectAll = $db->query("SELECT * FROM users_online WHERE timestamp > ($timestamp-$timeout)");
+    $selectAll = $db->query("SELECT * FROM $T[users_online] WHERE timestamp > ($timestamp-$timeout)");
     $count = $selectAll->count();
     return $count;
 }
