@@ -381,7 +381,7 @@ if (Input::exists()) {
     $settingsData = $db->queryById('settings', 1)->first();
     $myForm->setFieldValues($settingsData);
     $myForm->setNewValues($_POST);
-    if ($myForm->updateIfChangedAndValid(1, $errors)) {
+    if ($myForm->updateIfValid(1, $errors)) {
         $successes[] = lang('SETTINGS_UPDATE_SUCCESSFUL');
     }
 }

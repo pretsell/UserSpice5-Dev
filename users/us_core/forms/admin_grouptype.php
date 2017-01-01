@@ -115,7 +115,7 @@ if (Input::exists('post')) {
             }
         } else {
             $myForm->setFieldValues($db->queryById('grouptypes', $grouptype_id)->first());
-            if ($myForm->updateIfChangedAndValid($grouptype_id, $errors)) {
+            if ($myForm->updateIfValid($grouptype_id, $errors)) {
                 $successes[] = lang('GROUPTYPE_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
                 if (!Input::get('save')) {
                     $need_reload = true;

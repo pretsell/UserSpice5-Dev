@@ -337,7 +337,7 @@ if (Input::exists('post')) {
                 $successes[] = lang('GROUP_ADD_SUCCESSFUL', $myForm->getField('name')->getNewValue());
             }
         } else {
-            if ($myForm->updateIfChangedAndValid($group_id, $errors)) {
+            if ($myForm->updateIfValid($group_id, $errors)) {
                 $successes[] = lang('GROUP_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
             }
         }

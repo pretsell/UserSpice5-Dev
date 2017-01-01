@@ -360,7 +360,7 @@ class US_Form extends Element {
             }
         }
     }
-    public function updateIfChangedAndValid($id, &$errors, $fieldFilter=[]) {
+    public function updateIfValid($id, &$errors, $fieldFilter=[]) {
         if (!$table = $this->getDBTable()) {
             $errors[] = 'ERROR: No table specified';
             return false;
