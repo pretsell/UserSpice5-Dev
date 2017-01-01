@@ -32,6 +32,13 @@ abstract class US_FormField_ButtonAnchor extends FormField_Button {
             <a href="{LINK}" class="{INPUT_CLASS}" type="{TYPE}"><span class="{BUTTON_ICON}"></span> {LABEL_TEXT}</a>
             ',
         $MACRO_Link = '';
+    public function handle1Opt($name, $val) {
+        if (in_array(strtolower($name), ['href', 'link'])) {
+            $this->MACRO_Link = $val;
+            return true;
+        }
+        return parent::handle1Opt($name, $val);
+    }
 }
 abstract class US_FormField_ButtonSubmit extends FormField_Button {
 }
@@ -134,7 +141,7 @@ abstract class US_FormField_Recaptcha extends FormField {
     }
     public function getMacros($s, $opts) {
         $this->MACRO_Recaptcha_Public = configGet('recaptcha_public');
-        return parent::getMacros($opts);
+        return parent::getMacros($s, $opts);
     }
 }
 
@@ -194,12 +201,25 @@ abstract class US_FormField_Select extends FormField {
         $fv = $this->getFieldValue();
         #if (!@$row[$this->getIdField()]) var_dump($row);
         $rowVal = $row[$this->getIdField()];
+        #dbg("specialRowMacros: Comparing rowVal=$rowVal to fv=$fv");
         if (($fv === $rowVal) ||
-                ($fv !== 0 && $rowVal !== 0 && $fv == $rowVal)) {
+                ($fv !== 0 && $rowVal !== 0 && $fv == $rowVal) ||
+                ($fv === '0' && $rowVal === 0) ||
+                ($fv === 0 && $rowVal === '0')) {
+            #dbg("MATCH!");
             $macros['{SELECTED}'] = $this->selected;
         } else {
+            #dbg("NO MATCH!");
+            #var_dump($fv);
+            #var_dump($rowVal);
             $macros['{SELECTED}'] = '';
         }
+    }
+    public function getMacros($s, $opts) {
+        if (!$this->MACRO_Hint_Text) {
+            $this->MACRO_Hint_Text = lang('CHOOSE_FROM_LIST_BELOW');
+        }
+        return parent::getMacros($s, $opts);
     }
     public function getIdField() {
         return $this->idField;
@@ -217,7 +237,8 @@ abstract class US_FormField_Table extends FormField {
         $MACRO_TH_Row_Class = "",
         $MACRO_TH_Cell_Class = "",
         $MACRO_TD_Row_Class = "",
-        $MACRO_TD_Cell_Class = "";
+        $MACRO_TD_Cell_Class = "",
+        $MACRO_Delete_Label = "";
     public
         $HTML_Pre = '
             <div class="{DIV_CLASS}">
@@ -231,6 +252,7 @@ abstract class US_FormField_Table extends FormField {
             </table>
             </div> <!-- {DIV_CLASS} -->
             ',
+        $HTML_Delete_Checkbox = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{ID}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{DELETE_LABEL}</label>',
         $HTML_Checkbox = '<input type="checkbox" name="{FIELD_NAME}[]" value="{ID}"/>',
         $repElement = 'HTML_Input';
 
@@ -240,8 +262,11 @@ abstract class US_FormField_Table extends FormField {
             case 'td_row':
                 #dbg('setting table_data_cells');
                 $this->HTML_Input = $this->processMacros(
-                    ['{TABLE_DATA_CELLS}'=>$val,
-                        '{CHECKBOX}' => $this->HTML_Checkbox],
+                    [
+                        '{TABLE_DATA_CELLS}'=>$val,
+                        '{CHECKBOX}' => $this->HTML_Checkbox,
+                        '{DELETE_CHECKBOX}' => $this->HTML_Delete_Checkbox,
+                    ],
                     $this->HTML_Input);
                 #dbg('AFTER: HTML_Input='.htmlentities($this->HTML_Input));
                 return true;
@@ -309,4 +334,14 @@ abstract class US_FormField_TabToC extends FormField {
 
 abstract class US_FormField_Text extends FormField {
     protected $_fieldType = "text";
+}
+
+abstract class US_FormField_Textarea extends FormField {
+    protected $_fieldType = "textarea";
+    public
+        $HTML_Input = '
+              <textarea class="{INPUT_CLASS}" id="{FIELD_ID}" '
+            .'name="{FIELD_NAME}" rows="{ROWS}" placeholder="{PLACEHOLDER}" '
+            .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB}>{VALUE}</textarea>',
+        $MACRO_Rows = '6';
 }

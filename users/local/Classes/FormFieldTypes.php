@@ -24,3 +24,5 @@ class FormField_TabToC extends US_FormField_TabToC {
 }
 class FormField_Text extends US_FormField_Text {
 }
+class FormField_Textarea extends US_FormField_Textarea {
+}
