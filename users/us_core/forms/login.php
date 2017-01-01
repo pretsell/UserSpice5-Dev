@@ -8,8 +8,7 @@ by the UserSpice Team at http://UserSpice.com
 ini_set("allow_url_fopen", 1);
 
 $reCaptchaValid=FALSE;
-        $MACRO_Value = '';
-$fieldList = [
+$myForm = new Form([
     'username' => new FormField_Text([
         'dbfield' => 'users.username',
         'placeholder' => lang('USERNAME_OR_EMAIL'),
@@ -50,15 +49,15 @@ $fieldList = [
         'Button_Icon' => 'fa fa-plus-square',
     ]),
     '</div>'."\n",
-];
-$myForm = new Form($fieldList, [
+], [
     'title' => lang('SIGN_IN'),
     'elements' => ['Header', 'openContainer', 'openRow', 'openCol',
                     'TitleAndResults',
-                    'openForm', 'Fields', 'closeForm',
+                    'openForm', 'CSRF', 'Fields', 'closeForm',
                     'closeCol', 'closeRow', 'closeContainer',
                     'PageFooter', 'Footer'],
-    ]);
+    #'debug' => 5,
+]);
 
 /*
 If enabled, insert google and facebook auth url generators
