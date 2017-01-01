@@ -118,12 +118,15 @@ class US_Validate{
 	}
 
 	public function check($source, $items = array()) {
+        global $T; // table prefix map
 		$this->_errors = [];
 		if (!$items && $this->_ruleList) {
             $items = $this->_ruleList;
         }
 		#var_dump($items);
 		foreach ($items as $item => $rules) {
+            #dbg($item);
+            #var_dump($rules);
 			$item = sanitize($item);
 			$display = $rules['display'];
 			foreach ($rules as $rule => $rule_value) {
@@ -172,10 +175,14 @@ class US_Validate{
 							if (isset($rules['update_id'])) {
 								$table = $rule_value;
 								$id = $rules['update_id'];
-							} else
+							} else {
 								list($table, $id) = explode(',', $rule_value);
-							$query = "SELECT * FROM {$table} WHERE id != {$id} AND {$item} = '{$value}'";
-							$check = $this->_db->query($query);
+                            }
+                            if (@$T[$table]) {
+								$table = $T[$table];
+                            }
+							$query = "SELECT * FROM {$table} WHERE id != ? AND {$item} = ?";
+							$check = $this->_db->query($query, [$id, $value]);
 							if ($check->count()) {
 								$this->addError(["{$display} already exists. Please choose another {$display}.",$item]);
 							}
