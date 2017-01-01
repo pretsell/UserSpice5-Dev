@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //actual logic will eventually go here
-$curLang = configGet('site_language', 'english');
-if ($curLang != 'english') {
+$curLang = configGet('site_language', 'english.php');
+if ($curLang != 'english.php') {
     # these values will be over-ridden by the language settings below, but since
     # english is likely to be the most complete language file we will start with
     # this as a base.
@@ -33,7 +33,7 @@ if ($curLang != 'english') {
         require_once $locallang;
     }
 }
-require_once US_ROOT_DIR."us_core/language/$curLang.php";
-if (file_exists($locallang = US_ROOT_DIR."local/language/$curLang.php")) {
+require_once US_ROOT_DIR."us_core/language/$curLang";
+if (file_exists($locallang = US_ROOT_DIR."local/language/$curLang")) {
     require_once $locallang;
 }
