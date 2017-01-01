@@ -110,7 +110,7 @@ if(!empty($_POST['css'])){
 	</div> <!-- /col1/3 -->
 </div> <!-- /row -->
 
-<?php if (configGet('css_sample')){?>
+<?php if (configGet('css_sample')) { ?>
 <div class="row">
 
 	<div class="col-xs-12 text-center">
