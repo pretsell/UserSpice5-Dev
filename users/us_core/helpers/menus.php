@@ -9,9 +9,9 @@ function prepareMenuTree($menuResults){
 	$menuTree = $treeManager->getTree($menuResults, 'id','parent','display_order');
 	/*
 	Indent the tree
-	*/	
+	*/
 	//$menuTree = $treeManager->slapTree($recordsTree, 1 ); //1 for indent count
-	
+
 	return $menuTree;
 }
 
@@ -23,9 +23,9 @@ function prepareIndentedMenuTree($menuResults){
 	$menuTree = $treeManager->getTree($menuResults, 'id','parent','display_order');
 	/*
 	Indent the tree
-	*/	
+	*/
 	$menuIndentedTree = $treeManager->slapTree($menuTree, 1,'menu_title' ); //1 for indent count
-	
+
 	return $menuIndentedTree;
 }
 
@@ -43,8 +43,8 @@ function prepareDropdownString($menuItem){
 
 function prepareItemString($menuItem){
 	$itemString='';
-	$itemString.='<li><a href="'.US_URL_ROOT.$menuItem['link'].'"><span class="'.$menuItem['icon_class'].'"></span> '.$menuItem['label'].'</a></li>';
+	$itemString.='<li><a href="'.$menuItem['link'].'"><span class="'.$menuItem['icon_class'].'"></span> '.$menuItem['label'].'</a></li>';
 	return $itemString;
-	
+
 }
 ?>
