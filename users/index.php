@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 ?>
 <?php
-require_once 'c:/wamp/www/UserSpice5-Dev/src/z_us_root.php';
+require_once 'z_us_root.php';
 if (file_exists($locali = US_ROOT_DIR.'local/includes/init.php')) {
     require_once $locali;
 } else {
