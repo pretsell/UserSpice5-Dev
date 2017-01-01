@@ -64,11 +64,9 @@ if (isset($mode) && $mode == 'ROLE') {
     $parentScript = 'admin_groups.php';
 }
 
-// If requested group does not exist, redirect to $parentScript (admin_groups.php or admin_roles.php)
 if (!($group_id = Input::get('id')) || !groupIdExists($group_id)) {
     $group_id = null;
     $creating = true;
-    #Redirect::to($parentScript);
 } else {
     $creating = false;
 }
@@ -84,8 +82,6 @@ if ($groupDetails) {
 } else {
     $grouptype_id = null;
 }
-$groupRoleData = fetchRolesByType($grouptype_id, true);
-$groupUsers = fetchUsersByGroup($group_id);
 $grouptypesData = $db->queryAll('grouptypes')->results();
 $myForm = new Form([
     'toc' => new FormField_TabToc(['field' => 'toc', ]),
@@ -130,14 +126,16 @@ $myForm = new Form([
                 ]),
             ], [
                 'Well_Class'=>'well-sm',
+                #'debug' => 1,
                 'title'=>lang('DELETE_ROLE_ASSIGNMENTS'),
                 'delete_if' => ($mode == 'ROLE'),
+                'delete_if_empty' => true,
             ]),
             'newRoleWell' => new Form_Well([
                 'newRole' => new FormField_Select([
                     'field' => 'newRole',
                     'display' => lang('CHOOSE_ROLE'),
-                    'repeat' => $groupRoleData,
+                    # repeating data set below
                     'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_ROLE')],
                     'nodata' => '<p>'.lang('NO_ROLES_SETUP_GROUPTYPE').'</p>',
                     'isdbfield' => false,
@@ -146,7 +144,7 @@ $myForm = new Form([
                 'newRoleUser' => new FormField_Select([
                     'field' => 'newRoleUser',
                     'display' => lang('CHOOSE_GROUP_MEMBER'),
-                    'repeat' => $groupUsers,
+                    # repeating data set below
                     'idfield' => 'user_id',
                     'placeholder_row' => ['user_id'=>null, 'name'=>lang('CHOOSE_GROUP_MEMBER')],
                     'nodata' => '<p>'.lang('NO_MEMBERS_OF_GROUP').'</p>',
@@ -157,6 +155,7 @@ $myForm = new Form([
                 'Well_Class' => 'well-sm',
                 'title' => lang('ASSIGN_NEW_ROLE_TO_GROUP'),
                 'delete_if' => ($mode == 'ROLE'),
+                'delete_if_empty' => true,
             ]),
         ], [
             'active_tab'=>'active',
@@ -172,7 +171,7 @@ $myForm = new Form([
                     'field' => 'removeGroupUsers',
                     'Table_Class'=>'table-condensed',
                     'isdbfield' => false,
-                    'debug' => 0,
+                    #'debug' => 0,
                     'table_head_cells' => '<th>'.
                         lang('SELECT_USER_BELOW').'</th><th>'.
                         lang('NAME_USERS_MEMBERS').'</th>',
@@ -185,7 +184,7 @@ $myForm = new Form([
                     'field' => 'removeGroupGroups',
                     'Table_Class'=>'table-condensed',
                     'isdbfield' => false,
-                    'debug' => 0,
+                    #'debug' => 0,
                     'table_head_cells' => '<th>'.
                         lang('SELECT_GROUP_BELOW').'</th><th>'.
                         lang('NAME_GROUPS_MEMBERS').'</th>',
@@ -202,7 +201,7 @@ $myForm = new Form([
                     'field' => 'addGroupUsers',
                     'Table_Class'=>'table-condensed',
                     'isdbfield' => false,
-                    'debug' => 0,
+                    #'debug' => 0,
                     'table_head_cells' => '<th>'.
                         lang('SELECT_USER_BELOW').'</th><th>'.
                         lang('NAME_USERS_NON_MEMBERS').'</th>',
@@ -216,7 +215,7 @@ $myForm = new Form([
                     'field' => 'addGroupGroups',
                     'Table_Class'=>'table-condensed',
                     'isdbfield' => false,
-                    'debug' => 0,
+                    #'debug' => 0,
                     'table_head_cells' => '<th>'.
                         lang('SELECT_GROUP_BELOW').'</th><th>'.
                         lang('NAME_GROUPS_NON_MEMBERS').'</th>',
@@ -239,7 +238,7 @@ $myForm = new Form([
                         'field' => 'removePage',
                         'Table_Class'=>'table-sm',
                         'isdbfield' => false,
-                        'debug' => 0,
+                        #'debug' => 0,
                         'table_head_cells' => '<th>'.
                             lang('SELECT_PAGE_BELOW').'</th><th>'.
                             lang('NAME_ACCESSIBLE_PAGES').'</th>',
@@ -252,9 +251,9 @@ $myForm = new Form([
                     '<h3>'.lang('ADD_PAGE_ACCESS_GROUP').'</h3>',
                     'addPage' => new FormField_Table ([
                         'field' => 'addPage',
-                        'Table_Class' => 'table-sm',
+                        'table_class' => 'table-sm',
                         'isdbfield' => false,
-                        'debug' => 0,
+                        #'debug' => 0,
                         'table_head_cells' => '<th>'.
                             lang('SELECT_PAGE_BELOW').'</th><th>'.
                             lang('NAME_INACCESSIBLE_PAGES').'</th>',
@@ -269,7 +268,7 @@ $myForm = new Form([
                         'field' => 'publicPages',
                         'Table_Class' => 'table-sm',
                         'isdbfield' => false,
-                        'debug' => 0,
+                        #'debug' => 0,
                         'table_head_cells' => '<th>'.
                             lang('PUBLIC_PAGES').'</th>',
                         'table_data_cells' => '<td>{PAGE}</td>',
@@ -278,11 +277,22 @@ $myForm = new Form([
                     ]),
                 ],  ['Col_Class'=>'col-xs-12 col-sm-6 col-md-4']),
             ]),
-        ], ['tab_id'=>'groupAccess', 'title'=>lang('GROUP_ACCESS_TITLE')]),
+        ], [
+            'tab_id' => 'groupAccess',
+            'title' => lang('GROUP_ACCESS_TITLE'),
+        ]),
     ]),
     'save' => new FormField_ButtonSubmit([
             'field' => 'save',
             'display' => lang($mode.'_SAVE')
+        ]),
+    'save_and_new' => new FormField_ButtonSubmit([
+            'field' => 'save_and_new',
+            'display' => lang($mode.'_SAVE_AND_NEW')
+        ]),
+    'save_and_return' => new FormField_ButtonSubmit([
+            'field' => 'save_and_return',
+            'display' => lang($mode.'_SAVE_AND_RETURN')
         ]),
     'deleteGroup' => new FormField_ButtonDelete([
             'field' => 'deleteGroup',
@@ -291,8 +301,13 @@ $myForm = new Form([
         ]),
 ], [
     'table' => 'groups',
-    'title' => ($creating ? lang('CREATING_'.$mode) :
-                    lang('CONFIGURE_'.$mode, $groupDetails->name)),
+    'title' => ($creating ?
+                    // CREATING_GROUP_TITLE -or- CREATING_ROLE_TITLE
+                    lang('CREATING_'.$mode.'_TITLE') :
+                    // ADMIN_GROUP_TITLE -or- ADMIN_ROLE_TITLE
+                    lang('ADMIN_'.$mode.'_TITLE', $groupDetails->name)),
+    'form_action' => 'admin_group.php?id='.$group_id,
+    #'debug' => 5,
 ]);
 $myForm->getField('toc')->setRepData(
     $myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true])
@@ -335,8 +350,8 @@ if (Input::exists('post')) {
             addGroupsUsers_raw($role_id, $roleuser_id);
             $successes[] = lang('GROUP_ROLE_ADD_SUCCESSFUL');
         } elseif (Input::get('newRole') || Input::get('newRoleUser')) {
-            dbg('newRole='.Input::get('newRole'));
-            dbg('newRoleUser='.Input::get('newRoleUser'));
+            #dbg('newRole='.Input::get('newRole'));
+            #dbg('newRoleUser='.Input::get('newRoleUser'));
             $errors[] = lang('GROUP_NEED_ROLE_AND_USER');
         }
 
@@ -409,11 +424,13 @@ if (Input::exists('post')) {
 # If we just created this new then we need to get the ?group_id=n into the
 # URL so that we have it preserved in a normal fashion
 if ($need_reload) {
-    Redirect::to('admin_group.php', "id=$group_id&msg=$reload_msg");
+    Redirect::to(getPageLocation('admin_group.php'), "id=$group_id&msg=$reload_msg");
 }
 $myForm->setFieldValues($db->queryById('groups', $group_id)->first());
 $groupDetails = fetchGroupDetails($group_id);
-$myForm->getField('deleteRoles')->setRepData(fetchRolesByGroup($group_id));
+if ($fld = $myForm->getField('deleteRoles')) {
+    $fld->setRepData(fetchRolesByGroup($group_id));
+}
 
 //Retrieve list of accessible pages
 $groupPages = fetchPagesByGroup($group_id);
@@ -439,5 +456,18 @@ $nonGroupPages = fetchPagesNotByGroup($group_id, true);
 $myForm->getField('addPage')->setRepData($nonGroupPages);
 $publicPages = fetchPublicPages();
 $myForm->getField('publicPages')->setRepData($publicPages);
+if ($fld = $myForm->getField('newRole')) {
+    $groupRoleData = fetchRolesByType($grouptype_id, true);
+    $fld->setRepData($groupRoleData);
+}
+if ($fld = $myForm->getField('newRoleUser')) {
+    $groupUsers = fetchUsersByGroup($group_id);
+    $fld->setRepData($groupUsers);
+}
+
+# Check one more time to see if any fields or form sections need
+# to be deleted (delete_if_empty sort of thing now that repeating
+# data is loaded)
+$myForm->checkDeleteIfEmpty(true);
 
 echo $myForm->getHTML(['errors'=>$errors, 'successes'=>$successes]);
