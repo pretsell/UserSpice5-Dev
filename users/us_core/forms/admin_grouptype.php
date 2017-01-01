@@ -39,64 +39,115 @@ checkToken();
 
 # grouptypes.id must be specified via ?id=n
 if (!$grouptype_id = Input::get('id')) {
-    Redirect::to('admin_grouptypes.php');
+    $creating = true;
+    #Redirect::to('admin_grouptypes.php');
+} else {
+    $creating = false;
 }
+$parentPage = getPageLocation('admin_grouptypes.php');
+$currentPage = getPageLocation('admin_grouptype.php');
 
 # Initialize the form with form fields and HTML snippets
 $myForm = new Form([
-        'toc' => new FormField_TabToc(['TocType'=>'tab']),
-        'tab' => new FormTab_Contents([
-            'tab1' => new FormTab_Pane([
-                'name' => new FormField_Text([
-                                'dbfield' => 'grouptypes.name',
-                                'new_valid' => [
-                                            'action'=>'update',
-                                            'update_id'=>$grouptype_id,
-                                        ],
-                            ]),
-            ], ['active_tab'=>'active', 'tab_id'=>'tab1']),
-            'tab2' => new FormTab_Pane([
-                'short_name' => new FormField_Text([
-                                'dbfield' => 'grouptypes.short_name',
-                                'new_valid' => [
-                                            'action'=>'update',
-                                            'update_id'=>$grouptype_id,
-                                        ],
-                            ]),
-            ], ['tab_id'=>'tab2']),
-        ]),
-        'save' => new FormField_ButtonSubmit([
-                    'field' => 'save',
-                    'display' => lang('SAVE_GROUP_TYPE_LABEL')
+    'toc' => new FormField_TabToc(['TocType'=>'tab']),
+    'tab' => new FormTab_Contents([
+        'tab1' => new FormTab_Pane([
+            'name' =>
+                new FormField_Text([
+                    'dbfield' => 'grouptypes.name',
+                    'new_valid' => [
+                                'action'=>($creating?'add':'update'),
+                                'update_id'=>$grouptype_id,
+                            ],
                 ]),
-        'delete' => new FormField_ButtonDelete([
-                    'field' => 'delete',
-                    'display' => lang('DELETE_GROUP_TYPE_LABEL'),
-                    'value' => $grouptype_id,
+        ], ['active_tab'=>'active', 'tab_id'=>'tab1', 'title'=>"Hello"]),
+        'tab2' => new FormTab_Pane([
+            'short_name' =>
+                new FormField_Text([
+                    'dbfield' => 'grouptypes.short_name',
+                    'new_valid' => [
+                                'action'=>($creating?'add':'update'),
+                                'update_id'=>$grouptype_id,
+                            ],
                 ]),
-    ],
-    [
-        'table'=>'grouptypes'
-    ]);
+        ], [ 'tab_id'=>'tab2', 'title'=>"Good-bye" ]),
+    ]),
+    'save' => new FormField_ButtonSubmit([
+                'field' => 'save',
+                'display' => lang('GROUPTYPE_SAVE')
+            ]),
+    'save_and_new' => new FormField_ButtonSubmit([
+                'field' => 'save_and_new',
+                'display' => lang('GROUPTYPE_SAVE_AND_NEW')
+            ]),
+    'save_and_return' => new FormField_ButtonSubmit([
+                'field' => 'save_and_return',
+                'display' => lang('GROUPTYPE_SAVE_AND_RETURN')
+            ]),
+    'delete' => new FormField_ButtonDelete([
+                'field' => 'delete',
+                'display' => lang('GROUPTYPE_DELETE'),
+                'value' => $grouptype_id,
+                'delete_if' => $creating,
+            ]),
+], [
+    'title' => lang('ADMIN_GROUPTYPE_TITLE'),
+    'table' => 'grouptypes',
+]);
+
+# Fill in the ToC dynamically to ensure we have the appropriate labels
 $myForm->getField('toc')->setRepData($myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]));
+
 #
 # Update the database with any form data in $_POST
 #
 if (Input::exists('post')) {
-    $myForm->setFieldValues($db->queryById('grouptypes', $grouptype_id)->first());
-    $myForm->setNewValues($_POST);
-    if ($myForm->updateIfChangedAndValid($grouptype_id, $errors)) {
-        $successes[] = lang('GROUPTYPE_UPDATE_SUCCESS', $myForm->getField('name')->getNewValue());
-    }
+    $need_reload = false;
     if ($deletes = Input::get('delete')) {
         deleteGrouptypes($deletes, $errors, $successes);
+        Redirect::to($parentPage);
+    } else {
+        $myForm->setNewValues($_POST);
+        if ($creating) {
+            if ($newid = $myForm->insertIfValid($errors)) {
+                $successes[] = lang('GROUPTYPE_ADD_SUCCESSFUL', $myForm->getField('name')->getNewValue());
+                $need_reload = true;
+            }
+        } else {
+            $myForm->setFieldValues($db->queryById('grouptypes', $grouptype_id)->first());
+            if ($myForm->updateIfChangedAndValid($grouptype_id, $errors)) {
+                $successes[] = lang('GROUPTYPE_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
+                if (!Input::get('save')) {
+                    $need_reload = true;
+                }
+            }
+        }
+    }
+    if ($need_reload) {
+        if (Input::get('save')) {
+            Redirect::to($currentPage, "id=$newid&msg=GROUPTYPE_ADD_SUCCESSFUL");
+        } elseif (Input::get('save_and_new')) {
+            Redirect::to($currentPage, "last_id=$newid&msg=GROUPTYPE_ADD_SUCCESSFUL");
+        } elseif (Input::get('save_and_return')) {
+            Redirect::to($parentPage, "last_id=$newid&msg=GROUPTYPE_ADD_SUCCESSFUL");
+        }
     }
 }
 
 #
 # Prepare all data for displaying the form
 #
-$myForm->setFieldValues($db->queryById('grouptypes', $grouptype_id)->first());
+$grouptypeDetails = $db->queryById('grouptypes', $grouptype_id)->first();
+$myForm->setFieldValues($grouptypeDetails);
+
+if ($m = Input::get('msg')) {
+    if ($last_id = Input::get('last_id')) {
+        $grouptypeDetails = $db->queryById('grouptypes', $last_id)->first();
+    }
+    if ($grouptypeDetails && in_array($m, ['GROUPTYPE_ADD_SUCCESSFUL'])) {
+        $successes[] = lang($m, $grouptypeDetails->name);
+    }
+}
 
 #
 # Display the form
