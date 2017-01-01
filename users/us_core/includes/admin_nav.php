@@ -11,7 +11,14 @@ Load main navigation menus
 if (!isset($db)) {
     $db = DB::getInstance();
 }
-$admin_nav_all = $db->query("SELECT * FROM menus WHERE menu_title='admin' ORDER BY display_order");
+$sql = "SELECT menus.id, menu_title, parent, dropdown, logged_in,
+            display_order, label, icon_class,
+            CONCAT(IF(link <> '', link, pages.page), link_args) AS link
+        FROM ".$GLOBALS['T']['menus']." menus
+        LEFT JOIN ".$GLOBALS['T']['pages']." pages ON (menus.page_id = pages.id)
+        WHERE menu_title='admin'
+        ORDER BY display_order";
+$admin_nav_all = $db->query($sql);
 
 /*
 Set "results" to true to return associative array instead of object...part of db class
