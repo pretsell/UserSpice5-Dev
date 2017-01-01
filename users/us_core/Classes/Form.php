@@ -77,12 +77,7 @@ class US_Form extends Element {
             $this->setTitleByPage();
         }
         // delete conditional fields or sub-forms (keep_if or delete_if logic in $opts)
-        foreach ($this->getFields() as $fieldName=>$fieldObj) {
-            if ($fieldObj->getDeleteMe()) {
-                $this->debug(2,"Deleting field=$fieldName");
-                $this->deleteField($fieldName);
-            }
-        }
+        $this->checkFields2Delete();
 	}
     public function handle1Opt($name, $val) {
         switch (strtolower($name)) {
@@ -114,8 +109,37 @@ class US_Form extends Element {
         }
         return false;
     }
+    public function checkFields2Delete($recursive=false) {
+        $this->debug(2,"::checkFields2Delete(".($recursive?"TRUE":"FALSE")."): Entering");
+        foreach ($this->getFields([], ['not_only_fields']) as $fieldName=>$f) {
+            $this->debug(4,"::checkFields2Delete() Checking $fieldName");
+            if ((method_exists($f, 'getDeleteMe') && $f->getDeleteMe())) {
+                $this->debug(5,"Deleting field=$fieldName");
+                $this->deleteField($fieldName);
+            } elseif ($recursive && method_exists($f, 'checkFields2Delete')) {
+                $this->debug(5,"calling checkFields2Delete for $fieldName");
+                $f->checkFields2Delete($recursive);
+            }
+        }
+    }
+    public function checkDeleteIfEmpty($recursive=false) {
+        $this->debug(2,"::checkDeleteIfEmpty(".($recursive?"TRUE":"FALSE")."): Entering");
+        foreach ($this->getFields([], ['not_only_fields']) as $fieldName=>$f) {
+            $this->debug(4,"::checkDeleteIfEmpty() top-of-loop Checking $fieldName");
+            if ((method_exists($f, 'getDeleteIfEmpty') &&
+                    method_exists($f, 'repDataIsEmpty') &&
+                    $f->getDeleteIfEmpty() && $f->repDataIsEmpty($recursive))) {
+                $this->debug(4,"Deleting field=$fieldName");
+                $this->deleteField($fieldName);
+            } elseif ($recursive && method_exists($f, 'checkDeleteIfEmpty')) {
+                $this->debug(4,"calling checkDeleteIfEmpty for $fieldName");
+                $f->checkDeleteIfEmpty($recursive);
+            }
+        }
+    }
     public function setTitleByPage() {
-        $page = $this->_db->query("SELECT * FROM pages WHERE page = ?", [$this->_formName]);
+        global $T;
+        $page = $this->_db->query("SELECT * FROM $T[pages] pages WHERE page = ?", [$this->_formName]);
         if ($page->count() > 0) {
             $pageRow = $page->first();
             $this->setMacro('Form_Title', lang($pageRow->title_lang));
@@ -231,19 +255,24 @@ class US_Form extends Element {
         return $rtn;
     }
     public function setFieldValues($vals, $fieldFilter=array()) {
+        $this->debug(1, '::setFieldValues(): Entering');
         $fieldList = $this->fixFieldList($fieldFilter);
         foreach ($fieldList as $f) {
+            $this->debug(2, "::setFieldValues() - looping with f=$f");
             if (is_array($vals)) {
                 if (isset($vals[$f])) {
                     $this->getField($f)->setFieldValue($vals[$f]);
+                    $this->debug(3, "::setFieldValues(): using array to set ".print_r($vals[$f],true));
                 }
             } else { # presumably it is an object
                 $curObj = $this->getField($f);
                 // handle nested forms (like for tabs)
                 if (method_exists($curObj, 'setFieldValues')) {
+                    $this->debug(3, "::setFieldValues(): using curObj to call setFieldValues()");
                     $curObj->setFieldValues($vals, $fieldFilter);
                 } elseif (isset($vals->$f)) {
                     #if (!method_exists($curObj, 'setFieldValue')) { dbg( 'class='.get_class($curObj).', parent='.get_parent_class($curObj)); var_dump($curObj); }
+                    $this->debug(3, "::setFieldValues(): using curObj to set ".print_r($vals->$f,true));
                     $curObj->setFieldValue($vals->$f);
                 }
             }
@@ -286,6 +315,27 @@ class US_Form extends Element {
             }
         }
         return false;
+    }
+    public function repDataIsEmpty($recursive=false) {
+        if (!$recursive) {
+            return !(boolean)$this->repData;
+        }
+        $isEmpty = false;
+        foreach ($this->repData as $k=>$r) {
+            $this->debug(2, "::repDataIsEmpty(): k=$k");
+            if (!method_exists($r, 'isRepeating') || !$r->isRepeating()) {
+                continue;
+            }
+            if (method_exists($r, 'repDataIsEmpty')) {
+                if ($r->repDataIsEmpty($recursive)) {
+                    $isEmpty = true;
+                } else {
+                    $isEmpty = false;
+                    break;
+                }
+            }
+        }
+        return $isEmpty;
     }
 
 	public function getFormName() {
