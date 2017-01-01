@@ -82,7 +82,8 @@ class US_DB {
 		if (!$this->queryAll($table, $where, $orderBy)->error()) {
             return $this;
         }
-        var_dump($this);
+        return false;
+        #var_dump($this);
 	}
 
     public function queryById($table, $id) {
@@ -112,7 +113,10 @@ class US_DB {
 
 	public function action($action, $table, $where=array(), $orderBy=null) {
         global $T;
-		$sql = "{$action} FROM ".$T[$table];
+        if (@$T[$table]) {
+            $table = $T[$table];
+        }
+		$sql = "{$action} FROM ".$table;
 		$value = '';
 		if (count($where) == 3) {
 			$field = $where[0];
@@ -131,8 +135,11 @@ class US_DB {
 
 	public function insert($table, $fields = array()) {
         global $T;
+        if (@$T[$table]) {
+            $table = $T[$table];
+        }
         $values = '?'.str_repeat(',?', sizeof($fields)-1);
-		$sql = "INSERT INTO ".$T[$table].
+		$sql = "INSERT INTO ".$table.
             " (`". implode('`,`', array_keys($fields))."`) ".
             "VALUES ({$values})";
 		if (!$this->query($sql, $fields)->error()) {
@@ -143,13 +150,16 @@ class US_DB {
 
 	public function update($table, $id, $fields) {
         global $T;
+        if (@$T[$table]) {
+            $table = $T[$table];
+        }
 		$set = $comma = '';
 		foreach ($fields as $name => $value) {
 			$set .= "{$comma}{$name} = ?";
             $comma = ', ';
 		}
 
-		$sql = "UPDATE ".$T[$table]." SET {$set} WHERE id = ?";
+		$sql = "UPDATE ".$table." SET {$set} WHERE id = ?";
         $fields[] = $id; // add final bind value
 		return !$this->query($sql, $fields)->error();
 	}
