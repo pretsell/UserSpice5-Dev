@@ -166,17 +166,19 @@ function fetchNonGroupMembers_raw($group_id, $include_groups=true, $include_user
     }
     if ($include_groups) {
 		$sql .= "SELECT groups.id as id, groups.name as name, 'group' AS group_or_user
-						FROM $T[groups] groups
-						WHERE id != ?
-						AND NOT EXISTS (
-							SELECT *
-							FROM $T[groups_users_raw]
-							WHERE groups.id = user_id
-							AND user_is_group = 1
-							AND group_id = ?
-						) ";
-		$bindvals[] = $group_id;
-		$bindvals[] = $group_id;
+						FROM $T[groups] groups ";
+        if ($group_id) {
+            $sql .= "WHERE id != ?
+					AND NOT EXISTS (
+						SELECT *
+						FROM $T[groups_users_raw]
+						WHERE groups.id = user_id
+						AND user_is_group = 1
+						AND group_id = ?
+					) ";
+    		$bindvals[] = $group_id;
+    		$bindvals[] = $group_id;
+        }
 	}
 	#echo "DEBUG: group_id = $group_id, sql=$sql<br />\n";
 	$query = $db->query($sql,$bindvals);
@@ -214,7 +216,7 @@ function deleteGrouptypes($grouptype_ids, &$errors, &$successes) {
         }
     }
     if ($count) {
-        $successes[] = lang('GROUPTYPE_DELETE_SUCCESS', $count);
+        $successes[] = lang('GROUPTYPE_DELETE_SUCCESSFUL', $count);
     }
     return $count;
 }
@@ -551,6 +553,24 @@ function pathFinder($file, $root=null, $configPathToken=null, $defaultPath=null)
     return false;
 }
 
+function getPageLocation($page) {
+    $path = configGet('us_page_path', US_URL_ROOT);
+    if (!is_array($path)) {
+        foreach ([':', ';'] as $delim) {
+            if (strpos($path, $delim) !== false) {
+                $path = explode($path, $delim);
+                break;
+            }
+        }
+    }
+    foreach ((array)$path as $p) {
+        if (file_exists(US_ROOT_DIR.$p.$page)) {
+            return $p.$page;
+        }
+    }
+    return $page; // last-ditch, desperate measure...
+}
+
 //Check if a user has access to a page
 function securePage($uri=null) {
 	global $user, $T;
@@ -654,7 +674,8 @@ function fetchAllGroups() {
 	$db = DB::getInstance();
     $sql = "SELECT groups.*, gt.name AS grouptype_name
             FROM $T[groups] groups
-            LEFT JOIN $T[grouptypes] gt ON (gt.id = groups.grouptype_id)";
+            LEFT JOIN $T[grouptypes] gt ON (gt.id = groups.grouptype_id)
+            ORDER BY name";
 	return $db->query($sql)->results();
 }
 
@@ -721,7 +742,7 @@ function lang($key,$markers = NULL) {
 		}
 	}
 	// During development give a message to help id if missing the token
-	if ($str == "" && configGet('debug') ) {
+	if ($str == "" && configGet('debug_mode') ) {
         #dbg(substr($key, -6));
 		return ("DEBUG: No language key found: $key");
 	} else {
