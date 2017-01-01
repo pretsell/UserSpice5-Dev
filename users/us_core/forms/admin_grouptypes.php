@@ -51,32 +51,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # Check the CSRF token
 checkToken();
 
+# Where to go to edit/delete individual grouptype rows
+$childForm = getPageLocation('admin_grouptype.php');
+
 # Initialize the form with form fields and HTML snippets
 $myForm = new Form([
-        'name' => new FormField_Text('grouptypes.name', [
-                        'new_valid' => [
-                                    'action'=>'add',
-                                ],
-                    ]),
-        'short_name' => new FormField_Text('grouptypes.short_name', [
-                        'new_valid' => [
-                                    'action'=>'add',
-                                ],
-                    ]),
-        'create' => new FormField_ButtonSubmit('create', [
-                    'label' => lang('SAVE_GROUP_TYPE_LABEL')
-                ]),
-        'grouptype_list' => new FormField_Table('grouptype_list', [
-            'fields' => [
-                '<input type="checkbox" name="delete[]" value="{ID}"/>'=>lang('DELETE_GROUP_TYPE_LABEL'),
-                'name'=>lang('GROUPTYPE_NAME_LABEL'),
-                'short_name'=>lang('GROUPTYPE_SHORT_NAME_LABEL')
-            ],
+    'grouptype_list' =>
+        new FormField_Table([
+            'field' => 'grouptype_list',
+            'isdbfield' => false,
+            // from other side
+            'table_head_cells' => '<th>'.lang('GROUPTYPE_MARK_TO_DELETE').'</th>'.
+                '<th>'.lang('GROUPTYPE_NAME_LABEL').'</th>'.
+                '<th>'.lang('GROUPTYPE_SHORT_NAME_LABEL').'</th>',
+            'table_data_cells' => '<td>{DELETE_CHECKBOX}</td>'.
+                '<td><a href="'.$childForm.'?id={ID}">{NAME}</a></td>'.
+                '<td>{SHORT_NAME}</td>',
+                #'<td><a href="admin_grouptypes.php?id={grouptype_id}">{GROUPTYPE_NAME}</a></td>'.
+            'nodata' => '<p>'.lang('GROUPTYPES_DO_NOT_EXIST').'</p>',
+            'Table_Class' => 'table table-bordered table-condensed',
+            'Delete_Label' => lang('MARK_TO_DELETE'),
         ]),
-        'delete' => new FormField_ButtonDelete('delete', [
-                    'label' => lang('DELETE_GROUP_TYPES_LABEL'),
-                ]),
-    ]);
+    'delete' =>
+        new FormField_ButtonDelete([
+            'field' => 'delete',
+            'display' => lang('GROUPTYPE_DELETE_MARKED'),
+        ]),
+    'create' =>
+        new FormField_ButtonAnchor([
+            'field' => 'create',
+            'display' => lang('GROUPTYPE_CREATE'),
+            'link' => $childForm,
+        ]),
+], [
+    'title' => lang('ADMIN_GROUPTYPES_TITLE'),
+]);
 
 #
 # Update the database with any form data in $_POST
@@ -95,7 +104,7 @@ if (Input::exists('post')) {
             $errors = $validation->stackErrorMessages($errors);
         }
     }
-    if ($deletes = Input::get('delete')) {
+    if ($deletes = Input::get('grouptype_list')) {
         deleteGrouptypes($deletes, $errors, $successes);
     }
 }
@@ -103,71 +112,9 @@ if (Input::exists('post')) {
 #
 # Prepare all data for displaying the form
 #
-$myForm->getField('grouptype_list')->setRepeatValues($db->queryAll('grouptypes', 'name')->results());
+$myForm->getField('grouptype_list')->setRepData($db->queryAll('grouptypes', [],  'name')->results());
 
 #
 # Display the form
 #
-$opts = ['headers', 'footers', 'admin', 'errors'=>$errors, 'successes'=>$successes];
-echo $myForm->getHTMLStart($opts);
-echo $myForm->getHTMLOpenForm();
-echo $myForm->getHTMLOpenRowCol(['replaces'=>['{ROW-CLASS}'=>'well']]);
-echo "<h3>".lang('CREATE_GROUP_TYPE_LABEL')."</h3>\n";
-echo $myForm->getHTMLFields(['name', 'short_name', 'create']);
-echo $myForm->getHTMLCloseRowCol();
-echo $myForm->getHTMLOpenRowCol();
-echo $myForm->getHTMLFields(['grouptype_list', 'delete']);
-echo $myForm->getHTMLCloseRowCol();
-echo $myForm->getHTMLCloseForm();
-echo $myForm->getHTMLCloseContainer();
-
-/*
-<div class="container">
-    <div class="row">
-        <div class="xs=col-12">
-            <?php include_once(US_DOC_ROOT.US_URL_ROOT.'users/includes/admin_dashboard.php'); ?>
-        </div> <!-- col -->
-        <div class="xs=col-12">
-            <h2><?= lang('ADMINISTRATE_GROUP_TYPES_LABEL') ?></h2>
-    		<?php resultBlock($errors, $successes); ?>
-        </div> <!-- col -->
-    </div> <!-- row -->
-    <form method="post">
-    <div class="row well">
-        <div class="xs-col-12">
-            <h3><?= lang('CREATE_GROUP_TYPE_LABEL') ?></h3>
-        	<div class="form-group">
-                <label><?= lang('GROUP_TYPE_NAME_LABEL') ?></label>
-    			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('name') ?>"></span>
-                <input class='form-control' type="text" name="name" >
-            </div>
-        	<div class="form-group">
-                <label><?= lang('GROUP_TYPE_SHORT_NAME_LABEL') ?></label>
-    			<span class="glyphicon glyphicon-info-sign" title="<?= $validation->describe('short_name') ?>"></span>
-                <input class='form-control' type="text" name="short_name" >
-            </div>
-            <input type="submit" name="create" value="<?= lang('CREATE_GROUP_TYPE_LABEL') ?>" />
-        </div> <!-- col -->
-    </div> <!-- row -->
-    <div class="row">
-        <div class="xs-col-12">
-            <table class="table table-hover">
-                <tr><th><?= lang('DELETE_LABEL') ?></th><th><?= lang('GROUP_TYPE_NAME_LABEL') ?></th><th><?= lang('SHORT_NAME_LABEL') ?></th></tr>
-                <?php
-                foreach ($grouptypeData as $gt) {
-                ?>
-                    <tr>
-                        <td><input type="checkbox" name="deleteGrouptypes[]" value="<?= $gt->id ?>" /></td>
-                        <td><a href="admin_grouptype.php?id=<?= $gt->id ?>"><?= $gt->name ?></a></td>
-                        <td><?= $gt->short_name ?></td>
-                    </tr>
-                <?php
-                }
-                ?>
-            </table>
-            <input type="submit" name="delete" value="<?= lang('DELETE_SELECTED_GROUP_TYPES_LABEL') ?>" />
-        </div> <!-- col -->
-    </div> <!-- row -->
-    </form>
-</div> <!-- container -->
-*/
+echo $myForm->getHTML(['errors'=>$errors, 'successes'=>$successes]);
