@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 class US_Redirect {
-	public static function to($location = null,$args=''){
+	public static function to($location = null,$args='') {
         #die('WOULD HAVE REDIRECTED TO: '.$location);
 		if ($location) {
 			if (is_numeric($location)) {
@@ -29,11 +29,13 @@ class US_Redirect {
 						break;
 				}
 			}
-			if($args) $location.='?'.$args;
-			if (!headers_sent()){
+			if ($args) {
+                $location .= '?'.$args;
+            }
+			if (!headers_sent()) {
 				header('Location: '.$location);
 				exit();
-			}else{
+			} else {
 				echo '<script type="text/javascript">';
 				echo 'window.location.href="'.$location.'";';
 				echo '</script>';
