@@ -178,14 +178,15 @@ class US_User
     // if a user is an admin.
     public function isAdmin()
     {
+        global $T;
         if (!$this->isLoggedIn()) {
             return false;
         }
-        $sql = 'SELECT group_id
-			FROM groups_users
-			JOIN groups ON (groups_users.group_id = groups.id)
-			WHERE groups_users.user_id = ?
-			AND groups.admin';
+        $sql = "SELECT group_id
+			FROM $T[groups_users] gu
+			JOIN $T[groups] groups ON (gu.group_id = groups.id)
+			WHERE gu.user_id = ?
+			AND groups.admin";
         $this->_db->query($sql, array($this->_data->id));
         if ($this->_db->count() > 0) {
             return true;
@@ -205,7 +206,8 @@ class US_User
 
     public function logout()
     {
-        $this->_db->query('DELETE FROM users_session WHERE user_id = ? AND uagent = ?', array($this->data()->id, Session::uagent_no_version()));
+        global $T;
+        $this->_db->query("DELETE FROM $T[users_session] WHERE user_id = ? AND uagent = ?", array($this->data()->id, Session::uagent_no_version()));
 
         /*
         At present, user has logged out, so unset session variables and destroy the session.
@@ -249,13 +251,14 @@ class US_User
     // if the current user ($this) has this particular authorization
     public function hasAuth($page, $auth=null)
     {
+        global $T;
         if ($this->isAdmin()) {
             return true;
         }
         // simple auth = this user is a member of a group which is in groups_pages for this page
         $sql = "SELECT DISTINCT gu.group_id, gp.auth
-                FROM groups_users gu
-                JOIN groups_pages gp ON (gu.group_id = gp.group_id)
+                FROM $T[groups_users] gu
+                JOIN $T[groups_pages] gp ON (gu.group_id = gp.group_id)
                 WHERE gp.user_id = ?
                 AND gp.page_id = ? ";
         $bindvals = [$this->id(), $page];
