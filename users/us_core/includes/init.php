@@ -35,6 +35,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * moved to the database is now done through editing local/config.php.
  */
 
+# If we are using old-style single-script-form (not using master_form) then
+# we need to find z_us_root.php and include it here...
+if (!defined('US_ROOT_DIR')) {
+    $curpath = __FILE__;
+    $found = false;
+    while ($curpath = dirname($curpath)) {
+        if (file_exists($fn = $curpath.'/z_us_root.php')) {
+            $found = true;
+            break;
+        }
+    }
+    if ($found) {
+        require_once($fn);
+    }
+}
+
 /*
 If the site over-rides init.php with a copy in local/includes then include
 that file and don't continue here.
