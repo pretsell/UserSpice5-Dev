@@ -61,6 +61,7 @@
 abstract class US_Element {
     protected $_db=null;
     protected $_deleteMe=false;
+    protected $_deleteIfEmpty=false;
     public $debug = -1;
     public $elementList = [];
     public $repElement = null;
@@ -111,6 +112,10 @@ abstract class US_Element {
                 $this->setDeleteMe($val);
                 return true;
                 break;
+            case 'delete_if_empty':
+                $this->setDeleteIfEmpty($val);
+                return true;
+                break;
             case 'exclude_elements':
                 $this->deleteElements($val);
                 return true;
@@ -125,6 +130,7 @@ abstract class US_Element {
         $propHTML = 'HTML_'.$caseName;
         $propMacro = 'MACRO_'.$caseName;
         $this->debug(3, "::handle1Opt(): name=$name");
+#        dbg("propMacro=$propMacro");
         if (method_exists($this, $setMethod)) {
             $this->debug(3, "::handle1Opt(): METHOD: $setMethod, val=$val");
             $this->$setMethod($val);
@@ -137,6 +143,8 @@ abstract class US_Element {
             $this->debug(3, "::handle1Opt(): PROP MACRO: $propMacro, val=$val");
             $this->$propMacro = $val;
             return true;
+#        } elseif ($propMacro == 'MACRO_Rows') {
+#            var_dump($this);
         }
         return false;
     }
@@ -225,10 +233,12 @@ abstract class US_Element {
         $this->debug(2, "::getHTMLRepElement(): element=$element");
         #dbg("getHTMLRepElement(<pre>".substr($element, 0, 20)."</pre>...): Entering (".get_class($this).")");
         if ($this->repDataIsEmpty()) {
+            $this->debug(2, "::getHTMLRepElement(): returning empty alternate");
             return $this->getRepEmptyAlternate();
         }
         #dbg("getHTMLRepElement(): Not empty");
         $html = '';
+        $this->debug(2, "::getHTMLRepElement(): Before Loop");
         foreach ($this->getRepData() as $k=>$row) {
             $this->debug(2, "::getHTMLRepElement(): k=$k, row=".print_r($row,true));
             #dbg('REP ELEMENT class='.get_class($this).'==>'.$k);
@@ -266,6 +276,12 @@ abstract class US_Element {
             $this->debug(4, "::getHTMLRepElement(): html=$html");
         }
         return $html;
+    }
+    public function getDeleteIfEmpty() {
+        return $this->_deleteIfEmpty;
+    }
+    public function setDeleteIfEmpty($val) {
+        $this->_deleteIfEmpty = $val;
     }
     public function getDeleteMe() {
         return $this->_deleteMe;
