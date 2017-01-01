@@ -116,6 +116,9 @@ abstract class US_FormField extends Element {
                 break;
             case 'new_valid':
             case 'new_validate':
+                if (!isset($val['display']) && ($d = $this->getFieldLabel())) {
+                    $val['display'] = $d;
+                }
                 $args = [$this->_dbFieldName => $val];
                 $val = new Validate($args);
                 # NOTE: No break - falling through to 'valid' with $val set
@@ -153,8 +156,6 @@ abstract class US_FormField extends Element {
         $this->MACRO_Hint_Class = $this->getHintClass();
         if (!$this->MACRO_Hint_Text && $this->hasValidation()) {
             $this->MACRO_Hint_Text = $this->getValidator()->describe($this->_fieldName);
-        } else {
-            $this->MACRO_Hint_Text = '';
         }
         return parent::getMacros($s, $opts);
     }
