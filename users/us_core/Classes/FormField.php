@@ -142,6 +142,10 @@ abstract class US_FormField extends Element {
                 $this->setMacro('Extra_Attrib', $val);
                 return true;
                 break;
+            case 'field_id':
+                $this->setFieldId($val);
+                return true;
+                break;
         }
         return parent::handle1Opt($name, $val);
     }
@@ -305,6 +309,7 @@ abstract class US_FormField extends Element {
     }
 
     public function getHTMLScripts() {
+        #dbg("::getHTMLScripts - ".$this->HTML_Script);
         return $this->HTML_Script;
     }
     // if an inheriting class needs to adjust the snippets
