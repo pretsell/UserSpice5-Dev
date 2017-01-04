@@ -1,9 +1,5 @@
 <?php
-/*
-UserSpice 4
-An Open Source PHP User Management System
-by the UserSpice Team at http://UserSpice.com
-*/
-
-$mode = 'role';
-require_once('admin_groups.php');
+$formName = 'admin_roles.php';
+#$enableMasterHeaders = $enableMasterFooters = true;
+require_once 'C:/wamp/www/UserSpice5-Dev/users/z_us_root.php';
+require_once US_ROOT_DIR.'us_core/master_form.php';
