@@ -264,69 +264,31 @@ function deleteGroupsUsers_raw($groups, $users, $user_is_group=0) {
     return $count;
 }
 
-//Retrieve a list of all .php files in root files folder
-function getPathPhpFiles($absRoot,$urlRoot,$fullPath) {
-	$directory = $absRoot.$urlRoot.$fullPath;
-	//bold ($directory);
-	$pages = glob($directory . "*.php");
-
-	foreach ($pages as $page) {
-		$fixed = str_replace($absRoot.$urlRoot,'',$page);
-		$row[$fixed] = $fixed;
-	}
-	return $row;
-}
-
-//Retrieve a list of all .php files in root files folder
-function getPageFiles() {
-	$directory = "../";
-	$pages = glob($directory . "*.php");
-	foreach ($pages as $page) {
-		$fixed = str_replace('../','/'.US_URL_ROOT,$page);
-		$row[$fixed] = $fixed;
-	}
-	return $row;
-}
-
-//Retrive a list of all .php files in users/ folder
-function getUSPageFiles() {
-	$directory = "../users/";
-	$pages = glob($directory . "*.php");
-	foreach ($pages as $page) {
-		$fixed = str_replace('../users/','/'.US_URL_ROOT.'users/',$page);
-		$row[$fixed] = $fixed;
-	}
-	return $row;
-}
-
 //Delete a page from the DB
 function deletePages($pages) {
     global $T;
 	$db = DB::getInstance();
     $count=0;
     $sql = "DELETE FROM $T[pages] WHERE id = ?";
+    $sql2 = "DELETE FROM $T[menus] WHERE page_id = ?";
     foreach ((array)$pages as $p) {
-    	if (!$query = $db->query($sql, [$p])) {
-    		throw new Exception('There was a problem deleting pages.');
-    	} else {
+    	if ($query = $db->query($sql, [$p])) {
+            $db->query($sql2, [$p]);
     		$count++;
     	}
     }
     return $count;
 }
 
-function fetchResults($sql, $bindvals=[]) {
+function fetchResults($sql, $bindvals=[], $queryType=0) {
     $db = DB::getInstance();
-    return $db->query($sql, $bindvals)->results();
+    return $db->query($sql, $bindvals)->results($queryType);
 }
 
 //Fetch information on all pages
-function fetchAllPages() {
+function fetchAllPages($queryType=0) {
     global $T;
-    return fetchResults("SELECT id, page, private FROM $T[pages] ORDER BY page ASC");
-	$db = DB::getInstance();
-	$query = $db->query("SELECT id, page, private FROM $T[pages] ORDER BY page ASC");
-	return $query->results();
+    return fetchResults("SELECT id, page, private FROM $T[pages] ORDER BY page ASC", [], $queryType);
 }
 function fetchPublicPages() {
     global $T;
@@ -355,7 +317,7 @@ function pageIdExists($id) {
 	}
 }
 
-//Toggle private/public setting of a page
+//Set private/public setting of a page
 function updatePrivate($id, $private) {
     global $T;
 	$db = DB::getInstance();
@@ -366,10 +328,13 @@ function updatePrivate($id, $private) {
 function createPages($pages) {
     global $T;
 	$db = DB::getInstance();
+    $count = 0;
 	foreach($pages as $page) {
 		$fields=array('page'=>$page, 'private'=>'0');
 		$db->insert($T['pages'],$fields);
+        $count++;
 	}
+    return $count;
 }
 
 //Add authorization for a group to access page(s) (add to groups_pages)
@@ -449,6 +414,7 @@ function deleteGroupsPages($pages, $groups) {
 
 //Delete a defined array of users
 function deleteUsers($users) {
+    global $T;
 	$db = DB::getInstance();
 	$i = 0;
 	foreach((array)$users as $id) {
