@@ -12,7 +12,6 @@
  *      (they are named like these but without the "US_" prefix)
  */
 
-
 # To modify FormField_Button, find the definitions of FormField_ButtonAnchor,
 # FormField_ButtonSubmit, etc. in local/Classes/FormFieldTypes.php
 abstract class FormField_Button extends FormField {
@@ -145,6 +144,29 @@ abstract class US_FormField_Recaptcha extends FormField {
     }
 }
 
+abstract class US_FormField_SearchQ extends FormField {
+    public
+        $HTML_Pre = '
+            <div class="input-group col-xs-12">
+            <!-- USE TWITTER TYPEAHEAD JSON WITH API TO SEARCH -->
+            ',
+        $HTML_Input = '
+            <input class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}" placeholder="{PLACEHOLDER}" {REQUIRED_ATTRIB}>
+            <span class="input-group-btn">
+              <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+            </span>
+			<div class="searchQinfo">&nbsp;</div>
+            ',
+        $HTML_Post = '
+            </div>
+            ',
+        $HTML_Script = '<script src="'.US_URL_ROOT.'resources/js/search.js" charset="utf-8"></script>';
+    public $MACRO_Field_Id = 'system-search',
+        $MACRO_Field_Name = 'q',
+        $MACRO_Placeholder = 'Search Text...';
+    protected $_isDBField = false;
+}
+
 abstract class US_FormField_Select extends FormField {
     protected $_fieldType = "select";
     public $MACRO_Selected = '';
@@ -238,7 +260,7 @@ abstract class US_FormField_Table extends FormField {
         $MACRO_TH_Cell_Class = "",
         $MACRO_TD_Row_Class = "",
         $MACRO_TD_Cell_Class = "",
-        $MACRO_Delete_Label = "";
+        $MACRO_Checkbox_Label = "";
     public
         $HTML_Pre = '
             <div class="{DIV_CLASS}">
@@ -252,8 +274,8 @@ abstract class US_FormField_Table extends FormField {
             </table>
             </div> <!-- {DIV_CLASS} -->
             ',
-        $HTML_Delete_Checkbox = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{ID}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{DELETE_LABEL}</label>',
-        $HTML_Checkbox = '<input type="checkbox" name="{FIELD_NAME}[]" value="{ID}"/>',
+        $HTML_Checkbox_Id = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{ID}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
+        $HTML_Checkbox_Value = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
         $repElement = 'HTML_Input';
 
     public function handle1Opt($name, $val) {
@@ -264,8 +286,8 @@ abstract class US_FormField_Table extends FormField {
                 $this->HTML_Input = $this->processMacros(
                     [
                         '{TABLE_DATA_CELLS}'=>$val,
-                        '{CHECKBOX}' => $this->HTML_Checkbox,
-                        '{DELETE_CHECKBOX}' => $this->HTML_Delete_Checkbox,
+                        '{CHECKBOX_ID}' => $this->HTML_Checkbox_Id,
+                        '{CHECKBOX_VALUE}' => $this->HTML_Checkbox_Value,
                     ],
                     $this->HTML_Input);
                 #dbg('AFTER: HTML_Input='.htmlentities($this->HTML_Input));
@@ -280,6 +302,14 @@ abstract class US_FormField_Table extends FormField {
                 #dbg("_dataFields=".print_r($this->_dataFields,true));
                 #dbg("_dataFieldLabels=".print_r($this->_dataFieldLabels,true));
                 #dbg('AFTER: HTML_Pre='.htmlentities($this->HTML_Pre));
+                return true;
+                break;
+            case 'searchable':
+                if ($val) {
+                    $this->MACRO_Table_Class .= ' table-list-search';
+                } else {
+                    dbg("Turning searchable OFF is not implemented");
+                }
                 return true;
                 break;
         }

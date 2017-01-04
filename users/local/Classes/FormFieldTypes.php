@@ -16,6 +16,8 @@ class FormField_Radio extends US_FormField_Radio {
 }
 class FormField_Recaptcha extends US_FormField_Recaptcha {
 }
+class FormField_SearchQ extends US_FormField_SearchQ {
+}
 class FormField_Select extends US_FormField_Select {
 }
 class FormField_Table extends US_FormField_Table {
