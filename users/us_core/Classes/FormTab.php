@@ -36,6 +36,45 @@ class US_Form_Row extends Form {
         'openRow', 'Fields', 'closeRow',
     ];
 }
+class US_Form_Panel extends Form {
+    public $elementList = [
+        // since we are changing the order, maybe just re-use title?
+        'openPanel', 'Head', 'Title', 'openBody', 'Fields', 'closeBody', 'Foot', 'closePanel',
+    ];
+    protected $HTML_Head = '',
+        $HTML_Foot = '';
+    protected $HTML_Title = '
+        <h4>{FORM_TITLE}</h4>
+        ';
+    protected $HTML_openPanel = '
+        <div class="panel {PANEL_CLASS}">';
+    protected $HTML_openBody = '
+        <div class="panel-body {BODY_CLASS}">';
+    protected $HTML_closeBody = '
+        </div> <!-- panel-body -->
+        ';
+    protected $HTML_closePanel = '
+        </div> <!-- panel -->
+        ';
+    public $MACRO_Panel_Class = 'panel-default',
+        $MACRO_Body_Class = '',
+        $MACRO_Head_Class = '',
+        $MACRO_Foot_Class = '';
+    public function getHTMLHead() {
+        if ($this->HTML_Head) {
+            return '<div class="panel-heading {HEAD_CLASS}"'.$this->HTML_Head.'</div>';
+        } else {
+            return '';
+        }
+    }
+    public function getHTMLFoot() {
+        if ($this->HTML_Foot) {
+            return '<div class="panel-heading {FOOT_CLASS}"'.$this->HTML_Foot.'</div>';
+        } else {
+            return '';
+        }
+    }
+}
 class US_Form_Well extends Form {
     public $elementList = [
         // since we are changing the order, maybe just re-use title?
