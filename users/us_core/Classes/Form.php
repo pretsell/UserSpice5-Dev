@@ -122,7 +122,7 @@ class US_Form extends Element {
             }
         }
     }
-    public function checkDeleteIfEmpty($recursive=false) {
+    public function checkDeleteIfEmpty($recursive=true) {
         $this->debug(2,"::checkDeleteIfEmpty(".($recursive?"TRUE":"FALSE")."): Entering");
         foreach ($this->getFields([], ['not_only_fields']) as $fieldName=>$f) {
             $this->debug(4,"::checkDeleteIfEmpty() top-of-loop Checking $fieldName");
@@ -157,9 +157,9 @@ class US_Form extends Element {
     }
     public function getHTMLFooter($opts=[], $noFill=false) {
         $html = getInclude(pathFinder('includes/html_footer.php'));
-        foreach ($this->getAllFields() as $field) {
-            if (method_exists($field, 'getHTML_Scripts')) {
-                $html .= $field->getHTMLScripts();
+        foreach ($this->getAllFields() as $f=>$field) {
+            if (method_exists($field, 'getHTMLScripts')) {
+                $html = $field->getHTMLScripts().$html;
             }
         }
         return $html;
