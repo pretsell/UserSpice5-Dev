@@ -31,9 +31,9 @@ if (!isset($lang)) {
 $lang = array_merge($lang, array(
   //Generic labels
   'CHOOSE_FROM_LIST_BELOW'               => 'Choose from the list below',
-  'DELETE_SELECTED'                      => 'Select to Delete',
   'DELETE'                               => 'Delete',
   'MARK_TO_DELETE'                       => 'Mark for Deletion',
+  'MARK_TO_CREATE'                       => 'Mark for Creation',
   'YES'                                  => 'Yes',
   'NO'                                   => 'No',
   'ENABLED'                              => 'Enabled',
@@ -133,13 +133,13 @@ $lang = array_merge($lang, array(
   'FORGOTPASS_REQUEST_EXISTS'            => 'There is already a outstanding lost password request on this account',
   'FORGOTPASS_REQUEST_SUCCESS'           => 'We have emailed you instructions on how to regain access to your account',
 
-//Mail
+  //Mail
   'MAIL_ERROR'                           => 'Fatal error attempting mail, contact your server administrator',
   'MAIL_TEMPLATE_BUILD_ERROR'            => 'Error building email template',
   'MAIL_TEMPLATE_DIRECTORY_ERROR'        => 'Unable to open mail-templates directory. Perhaps try setting the mail directory to %m1%',
   'MAIL_TEMPLATE_FILE_EMPTY'             => 'Template file is empty... nothing to send',
 
-//Miscellaneous
+  //Miscellaneous
   'CAPTCHA_FAIL'                         => 'Failed security question',
   'CONFIRM'                              => 'Confirm',
   'DENY'                                 => 'Deny',
@@ -154,7 +154,7 @@ $lang = array_merge($lang, array(
   'TOKEN'                                => 'Token does not match!',
   'NO_ACCESS'                            => 'You do not have privilege to access that page.',
 
-//Groups
+  //Groups
   'ADMIN_GROUPS_TITLE'                   => 'Administrate Groups',
   'ADMIN_ROLES_TITLE'                    => 'Administrate Group Roles',
   'ADMIN_GROUP_TITLE'                    => 'Configure Details for Group `%m1%`',
@@ -167,8 +167,6 @@ $lang = array_merge($lang, array(
   'DELETE_SELECTED_ROLES'                => 'Delete Selected Group Roles',
   'GROUP_MEMBERSHIP'                     => 'Group Membership',
   'GROUP_ACCESS_TITLE'                   => 'Group Access',
-  'GROUP_NAME_LABEL'                     => 'Group Name',
-  'GROUP_SHORT_NAME_LABEL'               => 'Short Name',
   'GROUP_CHAR_LIMIT'                     => 'Group names must be between %m1% and %m2% characters in length',
   'GROUP_NAME_IN_USE'                    => 'Group name %m1% is already in use',
   'GROUP_DELETIONS_SUCCESSFUL'           => 'Successfully deleted %m1% group(s)',
@@ -178,8 +176,8 @@ $lang = array_merge($lang, array(
   'GROUP_SNAME_UPDATE'                   => 'Group short name changed to `%m1%`',
   'GROUP_TYPE_UPDATE'                    => 'Group Type changed',
   'GROUPTYPE_LABEL'                      => 'Group Type',
-  'GROUP_GROUPTYPE_LABEL'                => 'Group Type for this Group',
-  'ROLE_GROUPTYPE_LABEL'                 => 'Role configurable for this Group Type for this Group',
+  'GROUP_GROUPTYPE'                      => 'Group Type for this Group',
+  'ROLE_GROUPTYPE'                       => 'Role configurable for this Group Type for this Group',
   'GROUP_IS_ADMIN'                       => 'Admin Group Setting',
   'GROUP_NOT_ADMIN'                      => 'Not Admin (normal)',
   'GROUP_MEMBERS_ARE_ADMIN'              => 'All Members of this group automatically receive system administrator privileges',
@@ -249,13 +247,14 @@ $lang = array_merge($lang, array(
   'GROUP_NAME'                           => 'Group Name',
   'ROLE_SHORT_NAME'                      => 'Short Name',
   'GROUP_SHORT_NAME'                     => 'Short Name',
+
   // GroupTypes
   'ADMIN_GROUPTYPE_TITLE'                => 'Edit Group Type',
   'ADMIN_GROUPTYPES_TITLE'               => 'Administrate Group Types',
   'GROUPTYPE_MARK_TO_DELETE'             => 'Mark Group Type(s) for Deletion',
   'GROUPTYPE_DELETE_MARKED'              => 'Delete Selected Group Types',
-  'GROUPTYPE_NAME_LABEL'                 => 'Group Type Name',
-  'GROUPTYPE_SHORT_NAME_LABEL'           => 'Short Name',
+  'GROUPTYPE_NAME'                       => 'Group Type Name',
+  'GROUPTYPE_SHORT_NAME'                 => 'Short Name',
   'GROUPTYPE_ADD_SUCCESSFUL'             => 'Successfully added Group Type `%m1%`',
   'GROUPTYPE_UPDATE_SUCCESSFUL'          => 'Successfully updated Group Type `%m1%`',
   'GROUPTYPE_UPDATE_FAILED'              => 'Attempted update of Group Type `%m1%` FAILED',
@@ -268,7 +267,8 @@ $lang = array_merge($lang, array(
   'GROUPTYPE_SAVE_AND_NEW'               => 'Save and Create a New Group Type',
   'GROUPTYPE_SAVE_AND_RETURN'            => 'Save and Return to List of Group Types',
   'GROUPTYPE_DELETE'                     => 'Delete this Group Type',
-  // settings
+
+  // Settings
   'SETTINGS_SECURITY_TITLE'              => 'Security',
   'SETTINGS_FORCE_SSL'                   => 'Force SSL (experimental)',
   'SETTINGS_RECAPTCHA'                   => 'Recaptcha',
@@ -332,4 +332,20 @@ $lang = array_merge($lang, array(
   'HINT_FBLOGIN_CALLBACK'                => 'Available from Facebook',
   'SAVE_SITE_SETTINGS'                   => 'Save Site Settings',
   'SETTINGS_UPDATE_SUCCESSFUL'           => 'Settings Updated Successfully',
+
+  // Pages
+  'PAGES_TITLE'                          => 'Manage Page Access',
+  'PAGE'                                 => 'Page',
+  'ACCESS'                               => 'Access',
+  'PRIVATE'                              => 'Private',
+  'PUBLIC'                               => 'Public',
+  'NO_PAGES'                             => '(No pages in list)',
+  'CREATE_MARKED_PAGES'                  => 'Create Marked Pages',
+  'DELETE_MARKED_PAGES'                  => 'Delete Marked Pages',
+  'SCRIPTS_NOT_IN_DB'                    => 'These scripts appear to be pages but they are not in the database and are therefore inaccessible. Mark those which should be added to the database.',
+  'SCRIPTS_NOT_EXIST'                    => 'These pages are in the database but the necessary scripts do not exist. Mark those which should be deleted from the database.',
+  'PAGES_IN_MENU'                        => 'These pages are accessed from the menu. Deleting them will change the menu.',
+  'PAGES_ADD_SUCCESSFUL'                 => 'Successfully created %m1% page(s) in the database',
+  'PAGES_DELETE_SUCCESSFUL'              => 'Successfully deleted %m1% page(s) from the database',
+
   ));
