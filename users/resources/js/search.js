@@ -1,3 +1,5 @@
+// (Not sure where this came from? Closest I can find is
+// http://bootsnipp.com/snippets/VKxB) -plb
 $(document).ready(function() {
 var activeSystemClass = $('.list-group-item.active');
 
