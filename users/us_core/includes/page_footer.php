@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </div>
 
 <!-- jQuery -->
-<script src="<?= US_URL_ROOT."us_core/js/jquery.js" ?>"></script>
+<script src="<?= US_URL_ROOT."resources/js/jquery.js" ?>"></script>
 
 <!-- Bootstrap Core JavaScript -->
-<script src="<?= US_URL_ROOT."us_core/js/bootstrap.min.js" ?>"></script>
+<script src="<?= US_URL_ROOT."resources/js/bootstrap.min.js" ?>"></script>
