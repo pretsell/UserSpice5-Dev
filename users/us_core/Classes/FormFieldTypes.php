@@ -48,14 +48,14 @@ abstract class US_FormField_ButtonDelete extends FormField_Button {
 abstract class US_FormField_Checkbox extends FormField {
     protected $_fieldType = "checkbox";
 	public $HTML_Pre =
-            '<div class="{DIV_CLASS}">
+            '<div class="{DIV_CLASS}"> <!-- checkbox -->
             ',
         $HTML_Input =
     		'<input type="{TYPE}" name="{FIELD_NAME}" id="{FIELD_ID}" >
             ',
         $HTML_Post =
 		    '<label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}</label>
-        	 </div> <!-- {DIV_CLASS} -->
+        	 </div> <!-- {DIV_CLASS} (checkbox name={FIELD_NAME}, id={FIELD_ID} -->
              ';
 }
 
@@ -75,7 +75,7 @@ abstract class US_FormField_Radio extends FormField {
     protected $_fieldType = "radio";
     public
         $HTML_Pre = '
-            <div class="{DIV_CLASS}">
+            <div class="{DIV_CLASS}"> <!-- Radio (id={FIELD_ID}, name={FIELD_NAME}) -->
             <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
             <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
             ',
@@ -88,7 +88,7 @@ abstract class US_FormField_Radio extends FormField {
 			</div> <!-- radio -->
             ',
         $HTML_Post = '
-            </div> <!-- {DIV_CLASS} -->
+            </div> <!-- {DIV_CLASS} Radio (id={FIELD_ID}, name={FIELD_NAME}) -->
             ',
         $repElement = 'HTML_Input';
 }
@@ -99,14 +99,14 @@ abstract class US_FormField_Recaptcha extends FormField {
     public $MACRO_Recaptcha_Class = 'g-recaptcha',
         $MACRO_Recaptcha_Public = '';
     public $HTML_Pre = '
-            <div class="{DIV_CLASS}">
+            <div class="{DIV_CLASS}"> <!-- recaptcha -->
     		<label>{LABEL_TEXT}</label>
              ',
         $HTML_Input = '
             <div class="{RECAPTCHA_CLASS}" name="{RECAPTCHA_PUBLIC}"></div>
             ',
         $HTML_Post = '
-            </div> <!-- {DIV_CLASS} -->
+            </div> <!-- {DIV_CLASS} recaptcha -->
             ',
         $HTML_Script = '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
     public function dataIsValid($data) {
@@ -147,7 +147,7 @@ abstract class US_FormField_Recaptcha extends FormField {
 abstract class US_FormField_SearchQ extends FormField {
     public
         $HTML_Pre = '
-            <div class="input-group col-xs-12">
+            <div class="input-group col-xs-12"> <!-- SearchQ -->
             <!-- USE TWITTER TYPEAHEAD JSON WITH API TO SEARCH -->
             ',
         $HTML_Input = '
@@ -158,7 +158,7 @@ abstract class US_FormField_SearchQ extends FormField {
 			<div class="searchQinfo">&nbsp;</div>
             ',
         $HTML_Post = '
-            </div>
+            </div> <!-- SearchQ -->
             ',
         $HTML_Script = '<script src="'.US_URL_ROOT.'resources/js/search.js" charset="utf-8"></script>';
     public $MACRO_Field_Id = 'system-search',
@@ -174,7 +174,7 @@ abstract class US_FormField_Select extends FormField {
     public $repMacroAliases = ['{OPTION_VALUE}', '{OPTION_LABEL}'];
     public
         $HTML_Pre = '
-            <div class="{DIV_CLASS}">
+            <div class="{DIV_CLASS}"> <!-- Select (name={FIELD_NAME}, id={FIELD_ID}) -->
             <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
             <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
             <br />
@@ -185,7 +185,7 @@ abstract class US_FormField_Select extends FormField {
             ',
         $HTML_Post = '
             </select>
-            </div> <!-- {DIV_CLASS} -->
+            </div> <!-- {DIV_CLASS} Select (id={FIELD_ID}, name={FIELD_NAME}) -->
             ',
         $repElement = 'HTML_Input';
     protected
@@ -221,7 +221,7 @@ abstract class US_FormField_Select extends FormField {
         # a "blank" (unset) value might be null in data but '' in select statement
         # for the first "Choose below" item
         $fv = $this->getFieldValue();
-        #if (!@$row[$this->getIdField()]) var_dump($row);
+        #if (!@$row[$this->getIdField()]) { dbg("id field=".$this->getIdField().", row follows"); var_dump($row); }
         $rowVal = $row[$this->getIdField()];
         #dbg("specialRowMacros: Comparing rowVal=$rowVal to fv=$fv");
         if (($fv === $rowVal) ||
@@ -255,7 +255,7 @@ abstract class US_FormField_Table extends FormField {
         $_dataFields = [],
         $_dataFieldLabels = [];
     public
-        $MACRO_Table_Class = "table table-hover",
+        $MACRO_Table_Class = "table-hover",
         $MACRO_TH_Row_Class = "",
         $MACRO_TH_Cell_Class = "",
         $MACRO_TD_Row_Class = "",
@@ -263,8 +263,8 @@ abstract class US_FormField_Table extends FormField {
         $MACRO_Checkbox_Label = "";
     public
         $HTML_Pre = '
-            <div class="{DIV_CLASS}">
-            <table class="{TABLE_CLASS}">
+            <div class="{DIV_CLASS}"> <!-- Table (name={FIELD_NAME}) -->
+            <table class="table {TABLE_CLASS}">
             <tr class="{TH_ROW_CLASS}">{TABLE_HEAD_CELLS}</tr>
             ',
         $HTML_Input = '
@@ -272,7 +272,7 @@ abstract class US_FormField_Table extends FormField {
             ',
         $HTML_Post = '
             </table>
-            </div> <!-- {DIV_CLASS} -->
+            </div> <!-- {DIV_CLASS} Table (name={FIELD_NAME}) -->
             ',
         $HTML_Checkbox_Id = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{ID}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
         $HTML_Checkbox_Value = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
@@ -325,13 +325,13 @@ abstract class US_FormField_TabToC extends FormField {
     public $repElement = 'HTML_Input';
     public
         $HTML_Pre = '
-            <ul class="{TAB_UL_CLASS}" id="myTab">
+            <ul class="{TAB_UL_CLASS}" id="myTab"> <!-- ToC -->
             ',
         $HTML_Input = '
             <li class="{TAB_ACTIVE}"><a href="#{TAB_ID}" data-toggle="{TOC_TYPE}">{TITLE}</a></li>
              ',
         $HTML_Post = '
-             </ul>
+             </ul> <!-- ToC -->
              ';
     public function getTocType() {
         return $this->tocType;

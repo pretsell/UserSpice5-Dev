@@ -37,16 +37,16 @@ abstract class US_FormField extends Element {
     public $repEmptyAlternateReplacesAll = true;
     public
         $HTML_Pre = '
-            <div class="{DIV_CLASS}">
+            <div class="{DIV_CLASS}"> <!-- type={TYPE} id={FIELD_ID} name={FIELD_NAME} -->
               <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
               <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
               <br />',
         $HTML_Input = '
               <input class="{INPUT_CLASS}" type="{TYPE}" id="{FIELD_ID}" '
             .'name="{FIELD_NAME}" placeholder="{PLACEHOLDER}" value="{VALUE}" '
-            .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB}>',
+            .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB} {DISABLED}>',
         $HTML_Post = '
-            </div> <!-- {DIV_CLASS} -->',
+            </div> <!-- {DIV_CLASS} (type={TYPE} id={FIELD_ID}, name={FIELD_NAME}) -->',
         $HTML_Script = '',
         $elementList = ['Pre', 'Input', 'Post'];
     # Commented-out values below are added just-in-time prior to replacement
@@ -65,7 +65,8 @@ abstract class US_FormField extends Element {
         $MACRO_TH_Class = '',
         $MACRO_Placeholder = '',
         $MACRO_Extra_Attrib = '',
-        $MACRO_Value = '';
+        $MACRO_Value = '',
+        $MACRO_Disabled = '';
 
     public function __construct($opts=[]) {
         global $T;
@@ -285,6 +286,14 @@ abstract class US_FormField extends Element {
             $this->setValidator(new Validate());
         }
         return $this->_validateObject;
+    }
+
+    public function setDisabled($val) {
+        if ($val) {
+            $this->MACRO_Disabled = 'disabled';
+        } else {
+            $this->MACRO_Disabled = '';
+        }
     }
 
     #

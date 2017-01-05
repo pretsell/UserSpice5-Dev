@@ -7,7 +7,7 @@ class US_FormTab_Contents extends Form {
         <div class="tab-content {TAB_CONTENT_CLASS}" id="{TAB_ID}">
         ';
     protected $HTML_closeTab = '
-        </div> <!-- tab-content -->
+        </div> <!-- tab-content (id={TAB_ID}) -->
         ';
 }
 class US_FormTab_Pane extends Form {
@@ -18,7 +18,7 @@ class US_FormTab_Pane extends Form {
         <div class="tab-pane {TAB_PANE_ACTIVE} {TAB_PANE_CLASS}" id="{TAB_ID}">
         ';
     protected $HTML_closeTab = '
-        </div> <!-- tab-pane -->
+        </div> <!-- tab-pane (id={TAB_ID}) -->
         ';
 }
 class US_Form_Form extends Form {
@@ -39,7 +39,7 @@ class US_Form_Row extends Form {
 class US_Form_Panel extends Form {
     public $elementList = [
         // since we are changing the order, maybe just re-use title?
-        'openPanel', 'Head', 'Title', 'openBody', 'Fields', 'closeBody', 'Foot', 'closePanel',
+        'openPanel', 'Heading', 'Title', 'openBody', 'Fields', 'closeBody', 'Footing', 'closePanel',
     ];
     protected $HTML_Head = '',
         $HTML_Foot = '';
@@ -51,7 +51,7 @@ class US_Form_Panel extends Form {
     protected $HTML_openBody = '
         <div class="panel-body {BODY_CLASS}">';
     protected $HTML_closeBody = '
-        </div> <!-- panel-body -->
+        </div> <!-- panel-body (title={FORM_TITLE}) -->
         ';
     protected $HTML_closePanel = '
         </div> <!-- panel -->
@@ -60,14 +60,14 @@ class US_Form_Panel extends Form {
         $MACRO_Body_Class = '',
         $MACRO_Head_Class = '',
         $MACRO_Foot_Class = '';
-    public function getHTMLHead() {
+    public function getHTMLHeading() {
         if ($this->HTML_Head) {
             return '<div class="panel-heading {HEAD_CLASS}"'.$this->HTML_Head.'</div>';
         } else {
             return '';
         }
     }
-    public function getHTMLFoot() {
+    public function getHTMLFooting() {
         if ($this->HTML_Foot) {
             return '<div class="panel-heading {FOOT_CLASS}"'.$this->HTML_Foot.'</div>';
         } else {
@@ -86,7 +86,7 @@ class US_Form_Well extends Form {
     protected $HTML_openWell = '
         <div class="well {WELL_CLASS}">';
     protected $HTML_closeWell = '
-        </div> <!-- well -->
+        </div> <!-- well (title={FORM_TITLE}) -->
         ';
     public $MACRO_Well_Class = 'well-sm';
 }

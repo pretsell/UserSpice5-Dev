@@ -3,6 +3,9 @@
 
 */
 class US_Form extends Element {
+    const UPDATE_ERROR = 0;
+    const UPDATE_SUCCESS = 1;
+    const UPDATE_NO_CHANGE = 2;
 	protected $_formName,
         $_fields=[],
         $_validateObject=null,
@@ -19,24 +22,33 @@ class US_Form extends Element {
         'PageFooter', 'Footer',
     ];
     public $repElement = 'Fields';
-    protected $HTML_openContainer = '<div class="container {CONTAINER_CLASS}">'."\n";
-    protected $HTML_openRow = '<div class="row {ROW_CLASS}">'."\n";
-    protected $HTML_openCol = '<div class="{COL_CLASS}">'."\n";
-    protected $HTML_openForm = '<form name="{FORM_NAME}" action="{FORM_ACTION}" method="{FORM_METHOD}">'."\n";
-    protected $HTML_CSRF = '<input type="hidden" name="csrf" value="{GENERATE_CSRF_TOKEN}">'."\n";
-    protected $HTML_closeForm = '</form>'."\n";
-    protected $HTML_closeContainer = '</div> <!-- container -->'."\n";
-    protected $HTML_closeRow = '</div> <!-- row -->'."\n";
-    protected $HTML_closeCol = '</div> <!-- col -->'."\n";
+    protected $HTML_openContainer = '
+        <div class="container {CONTAINER_CLASS}">'."\n";
+    protected $HTML_openRow = '
+        <div class="row {ROW_CLASS}">'."\n";
+    protected $HTML_openCol = '
+        <div class="{COL_CLASS}">'."\n";
+    protected $HTML_openForm = '
+        <form name="{FORM_NAME}" action="{FORM_ACTION}" method="{FORM_METHOD}">'."\n";
+    protected $HTML_CSRF = '
+        <input type="hidden" name="csrf" value="{GENERATE_CSRF_TOKEN}">'."\n";
+    protected $HTML_closeForm = '
+        </form>'."\n";
+    protected $HTML_closeContainer = '
+        </div> <!-- container {CONTAINER_CLASS} -->'."\n";
+    protected $HTML_closeRow = '
+        </div> <!-- row {ROW_CLASS} -->'."\n";
+    protected $HTML_closeCol = '
+        </div> <!-- col {COL_CLASS} -->'."\n";
     protected $HTML_Title = '
-        <div class="{COL_CLASS}">
+        <div class="{COL_CLASS}"> <!-- title col -->
             <h2>{FORM_TITLE}</h2>
         </div> <!-- title col -->
         ';
     protected $HTML_Well_Title = '
-        <div class="{COL_CLASS}"> <!-- title col -->
+        <div class="{COL_CLASS}"> <!-- well title col -->
             <h2>{FORM_TITLE}</h2>
-        </div> <!-- title col -->
+        </div> <!-- well title col -->
         ';
     protected $HTML_TitleAndResults = '
         <div class="{COL_CLASS}"> <!-- title & results col -->
@@ -360,6 +372,7 @@ class US_Form extends Element {
             }
         }
     }
+
     public function updateIfValid($id, &$errors, $fieldFilter=[]) {
         if (!$table = $this->getDBTable()) {
             $errors[] = 'ERROR: No table specified';
@@ -369,14 +382,16 @@ class US_Form extends Element {
             $fields = $this->fieldListNewValues($fieldFilter, true);
             if ($this->checkFieldValidation($fields, $errors)) {
                 if ($this->_db->update($table, $id, $fields)) {
-                    return true;
+                    return self::UPDATE_SUCCESS; // means update occurred
                 } else {
                     $errors[] = lang('SQL_ERROR');
-                    return false;
+                    return self::UPDATE_ERROR; // error return value
                 }
             }
         }
+        return self::UPDATE_NO_CHANGE; // means no error, but no update occurred
     }
+
     # Delete rows identified by $ids in the DB table for this form
     public function delete($ids, &$errors) {
         if (!$ids) {
