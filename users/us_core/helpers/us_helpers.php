@@ -318,6 +318,7 @@ function pageIdExists($id) {
 }
 
 //Set private/public setting of a page
+# THIS FUNCTION CAN BE DELETED
 function updatePrivate($id, $private) {
     global $T;
 	$db = DB::getInstance();
@@ -342,12 +343,18 @@ function addGroupsPages($pages, $groups) {
     global $T;
 	$db = DB::getInstance();
 	$i = 0;
+	$insSql = "INSERT INTO $T[groups_pages]
+                (group_id, page_id)
+                VALUES (?, ?)";
+    $findSql = "SELECT id FROM $T[groups_pages]
+                WHERE group_id = ?
+                AND page_id = ? ";
 	foreach((array)$groups as $group_id) {
 		foreach((array)$pages as $page_id) {
-			$query = $db->query(
-				"INSERT INTO $T[groups_pages] (group_id, page_id) VALUES (?, ?)",
-				array($group_id, $page_id));
-			$i++;
+            if ($db->query($findSql, [$group_id, $page_id])->count() == 0) {
+    			$db->query( $insSql, [$group_id, $page_id]);
+    			$i++;
+            }
 		}
 	}
 	return $i;
@@ -357,8 +364,27 @@ function addGroupsPages($pages, $groups) {
 function fetchGroupsByPage($page_id) {
     global $T;
 	$db = DB::getInstance();
-	$query = $db->query("SELECT id, group_id FROM $T[groups_pages] WHERE page_id = ? ",array($page_id));
-	return $query->results();
+	$sql = "SELECT gp.id, gp.group_id, g.name, g.short_name
+            FROM $T[groups_pages] gp
+            LEFT JOIN $T[groups] g ON (gp.group_id = g.id)
+            WHERE page_id = ?
+            ORDER BY g.name, g.short_name";
+	return $db->query($sql, [$page_id])->results();
+}
+
+//Retrieve list of groups that can NOT access a page
+function fetchGroupsByNotPage($page_id) {
+    global $T;
+	$db = DB::getInstance();
+	$sql = "SELECT id, name, short_name
+            FROM $T[groups] g
+            WHERE NOT EXISTS
+                (SELECT *
+                 FROM $T[groups_pages] gp
+                 WHERE gp.group_id = g.id
+                 AND gp.page_id = ?)
+            ORDER BY name, short_name";
+	return $db->query($sql, [$page_id])->results();
 }
 
 //Retrieve list of groups that can access a menu

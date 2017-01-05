@@ -31,9 +31,11 @@ if (!isset($lang)) {
 $lang = array_merge($lang, array(
   //Generic labels
   'CHOOSE_FROM_LIST_BELOW'               => 'Choose from the list below',
+  'READ_ONLY'                            => 'Read Only',
   'DELETE'                               => 'Delete',
   'MARK_TO_DELETE'                       => 'Mark for Deletion',
   'MARK_TO_CREATE'                       => 'Mark for Creation',
+  'MARK_TO_ADD'                          => 'Mark to Add',
   'YES'                                  => 'Yes',
   'NO'                                   => 'No',
   'ENABLED'                              => 'Enabled',
@@ -334,7 +336,7 @@ $lang = array_merge($lang, array(
   'SETTINGS_UPDATE_SUCCESSFUL'           => 'Settings Updated Successfully',
 
   // Pages
-  'PAGES_TITLE'                          => 'Manage Page Access',
+  'ADMIN_PAGES_TITLE'                    => 'Manage Page Access',
   'PAGE'                                 => 'Page',
   'ACCESS'                               => 'Access',
   'PRIVATE'                              => 'Private',
@@ -347,5 +349,19 @@ $lang = array_merge($lang, array(
   'PAGES_IN_MENU'                        => 'These pages are accessed from the menu. Deleting them will change the menu.',
   'PAGES_ADD_SUCCESSFUL'                 => 'Successfully created %m1% page(s) in the database',
   'PAGES_DELETE_SUCCESSFUL'              => 'Successfully deleted %m1% page(s) from the database',
+  // Page
+  'ADMIN_PAGE_TITLE'                     => 'Manage Page Authorizations',
+  'PAGE_INFO_TITLE'                      => 'Page Information',
+  'PAGE_PATH'                            => 'File Path of Page',
+  'PUBLIC_OR_PRIVATE'                    => 'Public / Private',
+  'GROUP'                                => 'Group',
+  'NO_GROUP_ACCESS'                      => '(No Groups Have Access to this Page)',
+  'NO_GROUP_WITHOUT_ACCESS'              => '(No Groups Exist Without Access to this Page)',
+  'PAGE_DEL_GROUP_ACCESS'                => 'Delete Page Access for Marked Groups',
+  'PAGE_ADD_GROUP_ACCESS'                => 'Add Page Access for Marked Groups',
+  'PAGE_UPDATE_FAILED'                   => 'Attempted update of Page FAILED',
+  'PAGE_UPDATE_SUCCESSFUL'               => 'Successfully updated Page',
+  'PAGE_SAVE'                            => 'Save Changes to Page',
+  'PAGE_SAVE_AND_RETURN'                 => 'Save Changes and Return to Page List',
 
   ));
