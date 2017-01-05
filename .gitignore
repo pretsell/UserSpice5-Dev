@@ -10,6 +10,9 @@ users/admin_group.php
 users/admin_groups.php
 users/admin_role.php
 users/admin_roles.php
+users/admin_pages.php
+users/admin_page.php
+users/admin_settings.php
 users/admin_grouptypes.php
 users/admin_grouptype.php
 users/z_us_root.php
