@@ -120,7 +120,7 @@ $myForm = new Form ([
         'searchable' => true,
     ]),
 ], [
-    'title' => lang('PAGES_TITLE'),
+    'title' => lang('ADMIN_PAGES_TITLE'),
 ]);
 
 $myForm->checkDeleteIfEmpty();
