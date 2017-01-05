@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 23, 2016 at 10:43 PM
+-- Generation Time: Jan 05, 2017 at 12:12 PM
 -- Server version: 5.7.11
 -- PHP Version: 5.6.19
 
@@ -23,10 +23,66 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `field_defs`
+-- Table structure for table `config_defs`
 --
 
-CREATE TABLE `field_defs` (
+CREATE TABLE `config_defs` (
+  `id` int(11) NOT NULL,
+  `code` varchar(50) COLLATE utf8_bin NOT NULL,
+  `val_type` enum('str','int','text','bool') COLLATE utf8_bin NOT NULL,
+  `allow_user_override` tinyint(1) NOT NULL DEFAULT '0',
+  `html_function_name` varchar(50) COLLATE utf8_bin NOT NULL,
+  `json_encoded` tinyint(1) NOT NULL DEFAULT '0',
+  `label` varchar(100) COLLATE utf8_bin NOT NULL,
+  `label2` varchar(100) COLLATE utf8_bin NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `config_opts`
+--
+
+CREATE TABLE `config_opts` (
+  `id` int(11) NOT NULL,
+  `config_def_id` int(11) NOT NULL,
+  `seq` int(11) NOT NULL,
+  `option_val` varchar(250) COLLATE utf8_bin NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `config_vals`
+--
+
+CREATE TABLE `config_vals` (
+  `id` int(11) NOT NULL,
+  `config_def_id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `val_int` int(11) DEFAULT NULL,
+  `val_str` varchar(500) COLLATE utf8_bin DEFAULT NULL,
+  `val_text` text COLLATE utf8_bin
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `groups_groups`
+--
+CREATE TABLE `groups_groups` (
+`id` bigint(20)
+,`parent_id` int(11)
+,`child_id` int(11)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `us_field_defs`
+--
+
+CREATE TABLE `us_field_defs` (
   `id` int(11) NOT NULL,
   `name` varchar(50) COLLATE utf8_bin NOT NULL,
   `alias` varchar(50) COLLATE utf8_bin DEFAULT NULL,
@@ -43,10 +99,10 @@ CREATE TABLE `field_defs` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 --
--- Dumping data for table `field_defs`
+-- Dumping data for table `us_field_defs`
 --
 
-INSERT INTO `field_defs` (`id`, `name`, `alias`, `display_lang`, `min`, `max`, `required`, `unique_in_table`, `match_field`, `is_numeric`, `valid_email`, `regex`, `regex_display`) VALUES
+INSERT INTO `us_field_defs` (`id`, `name`, `alias`, `display_lang`, `min`, `max`, `required`, `unique_in_table`, `match_field`, `is_numeric`, `valid_email`, `regex`, `regex_display`) VALUES
 (1, 'users.username', 'username', 'USERNAME', 1, 150, 1, 'users', NULL, NULL, NULL, '/^[^\\t !@#$%^&*(){}\\[\\]`~\\\\|]*$/', 'No spaces or special characters'),
 (2, 'users.fname', 'fname', 'FNAME', 1, 150, 1, NULL, NULL, NULL, NULL, NULL, NULL),
 (3, 'users.lname', 'lname', 'LNAME', 1, 150, 1, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -54,18 +110,19 @@ INSERT INTO `field_defs` (`id`, `name`, `alias`, `display_lang`, `min`, `max`, `
 (5, 'users.password', 'password', 'PASSWORD', 6, 150, 1, NULL, NULL, NULL, NULL, NULL, NULL),
 (6, 'confirm', NULL, 'CONFIRM_PASSWD', NULL, NULL, 1, NULL, 'password', NULL, NULL, NULL, NULL),
 (7, 'users.bio', 'bio', 'BIO_LABEL', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
-(8, 'groups.name', 'name', 'GROUP_NAME_LABEL', 1, 150, 1, 'groups', NULL, NULL, NULL, NULL, NULL),
-(9, 'groups.short_name', 'short_name', 'GROUP_SHORT_NAME_LABEL', 1, 25, NULL, 'groups', NULL, NULL, NULL, NULL, NULL),
-(10, 'grouptypes.name', 'name', 'GROUPTYPE_NAME_LABEL', 1, 150, 1, 'grouptypes', NULL, NULL, NULL, NULL, NULL),
-(11, 'grouptypes.short_name', 'short_name', 'GROUPTYPE_SHORT_NAME_LABEL', 1, 25, NULL, 'grouptypes', NULL, NULL, NULL, NULL, NULL);
+(8, 'groups.name', 'name', 'GROUP_NAME', 1, 150, 1, 'groups', NULL, NULL, NULL, NULL, NULL),
+(9, 'groups.short_name', 'short_name', 'GROUP_SHORT_NAME', 1, 25, NULL, 'groups', NULL, NULL, NULL, NULL, NULL),
+(10, 'grouptypes.name', 'name', 'GROUPTYPE_NAME', 1, 150, 1, 'grouptypes', NULL, NULL, NULL, NULL, NULL),
+(11, 'grouptypes.short_name', 'short_name', 'GROUPTYPE_SHORT_NAME', 1, 25, NULL, 'grouptypes', NULL, NULL, NULL, NULL, NULL),
+(13, 'groups.grouptype_id', 'grouptype_id', 'GROUPTYPE_LABEL', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `groups`
+-- Table structure for table `us_groups`
 --
 
-CREATE TABLE `groups` (
+CREATE TABLE `us_groups` (
   `id` int(11) NOT NULL,
   `grouptype_id` int(11) DEFAULT NULL,
   `name` varchar(150) NOT NULL,
@@ -75,66 +132,35 @@ CREATE TABLE `groups` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `groups`
+-- Dumping data for table `us_groups`
 --
 
-INSERT INTO `groups` (`id`, `grouptype_id`, `name`, `short_name`, `admin`, `is_role`) VALUES
-(1, NULL, 'User', NULL, 0, 0),
-(2, NULL, 'Administrator', NULL, 1, 0),
-(3, NULL, 'Foo2', NULL, 1, 0),
-(4, 9, 'Silk Road AG', '', 0, 0),
-(5, NULL, 'Foo1', '', 0, 0),
-(6, NULL, 'Foo3', NULL, 0, 0),
-(7, NULL, 'newgroupb', NULL, 0, 0),
-(8, 10, 'Focus Group Leader', 'FL', 0, 1),
-(9, 3, 'Focus Group Women\'s Ministry Coordinator', 'FGWMC', 0, 1),
-(10, 9, 'Affinity Group Director', 'AD', 0, 1),
-(11, 9, 'Affinity Group Women&#039;s Ministry Coordinator', 'AGWMC', 0, 1),
-(12, 11, 'Team Leader', 'TL', 0, 1),
-(13, 4, 'Team Women\'s Ministry Coordinator', 'Team WMC', 0, 1),
-(14, 8, 'Church Planting Division Director', 'CPD', 0, 1),
-(15, 1, 'Women\'s Ministry Director (CPD)', 'WMD', 0, 1),
-(16, 3, 'Assistant Focus Group Leader', 'AFL', 0, 1),
-(17, 3, 'Assistant Focus Group Women\'s Ministry Coordinator', 'FG AWMC', 0, 1),
-(18, 2, 'Assistant Affinity Group Director', 'AAD', 0, 1),
-(19, 2, 'Assistant Affinity Group Women\'s Ministry Coordinator', 'AG AWMC', 0, 1),
-(20, 4, 'Assistant Team Leader', 'ATL', 0, 1),
-(21, 4, 'Assistant Team Women\'s Ministry Coordinator', 'Team AWMC', 0, 1),
-(22, 1, 'Assistant Church Planting Division Director', 'ACPD', 0, 1),
-(23, 1, 'Assistant Women\'s Ministry Director', 'AWMD', 0, 1),
-(39, 10, 'Balkans FG', 'BFG', 0, 0),
-(40, 11, 'Roma CP', 'RCP', 0, 0),
-(42, NULL, 'foo8', '', 0, 0),
-(43, 8, 'Charlie!', 'Charles!', 0, 0);
+INSERT INTO `us_groups` (`id`, `grouptype_id`, `name`, `short_name`, `admin`, `is_role`) VALUES
+(1, 0, 'Users', '', 0, 0),
+(2, 0, 'Administrators', '', 1, 0),
+(54, 8, 'President', 'Pres', 1, 1),
+(55, 8, 'Vice President', 'VP', 0, 1),
+(56, 8, 'Acme Multi-National Corp International Division', 'Acme', 0, 0),
+(57, 11, 'Zoological Department', 'ZD', 0, 0),
+(58, 11, 'Department Head', 'DH', 0, 1);
 
 -- --------------------------------------------------------
 
 --
--- Stand-in structure for view `groups_groups`
---
-CREATE TABLE `groups_groups` (
-`id*10000+id` bigint(20)
-,`parent_id` int(11)
-,`child_id` int(11)
-);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `groups_menus`
+-- Table structure for table `us_groups_menus`
 --
 
-CREATE TABLE `groups_menus` (
+CREATE TABLE `us_groups_menus` (
   `id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
   `menu_id` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 --
--- Dumping data for table `groups_menus`
+-- Dumping data for table `us_groups_menus`
 --
 
-INSERT INTO `groups_menus` (`id`, `group_id`, `menu_id`) VALUES
+INSERT INTO `us_groups_menus` (`id`, `group_id`, `menu_id`) VALUES
 (22, 2, 37),
 (20, 1, 4),
 (19, 0, 4),
@@ -163,10 +189,10 @@ INSERT INTO `groups_menus` (`id`, `group_id`, `menu_id`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `groups_pages`
+-- Table structure for table `us_groups_pages`
 --
 
-CREATE TABLE `groups_pages` (
+CREATE TABLE `us_groups_pages` (
   `id` int(11) NOT NULL,
   `allow_deny` char(1) NOT NULL DEFAULT 'A',
   `group_id` int(15) DEFAULT NULL,
@@ -176,10 +202,10 @@ CREATE TABLE `groups_pages` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `groups_pages`
+-- Dumping data for table `us_groups_pages`
 --
 
-INSERT INTO `groups_pages` (`id`, `allow_deny`, `group_id`, `grouprole_id`, `page_id`, `auth`) VALUES
+INSERT INTO `us_groups_pages` (`id`, `allow_deny`, `group_id`, `grouprole_id`, `page_id`, `auth`) VALUES
 (2, 'A', 2, NULL, 27, ''),
 (3, 'A', 1, NULL, 24, ''),
 (4, 'A', 1, NULL, 22, ''),
@@ -199,17 +225,16 @@ INSERT INTO `groups_pages` (`id`, `allow_deny`, `group_id`, `grouprole_id`, `pag
 (23, 'A', 1, NULL, 56, ''),
 (26, 'A', 2, NULL, 60, ''),
 (27, 'A', 1, NULL, 55, ''),
-(28, 'A', 43, NULL, 30, ''),
-(29, 'A', 43, NULL, 46, ''),
-(30, 'A', 43, NULL, 33, '');
+(47, 'A', 57, NULL, 22, ''),
+(48, 'A', 57, NULL, 50, '');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `groups_roles_users`
+-- Table structure for table `us_groups_roles_users`
 --
 
-CREATE TABLE `groups_roles_users` (
+CREATE TABLE `us_groups_roles_users` (
   `id` int(11) NOT NULL,
   `group_id` int(11) DEFAULT NULL COMMENT AS `null = all groups`,
   `role_group_id` int(11) DEFAULT NULL COMMENT AS `null = all roles`,
@@ -217,22 +242,25 @@ CREATE TABLE `groups_roles_users` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 --
--- Dumping data for table `groups_roles_users`
+-- Dumping data for table `us_groups_roles_users`
 --
 
-INSERT INTO `groups_roles_users` (`id`, `group_id`, `role_group_id`, `user_id`) VALUES
+INSERT INTO `us_groups_roles_users` (`id`, `group_id`, `role_group_id`, `user_id`) VALUES
 (6, 41, 8, 4),
 (7, 43, 14, 1),
 (8, 43, 14, 2),
 (9, 43, 23, 5),
-(10, 39, 8, 2);
+(10, 39, 8, 2),
+(11, 52, 10, 3),
+(12, 56, 54, 2),
+(13, 57, 58, 2);
 
 -- --------------------------------------------------------
 
 --
--- Stand-in structure for view `groups_users`
+-- Stand-in structure for view `us_groups_users`
 --
-CREATE TABLE `groups_users` (
+CREATE TABLE `us_groups_users` (
 `id` bigint(20)
 ,`user_id` int(11)
 ,`group_id` int(11)
@@ -242,10 +270,10 @@ CREATE TABLE `groups_users` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `groups_users_raw`
+-- Table structure for table `us_groups_users_raw`
 --
 
-CREATE TABLE `groups_users_raw` (
+CREATE TABLE `us_groups_users_raw` (
   `id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -253,67 +281,47 @@ CREATE TABLE `groups_users_raw` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `groups_users_raw`
+-- Dumping data for table `us_groups_users_raw`
 --
 
-INSERT INTO `groups_users_raw` (`id`, `group_id`, `user_id`, `user_is_group`) VALUES
+INSERT INTO `us_groups_users_raw` (`id`, `group_id`, `user_id`, `user_is_group`) VALUES
 (100, 1, 1, 0),
 (102, 1, 2, 0),
-(110, 1, 4, 0),
-(111, 1, 5, 0),
-(116, 1, 6, 0),
-(117, 1, 7, 0),
 (101, 2, 1, 0),
-(107, 3, 1, 1),
-(108, 3, 2, 1),
-(109, 3, 4, 1),
-(106, 5, 1, 1),
-(112, 7, 3, 0),
-(114, 7, 5, 0),
-(144, 8, 2, 0),
-(132, 8, 4, 0),
-(140, 14, 1, 0),
-(141, 14, 2, 0),
-(142, 23, 5, 0),
-(143, 39, 2, 0),
-(126, 40, 2, 0),
-(127, 40, 4, 0),
-(133, 43, 1, 0),
-(134, 43, 2, 0),
-(136, 43, 4, 0),
-(137, 43, 5, 0),
-(138, 43, 6, 0),
-(139, 43, 7, 0);
+(160, 54, 2, 0),
+(159, 56, 2, 0),
+(161, 57, 2, 0),
+(162, 58, 2, 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `grouptypes`
+-- Table structure for table `us_grouptypes`
 --
 
-CREATE TABLE `grouptypes` (
+CREATE TABLE `us_grouptypes` (
   `id` int(11) NOT NULL,
-  `name` varchar(150) COLLATE utf8_bin NOT NULL,
-  `short_name` varchar(15) COLLATE utf8_bin NOT NULL
+  `name` varchar(150) CHARACTER SET utf8 NOT NULL,
+  `short_name` varchar(15) CHARACTER SET utf8 NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 --
--- Dumping data for table `grouptypes`
+-- Dumping data for table `us_grouptypes`
 --
 
-INSERT INTO `grouptypes` (`id`, `name`, `short_name`) VALUES
-(8, 'Church Planting Division', 'CPD'),
-(9, 'Affinity Group', 'AG'),
-(10, 'Focus Group', 'FG'),
-(11, 'Team', 'Team');
+INSERT INTO `us_grouptypes` (`id`, `name`, `short_name`) VALUES
+(8, 'International Division', 'ID'),
+(9, 'Region', 'Region'),
+(10, 'Team', 'Team'),
+(11, 'Department', 'Dept');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `menus`
+-- Table structure for table `us_menus`
 --
 
-CREATE TABLE `menus` (
+CREATE TABLE `us_menus` (
   `id` int(10) NOT NULL,
   `menu_title` varchar(255) NOT NULL,
   `parent` int(10) NOT NULL,
@@ -322,166 +330,131 @@ CREATE TABLE `menus` (
   `display_order` int(10) NOT NULL,
   `label` varchar(255) NOT NULL,
   `link` varchar(255) NOT NULL,
+  `link_args` varchar(500) NOT NULL DEFAULT '',
   `page_id` int(11) DEFAULT NULL,
   `icon_class` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `menus`
+-- Dumping data for table `us_menus`
 --
 
-INSERT INTO `menus` (`id`, `menu_title`, `parent`, `dropdown`, `logged_in`, `display_order`, `label`, `link`, `page_id`, `icon_class`) VALUES
-(1, 'main', -1, 0, 1, 0, 'Home', '', NULL, 'fa fa-fw fa-home'),
-(2, 'main', -1, 0, 1, 2, 'Dashboard', 'users/admin.php', 4, 'fa fa-fw fa-cogs'),
-(3, 'main', -1, 1, 1, 1, '{{username}}', '', NULL, 'fa fa-fw fa-user'),
-(4, 'main', 3, 0, 1, 1, 'Profile', 'users/profile.php', 22, 'fa fa-fw fa-home'),
-(5, 'main', 3, 0, 1, 1, 'Logout', 'users/logout.php', 21, 'fa fa-fw fa-home'),
-(6, 'main', -1, 1, 1, 3, 'Help', '', NULL, 'fa fa-fw fa-life-ring'),
-(8, 'main', -1, 0, 0, 1, 'Register', 'users/join.php', 18, 'fa fa-fw fa-plus-square'),
-(9, 'main', -1, 0, 0, 2, 'Log In', 'users/login.php', 20, 'fa fa-fw fa-sign-in'),
-(10, 'admin', -1, 0, 1, 10, 'Info', 'users/admin.php', 4, ''),
-(11, 'admin', -1, 1, 1, 20, 'Settings', '', NULL, ''),
-(12, 'admin', 11, 0, 1, 10, 'Security', 'users/admin_security.php', 32, ''),
-(13, 'admin', 11, 0, 1, 20, 'CSS', 'users/admin_css.php', 29, ''),
-(14, 'admin', -1, 0, 1, 30, 'Users', 'users/admin_users.php', 40, ''),
-(16, 'admin', -1, 0, 1, 50, 'Pages', 'users/admin_pages.php', 6, ''),
-(17, 'admin', 20, 0, 1, 10, 'Settings', 'users/admin_email.php', 30, ''),
-(18, 'admin', -1, 0, 1, 60, 'Menus', 'users/admin_menus.php', 43, ''),
-(20, 'admin', -1, 1, 1, 70, 'Email', '', NULL, ''),
-(21, 'admin', 20, 0, 1, 20, 'Email Verify Template', 'users/admin_email_template.php?type=verify', NULL, ''),
-(22, 'admin', 20, 0, 1, 30, 'Forgot Password Template', 'users/admin_email_template.php?type=forgot', NULL, ''),
-(23, 'main', 6, 0, 0, 99999, 'Verify Resend', 'users/verify_resend.php', 26, ''),
-(24, 'admin', 11, 0, 1, 30, 'General', 'users/admin_general.php', 31, ''),
-(25, 'admin', 11, 0, 1, 40, 'Redirects', 'users/admin_redirects.php', 57, ''),
-(26, 'admin', -1, 0, 1, 80, 'Add User(s)', 'users/admin_users_add.php', 59, ''),
-(27, 'admin', 20, 0, 1, 40, 'Test', 'users/admin_email_test.php', 33, ''),
-(28, 'admin', -1, 1, 1, 90, 'System', '', NULL, ''),
-(29, 'admin', 28, 0, 1, 10, 'Updates', 'users/admin_updates.php', 66, ''),
-(30, 'admin', 28, 0, 1, 20, 'Backup', 'users/admin_backup.php', 68, ''),
-(31, 'admin', 28, 0, 1, 30, 'Restore', 'users/admin_restore.php', 69, ''),
-(32, 'admin', 28, 0, 1, 40, 'Status', 'users/admin_status.php', 70, ''),
-(33, 'admin', 28, 0, 1, 50, 'PHP Info', 'users/admin_phpinfo.php', 71, ''),
-(34, 'admin', 11, 0, 1, 50, 'Registration', 'users/admin_registration.php', 73, ''),
-(35, 'admin', 11, 0, 1, 60, 'Google Login', 'users/admin_googlelogin.php', 75, ''),
-(36, 'admin', 11, 0, 1, 70, 'Facebook Login', 'users/admin_facebooklogin.php', 78, ''),
-(38, 'admin', -1, 1, 1, 40, 'Groups', '', NULL, ''),
-(39, 'admin', 38, 0, 1, 10, 'Groups', 'users/admin_groups.php', 74, ''),
-(40, 'admin', 38, 0, 1, 20, 'Group Roles', 'users/admin_roles.php', NULL, ''),
-(41, 'admin', 38, 0, 1, 30, 'Group Types', 'users/admin_grouptypes.php', NULL, '');
+INSERT INTO `us_menus` (`id`, `menu_title`, `parent`, `dropdown`, `logged_in`, `display_order`, `label`, `link`, `link_args`, `page_id`, `icon_class`) VALUES
+(1, 'main', -1, 0, 1, 0, 'Home', '', '', NULL, 'fa fa-fw fa-home'),
+(2, 'main', -1, 0, 1, 2, 'Dashboard', '', '', 4, 'fa fa-fw fa-cogs'),
+(3, 'main', -1, 1, 1, 1, '{{username}}', '', '', NULL, 'fa fa-fw fa-user'),
+(4, 'main', 3, 0, 1, 1, 'Profile', '', '', 22, 'fa fa-fw fa-home'),
+(5, 'main', 3, 0, 1, 1, 'Logout', '', '', 21, 'fa fa-fw fa-home'),
+(6, 'main', -1, 1, 1, 3, 'Help', '', '', NULL, 'fa fa-fw fa-life-ring'),
+(8, 'main', -1, 0, 0, 1, 'Register', '', '', 18, 'fa fa-fw fa-plus-square'),
+(9, 'main', -1, 0, 0, 2, 'Log In', '', '', 20, 'fa fa-fw fa-sign-in'),
+(10, 'admin', -1, 0, 1, 10, 'Info', '', '', 4, ''),
+(11, 'admin', -1, 0, 1, 20, 'Settings', '', '', 32, ''),
+(14, 'admin', -1, 0, 1, 30, 'Users', '', '', 40, ''),
+(16, 'admin', -1, 0, 1, 50, 'Pages', '', '', 6, ''),
+(17, 'admin', 20, 0, 1, 10, 'Settings', '', '', 30, ''),
+(18, 'admin', -1, 0, 1, 60, 'Menus', '', '', 43, ''),
+(20, 'admin', -1, 1, 1, 70, 'Email', '', '', NULL, ''),
+(21, 'admin', 20, 0, 1, 20, 'Email Verify Template', '', '?type=verify', 46, ''),
+(22, 'admin', 20, 0, 1, 30, 'Forgot Password Template', '', '?type=forgot', 46, ''),
+(23, 'main', 6, 0, 0, 99999, 'Verify Resend', '', '', 26, ''),
+(26, 'admin', -1, 0, 1, 80, 'Add User(s)', '', '', 59, ''),
+(27, 'admin', 20, 0, 1, 40, 'Test', '', '', 33, ''),
+(28, 'admin', -1, 1, 1, 90, 'System', '', '', NULL, ''),
+(29, 'admin', 28, 0, 1, 10, 'Updates', '', '', 66, ''),
+(30, 'admin', 28, 0, 1, 20, 'Backup', '', '', 68, ''),
+(31, 'admin', 28, 0, 1, 30, 'Restore', '', '', 69, ''),
+(32, 'admin', 28, 0, 1, 40, 'Status', '', '', 70, ''),
+(33, 'admin', 28, 0, 1, 50, 'PHP Info', '', '', 71, ''),
+(38, 'admin', -1, 1, 1, 40, 'Groups', '', '', NULL, ''),
+(39, 'admin', 38, 0, 1, 10, 'Groups', '', '', 74, ''),
+(40, 'admin', 38, 0, 1, 20, 'Group Roles', '', '', 84, ''),
+(41, 'admin', 38, 0, 1, 30, 'Group Types', '', '', 85, '');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `pages`
+-- Table structure for table `us_pages`
 --
 
-CREATE TABLE `pages` (
+CREATE TABLE `us_pages` (
   `id` int(11) NOT NULL,
   `page` varchar(100) NOT NULL,
-  `private` int(11) NOT NULL DEFAULT '0',
-  `title_lang` varchar(40) DEFAULT NULL
+  `private` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `pages`
+-- Dumping data for table `us_pages`
 --
 
-INSERT INTO `pages` (`id`, `page`, `private`, `title_lang`) VALUES
-(1, 'index.php', 0, NULL),
-(2, 'z_us_root.php', 0, NULL),
-(4, 'users/admin.php', 1, NULL),
-(6, 'users/admin_pages.php', 1, NULL),
-(14, 'users/forgot_password.php', 0, NULL),
-(15, 'users/password_reset.php', 0, NULL),
-(17, 'users/init.php', 0, NULL),
-(18, 'users/join.php', 0, NULL),
-(20, 'users/login.php', 0, NULL),
-(21, 'users/logout.php', 0, NULL),
-(22, 'users/profile.php', 1, NULL),
-(25, 'users/verify.php', 0, NULL),
-(26, 'users/verify_resend.php', 0, NULL),
-(28, 'usersc/empty.php', 0, NULL),
-(29, 'users/admin_css.php', 1, NULL),
-(30, 'users/admin_email.php', 1, NULL),
-(31, 'users/admin_general.php', 1, NULL),
-(32, 'users/admin_security.php', 1, NULL),
-(33, 'users/admin_email_test.php', 1, NULL),
-(36, 'users/admin_page.php', 1, NULL),
-(39, 'users/admin_user.php', 1, NULL),
-(40, 'users/admin_users.php', 1, NULL),
-(42, 'users/db_cred.php', 1, NULL),
-(43, 'users/admin_menus.php', 0, NULL),
-(44, 'users/admin_menu.php', 0, NULL),
-(45, 'users/admin_menu_item.php', 0, NULL),
-(46, 'users/admin_email_template.php', 1, NULL),
-(48, 'users/index.php', 0, NULL),
-(49, 'contact.php', 0, NULL),
-(50, 'gallery.php', 1, NULL),
-(51, 'join.php', 0, NULL),
-(52, 'login.php', 0, 'SIGN_IN'),
-(55, 'profile.php', 1, NULL),
-(57, 'users/admin_redirects.php', 1, NULL),
-(59, 'users/admin_users_add.php', 1, NULL),
-(60, 'blocked.php', 0, NULL),
-(61, 'forgot_password.php', 0, NULL),
-(62, 'users/blocked.php', 0, NULL),
-(63, 'password_reset.php', 0, NULL),
-(64, 'verify.php', 0, NULL),
-(65, 'verify_resend.php', 0, NULL),
-(66, 'users/admin_updates.php', 1, NULL),
-(68, 'users/admin_backup.php', 1, NULL),
-(69, 'users/admin_restore.php', 1, NULL),
-(70, 'users/admin_status.php', 1, NULL),
-(71, 'users/admin_phpinfo.php', 1, NULL),
-(73, 'users/admin_registration.php', 1, NULL),
-(74, 'users/admin_groups.php', 1, NULL),
-(75, 'users/admin_googlelogin.php', 1, NULL),
-(78, 'users/admin_facebooklogin.php', 1, NULL),
-(79, 'oauth_denied.php', 0, NULL),
-(80, 'users/admin_group.php', 1, NULL),
-(82, 'users/oauth_denied.php', 0, NULL),
-(83, 'users/admin_role.php', 1, NULL),
-(84, 'users/admin_roles.php', 1, NULL),
-(85, 'admin_grouptypes.php', 1, 'ADMIN_GROUPTYPES_TITLE'),
-(86, 'admin_grouptype.php', 1, 'ADMIN_GROUPTYPE_TITLE'),
-(87, 'nologin.php', 0, NULL);
+INSERT INTO `us_pages` (`id`, `page`, `private`) VALUES
+(6, '/UserSpice5-Dev/users/admin_pages.php', 1),
+(14, '/UserSpice5-Dev/users/forgot_password.php', 0),
+(15, '/UserSpice5-Dev/users/password_reset.php', 0),
+(18, '/UserSpice5-Dev/users/join.php', 0),
+(20, '/UserSpice5-Dev/users/login.php', 0),
+(21, '/UserSpice5-Dev/users/logout.php', 0),
+(22, '/UserSpice5-Dev/users/profile.php', 1),
+(26, '/UserSpice5-Dev/users/verify_resend.php', 0),
+(30, '/UserSpice5-Dev/users/admin_email.php', 1),
+(32, '/UserSpice5-Dev/users/admin_settings.php', 1),
+(33, '/UserSpice5-Dev/users/admin_email_test.php', 1),
+(36, '/UserSpice5-Dev/users/admin_page.php', 1),
+(39, '/UserSpice5-Dev/users/admin_user.php', 1),
+(40, '/UserSpice5-Dev/users/admin_users.php', 1),
+(43, '/UserSpice5-Dev/users/admin_menus.php', 0),
+(44, '/UserSpice5-Dev/users/admin_menu.php', 0),
+(45, '/UserSpice5-Dev/users/admin_menu_item.php', 0),
+(46, '/UserSpice5-Dev/users/admin_email_template.php', 1),
+(48, '/UserSpice5-Dev/users/index.php', 0),
+(49, '/UserSpice5-Dev/users/contact.php', 0),
+(50, '/UserSpice5-Dev/users/gallery.php', 1),
+(59, '/UserSpice5-Dev/users/admin_users_add.php', 1),
+(62, '/UserSpice5-Dev/users/blocked.php', 0),
+(66, '/UserSpice5-Dev/users/admin_updates.php', 1),
+(68, '/UserSpice5-Dev/users/admin_backup.php', 1),
+(69, '/UserSpice5-Dev/users/admin_restore.php', 1),
+(70, '/UserSpice5-Dev/users/admin_status.php', 1),
+(71, '/UserSpice5-Dev/users/admin_phpinfo.php', 1),
+(74, '/UserSpice5-Dev/users/admin_groups.php', 1),
+(80, '/UserSpice5-Dev/users/admin_group.php', 1),
+(82, '/UserSpice5-Dev/users/oauth_denied.php', 0),
+(83, '/UserSpice5-Dev/users/admin_role.php', 1),
+(84, '/UserSpice5-Dev/users/admin_roles.php', 1),
+(85, '/UserSpice5-Dev/users/admin_grouptypes.php', 1),
+(86, '/UserSpice5-Dev/users/admin_grouptype.php', 1),
+(87, '/UserSpice5-Dev/users/nologin.php', 0),
+(93, '/UserSpice5-Dev/users/admin.php', 0),
+(94, '/UserSpice5-Dev/users/admin_general.php', 0),
+(95, '/UserSpice5-Dev/users/verify.php', 0),
+(96, '/UserSpice5-Dev/users/admin_pages_old.php', 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `profiles`
+-- Table structure for table `us_profiles`
 --
 
-CREATE TABLE `profiles` (
+CREATE TABLE `us_profiles` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `bio` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `profiles`
---
-
-INSERT INTO `profiles` (`id`, `user_id`, `bio`) VALUES
-(19, 4, 'This is your bio'),
-(20, 5, 'This is your bio'),
-(21, 6, 'This is your bio'),
-(22, 7, 'This is your bio');
-
 -- --------------------------------------------------------
 
 --
--- Table structure for table `settings`
+-- Table structure for table `us_settings`
 --
 
-CREATE TABLE `settings` (
+CREATE TABLE `us_settings` (
   `id` int(50) NOT NULL,
   `site_name` varchar(100) NOT NULL,
   `site_url` varchar(255) NOT NULL,
   `install_location` varchar(255) NOT NULL,
   `copyright_message` varchar(255) NOT NULL,
   `version` varchar(255) NOT NULL,
-  `language` varchar(255) NOT NULL,
+  `site_language` varchar(255) NOT NULL,
   `site_offline` int(1) NOT NULL,
   `debug_mode` int(1) NOT NULL,
   `query_count` int(1) NOT NULL,
@@ -526,19 +499,19 @@ CREATE TABLE `settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `settings`
+-- Dumping data for table `us_settings`
 --
 
-INSERT INTO `settings` (`id`, `site_name`, `site_url`, `install_location`, `copyright_message`, `version`, `language`, `site_offline`, `debug_mode`, `query_count`, `track_guest`, `recaptcha`, `force_ssl`, `css_sample`, `css1`, `css2`, `css3`, `mail_method`, `smtp_server`, `smtp_port`, `smtp_transport`, `email_login`, `email_pass`, `from_name`, `from_email`, `email_act`, `recaptcha_private`, `recaptcha_public`, `email_verify_template`, `forgot_password_template`, `redirect_login`, `redirect_logout`, `redirect_deny_nologin`, `redirect_deny_noperm`, `redirect_referrer_login`, `session_timeout`, `allow_remember_me`, `backup_dest`, `agreement`, `glogin`, `fblogin`, `gid`, `gsecret`, `fbid`, `fbsecret`, `gcallback`, `fbcallback`, `allow_username_change`) VALUES
-(1, 'UserSpice5', 'http://localhost/UserSpice5-Dev/', '', 'US', '5.0.0a', 'en', 0, 1, 1, 1, 0, 0, 1, 'us_core/css/color_schemes/standard.css', 'us_core/css/blank.css', 'us_core/css/blank.css', 'smtp', '', 25, 'TLS', '', '', 'UserSpice Admin', '', 0, '', '', '&lt;p&gt;Congratulations {{fname}},&lt;/p&gt;\n&lt;p&gt;Thanks for signing up Please click the link below to verify your email address.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Once you verify your email address you will be ready to login!&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;', '&lt;p&gt;Hello {{fname}},&lt;/p&gt;\n&lt;p&gt;You are receiving this email because a request was made to reset your password. If this was not you, you may disgard this email.&lt;/p&gt;\n&lt;p&gt;If this was you, click the link below to continue with the password reset process.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;', 'profile.php', 'index.php', 'login.php', 'index.php', 1, 86400, 1, 'backup_userspice/', 'Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our privacy policy govern our relationship with you in relation to this website. If you disagree with any part of these terms and conditions, please do not use our website.\r\n\r\nThe use of this website is subject to the following terms of use:\r\n\r\nThe content of the pages of this website is for your general information and use only. It is subject to change without notice.\r\n\r\nThis website uses cookies to monitor browsing preferences. If you do allow cookies to be used, the following personal information may be stored by us for use by third parties.\r\n\r\nNeither we nor any third parties provide any warranty or guarantee as to the accuracy, timeliness, performance, completeness or suitability of the information and materials found or offered on this website for any particular purpose.\r\n\r\nYou acknowledge that such information and materials may contain inaccuracies or errors and we expressly exclude liability for any such inaccuracies or errors to the fullest extent permitted by law.\r\n\r\nYour use of any information or materials on this website is entirely at your own risk, for which we shall not be liable. It shall be your own responsibility to ensure that any products, services or information available through this website meet your specific requirements.\r\n\r\nThis website contains material which is owned by or licensed to us. This material includes, but is not limited to, the design, layout, look, appearance and graphics. Reproduction is prohibited other than in accordance with the copyright notice, which forms part of these terms and conditions.\r\nAll trade marks reproduced in this website which are not the property of, or licensed to, the operator are acknowledged on the website.\r\n\r\nUnauthorised use of this website may give rise to a claim for damages and/or be a criminal offence.\r\n\r\nFrom time to time this website may also include links to other websites. These links are provided for your convenience to provide further information. They do not signify that we endorse the website(s). We have no responsibility for the content of the linked website(s).', 0, 0, '', '', '', '', 'https://us.raysee.net/users/helpers/gcallback.php', 'https://us.raysee.net/users/helpers/fbcallback.php', 1);
+INSERT INTO `us_settings` (`id`, `site_name`, `site_url`, `install_location`, `copyright_message`, `version`, `site_language`, `site_offline`, `debug_mode`, `query_count`, `track_guest`, `recaptcha`, `force_ssl`, `css_sample`, `css1`, `css2`, `css3`, `mail_method`, `smtp_server`, `smtp_port`, `smtp_transport`, `email_login`, `email_pass`, `from_name`, `from_email`, `email_act`, `recaptcha_private`, `recaptcha_public`, `email_verify_template`, `forgot_password_template`, `redirect_login`, `redirect_logout`, `redirect_deny_nologin`, `redirect_deny_noperm`, `redirect_referrer_login`, `session_timeout`, `allow_remember_me`, `backup_dest`, `agreement`, `glogin`, `fblogin`, `gid`, `gsecret`, `fbid`, `fbsecret`, `gcallback`, `fbcallback`, `allow_username_change`) VALUES
+(1, 'UserSpice5', 'http://localhost/UserSpice5-Dev/', '', 'US', '5.0.0a', 'english.php', 0, 1, 1, 1, 0, 0, 1, 'us_core/css/color_schemes/standard.css', 'us_core/css/blank.css', 'us_core/css/blank.css', 'smtp', '', 25, 'TLS', '', '', 'UserSpice Admin', '', 0, '', '', '&lt;p&gt;Congratulations {{fname}},&lt;/p&gt;\n&lt;p&gt;Thanks for signing up Please click the link below to verify your email address.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Once you verify your email address you will be ready to login!&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;', '&lt;p&gt;Hello {{fname}},&lt;/p&gt;\n&lt;p&gt;You are receiving this email because a request was made to reset your password. If this was not you, you may disgard this email.&lt;/p&gt;\n&lt;p&gt;If this was you, click the link below to continue with the password reset process.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;', 'profile.php', 'index.php', 'login.php', 'index.php', 1, 86400, 1, 'backup_userspice/', 'Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our privacy policy govern our relationship with you in relation to this website. If you disagree with any part of these terms and conditions, please do not use our website.\r\n\r\nThe use of this website is subject to the following terms of use:\r\n\r\nThe content of the pages of this website is for your general information and use only. It is subject to change without notice.\r\n\r\nThis website uses cookies to monitor browsing preferences. If you do allow cookies to be used, the following personal information may be stored by us for use by third parties.\r\n\r\nNeither we nor any third parties provide any warranty or guarantee as to the accuracy, timeliness, performance, completeness or suitability of the information and materials found or offered on this website for any particular purpose.\r\n\r\nYou acknowledge that such information and materials may contain inaccuracies or errors and we expressly exclude liability for any such inaccuracies or errors to the fullest extent permitted by law.\r\n\r\nYour use of any information or materials on this website is entirely at your own risk, for which we shall not be liable. It shall be your own responsibility to ensure that any products, services or information available through this website meet your specific requirements.\r\n\r\nThis website contains material which is owned by or licensed to us. This material includes, but is not limited to, the design, layout, look, appearance and graphics. Reproduction is prohibited other than in accordance with the copyright notice, which forms part of these terms and conditions.\r\nAll trade marks reproduced in this website which are not the property of, or licensed to, the operator are acknowledged on the website.\r\n\r\nUnauthorised use of this website may give rise to a claim for damages and/or be a criminal offence.\r\n\r\nFrom time to time this website may also include links to other websites. These links are provided for your convenience to provide further information. They do not signify that we endorse the website(s). We have no responsibility for the content of the linked website(s).', 0, 0, '', '', '', '', 'https://us.raysee.net/users/helpers/gcallback.php', 'https://us.raysee.net/users/helpers/fbcallback.php', 1);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users`
+-- Table structure for table `us_users`
 --
 
-CREATE TABLE `users` (
+CREATE TABLE `us_users` (
   `id` int(11) NOT NULL,
   `email` varchar(155) NOT NULL,
   `username` varchar(255) NOT NULL,
@@ -570,25 +543,20 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `users`
+-- Dumping data for table `us_users`
 --
 
-INSERT INTO `users` (`id`, `email`, `username`, `password`, `fname`, `lname`, `permissions`, `logins`, `account_owner`, `account_id`, `company`, `stripe_cust_id`, `billing_phone`, `billing_srt1`, `billing_srt2`, `billing_city`, `billing_state`, `billing_zip_code`, `timezone_string`, `join_date`, `last_login`, `email_verified`, `vericode`, `title`, `active`, `bio`, `google_uid`, `facebook_uid`) VALUES
-(1, 'userspicephp@gmail.com', 'admin', '$2y$12$iE87plmPoyV1rjoZPZENLOi55frC3HrQAz70VI/ud.mzbco2wz/1S', 'Admin', 'User', 1, 310, 1, 0, 'UserSpice', '', '', '', '', '', '', '', 'America/Toronto', '2016-01-01 00:00:00', '2016-11-23 07:05:10', 1, '322418', '', 0, '&lt;p&gt;This is the admin user default bio&lt;/p&gt;', '', ''),
-(2, 'noreply@userspice.com', 'user', '$2y$12$HZa0/d7evKvuHO8I3U8Ff.pOjJqsGTZqlX8qURratzP./EvWetbkK', 'user2', 'user', 1, 18, 1, 0, 'none', '', '', '', '', '', '', '', 'Europe/Tirane', '2016-01-02 00:00:00', '2016-10-27 07:15:39', 1, '970748', '', 1, '&lt;p&gt;This is the user user bio&lt;/p&gt;', '', ''),
-(3, 'foo@foo.foo', 'foofoo', '$2y$12$29DeeY0IfEcCvLyE2NtYzueTeFas7tfg.rbeDZ4Un6D6G9aB3VuaK', 'foo', 'foo', 1, 0, 1, 0, '', '', '', '', '', '', '', '', '', '2016-10-25 03:17:28', '0000-00-00 00:00:00', 0, '267211', '', 1, '', '', ''),
-(4, 'bar@bar.bar', 'barbar', '$2y$12$HZa0/d7evKvuHO8I3U8Ff.pOjJqsGTZqlX8qURratzP./EvWetbkK', 'barbar', 'barbar', 1, 2, 1, 0, '', '', '', '', '', '', '', '', '', '2016-10-25 03:26:22', '2016-11-01 09:39:25', 1, '396850', '', 1, '', '', ''),
-(5, 'plbowers@gmail.com', 'myspecialusername', '$2y$12$cy8/M1hUIe5ZbuzQnPx37e5vkdJNZvJkBU6VfqFQS5en..YucTLX6', 'ab', 'bc', 1, 0, 1, 0, '', '', '', '', '', '', '', '', '', '2016-10-25 15:45:23', '0000-00-00 00:00:00', 0, '200634', '', 1, '', '', ''),
-(6, 'foo@foo.boo', 'foox', '$2y$12$MT6g9SZtyxRMLKVtBz6dp.5vq7p3W21TVisTmDIrDOA9VdZXawdhi', 'Foox', 'Foox', 1, 0, 1, 0, '', '', '', '', '', '', '', '', '', '2016-11-05 04:44:59', '0000-00-00 00:00:00', 0, '370373', '', 1, '', '', ''),
-(7, 'sam@spade.com', 'sam', '$2y$12$odwgXkedVQ2gyZOayJn0.uW24jRFkV7Zn.fXLj848QeBrhTURPRCC', 'Sam', 'Spade', 1, 1, 1, 0, '', '', '', '', '', '', '', '', '', '2016-11-05 10:54:38', '2016-11-05 10:54:48', 1, '828530', '', 1, '', '', '');
+INSERT INTO `us_users` (`id`, `email`, `username`, `password`, `fname`, `lname`, `permissions`, `logins`, `account_owner`, `account_id`, `company`, `stripe_cust_id`, `billing_phone`, `billing_srt1`, `billing_srt2`, `billing_city`, `billing_state`, `billing_zip_code`, `timezone_string`, `join_date`, `last_login`, `email_verified`, `vericode`, `title`, `active`, `bio`, `google_uid`, `facebook_uid`) VALUES
+(1, 'userspicephp@gmail.com', 'admin', '$2y$12$iE87plmPoyV1rjoZPZENLOi55frC3HrQAz70VI/ud.mzbco2wz/1S', 'Admin', 'User', 1, 319, 1, 0, 'UserSpice', '', '', '', '', '', '', '', 'America/Toronto', '2016-01-01 00:00:00', '2016-12-31 13:40:06', 1, '322418', '', 0, '&lt;p&gt;This is the admin user default bio&lt;/p&gt;', '', ''),
+(2, 'noreply@userspice.com', 'user', '$2y$12$HZa0/d7evKvuHO8I3U8Ff.pOjJqsGTZqlX8qURratzP./EvWetbkK', 'user2', 'user', 1, 18, 1, 0, 'none', '', '', '', '', '', '', '', 'Europe/Tirane', '2016-01-02 00:00:00', '2016-10-27 07:15:39', 1, '970748', '', 1, '&lt;p&gt;This is the user user bio&lt;/p&gt;', '', '');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users_online`
+-- Table structure for table `us_users_online`
 --
 
-CREATE TABLE `users_online` (
+CREATE TABLE `us_users_online` (
   `id` int(10) NOT NULL,
   `ip` varchar(15) NOT NULL,
   `timestamp` varchar(15) NOT NULL,
@@ -597,20 +565,24 @@ CREATE TABLE `users_online` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `users_online`
+-- Dumping data for table `us_users_online`
 --
 
-INSERT INTO `users_online` (`id`, `ip`, `timestamp`, `user_id`, `session`) VALUES
-(2, '::1', '1479654885', 0, ''),
-(5, '::1', '1479940864', 1, '');
+INSERT INTO `us_users_online` (`id`, `ip`, `timestamp`, `user_id`, `session`) VALUES
+(2, '::1', '1483259458', 0, ''),
+(5, '::1', '1483617130', 1, ''),
+(6, '::1', '1480108084', 2, ''),
+(7, '::1', '1483257100', 0, ''),
+(8, '::1', '1483257100', 0, ''),
+(9, '::1', '1483257110', 0, '');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users_session`
+-- Table structure for table `us_users_session`
 --
 
-CREATE TABLE `users_session` (
+CREATE TABLE `us_users_session` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `hash` varchar(255) NOT NULL,
@@ -618,10 +590,10 @@ CREATE TABLE `users_session` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `users_session`
+-- Dumping data for table `us_users_session`
 --
 
-INSERT INTO `users_session` (`id`, `user_id`, `hash`, `uagent`) VALUES
+INSERT INTO `us_users_session` (`id`, `user_id`, `hash`, `uagent`) VALUES
 (1, 1, '5f2e2069f4413fa356e94c26b7199092cd1ab40ff22e233861ad8ce23b4e54ff', 'Mozilla (Windows NT 10.0; WOW64; rv:50.0) Gecko Firefox'),
 (2, 1, '444c0fe386ec5152d3941b558589b069429e34371e15a684a6929d44e067a422', 'Mozilla (Windows NT 10.0; WOW64; rv:50.0) Gecko Firefox');
 
@@ -632,46 +604,53 @@ INSERT INTO `users_session` (`id`, `user_id`, `hash`, `uagent`) VALUES
 --
 DROP TABLE IF EXISTS `groups_groups`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `groups_groups`  AS  select ((`groups`.`id` * 10000) + `groups`.`id`) AS `id*10000+id`,`groups`.`id` AS `parent_id`,`groups`.`id` AS `child_id` from `groups` union select ((`ug1`.`group_id` * 10000) + `ug1`.`user_id`) AS `id`,`ug1`.`group_id` AS `parent_id`,`ug1`.`user_id` AS `child_id` from `groups_users_raw` `ug1` where (`ug1`.`user_is_group` = 1) union select ((`ug1`.`group_id` * 10000) + `ug2`.`user_id`) AS `id`,`ug1`.`group_id` AS `parent_id`,`ug2`.`user_id` AS `child_id` from (`groups_users_raw` `ug1` join `groups_users_raw` `ug2` on((`ug1`.`user_id` = `ug2`.`group_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) union select ((`ug1`.`group_id` * 10000) + `ug3`.`user_id`) AS `id`,`ug1`.`group_id` AS `group_id`,`ug3`.`user_id` AS `user_id` from ((`groups_users_raw` `ug1` join `groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) union select ((`ug1`.`group_id` * 10000) + `ug4`.`user_id`) AS `id`,`ug1`.`group_id` AS `group_id`,`ug4`.`user_id` AS `user_id` from (((`groups_users_raw` `ug1` join `groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `groups_groups`  AS  select ((`groups`.`id` * 10000) + `groups`.`id`) AS `id`,`groups`.`id` AS `parent_id`,`groups`.`id` AS `child_id` from `us_groups` `groups` union select ((`ug1`.`group_id` * 10000) + `ug1`.`user_id`) AS `id`,`ug1`.`group_id` AS `parent_id`,`ug1`.`user_id` AS `child_id` from `us_groups_users_raw` `ug1` where (`ug1`.`user_is_group` = 1) union select ((`ug1`.`group_id` * 10000) + `ug2`.`user_id`) AS `id`,`ug1`.`group_id` AS `parent_id`,`ug2`.`user_id` AS `child_id` from (`us_groups_users_raw` `ug1` join `us_groups_users_raw` `ug2` on((`ug1`.`user_id` = `ug2`.`group_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) union select ((`ug1`.`group_id` * 10000) + `ug3`.`user_id`) AS `id`,`ug1`.`group_id` AS `group_id`,`ug3`.`user_id` AS `user_id` from ((`us_groups_users_raw` `ug1` join `us_groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `us_groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) union select ((`ug1`.`group_id` * 10000) + `ug4`.`user_id`) AS `id`,`ug1`.`group_id` AS `group_id`,`ug4`.`user_id` AS `user_id` from (((`us_groups_users_raw` `ug1` join `us_groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `us_groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `us_groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) ;
 
 -- --------------------------------------------------------
 
 --
--- Structure for view `groups_users`
+-- Structure for view `us_groups_users`
 --
-DROP TABLE IF EXISTS `groups_users`;
+DROP TABLE IF EXISTS `us_groups_users`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `groups_users`  AS  select `groups_users_raw`.`id` AS `id`,`groups_users_raw`.`user_id` AS `user_id`,`groups_users_raw`.`group_id` AS `group_id`,0 AS `nested` from `groups_users_raw` where (`groups_users_raw`.`user_is_group` = 0) union select (`ug1`.`user_id` + (`ug2`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug2`.`group_id` AS `group_id`,1 AS `nested` from (`groups_users_raw` `ug1` join `groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug3`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug3`.`group_id` AS `group_id`,1 AS `nested` from ((`groups_users_raw` `ug1` join `groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug4`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug4`.`group_id` AS `group_id`,1 AS `nested` from (((`groups_users_raw` `ug1` join `groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug5`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug5`.`group_id` AS `group_id`,1 AS `nested` from ((((`groups_users_raw` `ug1` join `groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) join `groups_users_raw` `ug5` on((`ug4`.`group_id` = `ug5`.`user_id`))) where ((`ug5`.`user_is_group` = 1) and (`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `us_groups_users`  AS  select `us_groups_users_raw`.`id` AS `id`,`us_groups_users_raw`.`user_id` AS `user_id`,`us_groups_users_raw`.`group_id` AS `group_id`,0 AS `nested` from `us_groups_users_raw` where (`us_groups_users_raw`.`user_is_group` = 0) union select (`ug1`.`user_id` + (`ug2`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug2`.`group_id` AS `group_id`,1 AS `nested` from (`us_groups_users_raw` `ug1` join `us_groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug3`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug3`.`group_id` AS `group_id`,1 AS `nested` from ((`us_groups_users_raw` `ug1` join `us_groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `us_groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug4`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug4`.`group_id` AS `group_id`,1 AS `nested` from (((`us_groups_users_raw` `ug1` join `us_groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `us_groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `us_groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug5`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug5`.`group_id` AS `group_id`,1 AS `nested` from ((((`us_groups_users_raw` `ug1` join `us_groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `us_groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `us_groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) join `us_groups_users_raw` `ug5` on((`ug4`.`group_id` = `ug5`.`user_id`))) where ((`ug5`.`user_is_group` = 1) and (`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) ;
 
 --
 -- Indexes for dumped tables
 --
 
 --
--- Indexes for table `field_defs`
+-- Indexes for table `config_defs`
 --
-ALTER TABLE `field_defs`
+ALTER TABLE `config_defs`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `code` (`code`) USING BTREE;
+
+--
+-- Indexes for table `us_field_defs`
+--
+ALTER TABLE `us_field_defs`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `name` (`name`);
 
 --
--- Indexes for table `groups`
+-- Indexes for table `us_groups`
 --
-ALTER TABLE `groups`
+ALTER TABLE `us_groups`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `groups_menus`
+-- Indexes for table `us_groups_menus`
 --
-ALTER TABLE `groups_menus`
+ALTER TABLE `us_groups_menus`
   ADD PRIMARY KEY (`id`),
   ADD KEY `group_id` (`group_id`),
   ADD KEY `menu_id` (`menu_id`);
 
 --
--- Indexes for table `groups_pages`
+-- Indexes for table `us_groups_pages`
 --
-ALTER TABLE `groups_pages`
+ALTER TABLE `us_groups_pages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `group_id` (`group_id`),
   ADD KEY `page_id` (`page_id`),
@@ -679,18 +658,18 @@ ALTER TABLE `groups_pages`
   ADD KEY `auth` (`auth`);
 
 --
--- Indexes for table `groups_roles_users`
+-- Indexes for table `us_groups_roles_users`
 --
-ALTER TABLE `groups_roles_users`
+ALTER TABLE `us_groups_roles_users`
   ADD PRIMARY KEY (`id`),
   ADD KEY `group_id` (`group_id`),
   ADD KEY `role_id` (`role_group_id`),
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `groups_users_raw`
+-- Indexes for table `us_groups_users_raw`
 --
-ALTER TABLE `groups_users_raw`
+ALTER TABLE `us_groups_users_raw`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `group_id_2` (`group_id`,`user_id`,`user_is_group`),
   ADD KEY `user_id` (`user_id`),
@@ -698,52 +677,52 @@ ALTER TABLE `groups_users_raw`
   ADD KEY `user_is_group` (`user_is_group`);
 
 --
--- Indexes for table `grouptypes`
+-- Indexes for table `us_grouptypes`
 --
-ALTER TABLE `grouptypes`
+ALTER TABLE `us_grouptypes`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `menus`
+-- Indexes for table `us_menus`
 --
-ALTER TABLE `menus`
+ALTER TABLE `us_menus`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `pages`
+-- Indexes for table `us_pages`
 --
-ALTER TABLE `pages`
+ALTER TABLE `us_pages`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `profiles`
+-- Indexes for table `us_profiles`
 --
-ALTER TABLE `profiles`
+ALTER TABLE `us_profiles`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `settings`
+-- Indexes for table `us_settings`
 --
-ALTER TABLE `settings`
+ALTER TABLE `us_settings`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `users`
+-- Indexes for table `us_users`
 --
-ALTER TABLE `users`
+ALTER TABLE `us_users`
   ADD PRIMARY KEY (`id`),
   ADD KEY `EMAIL` (`email`) USING BTREE;
 
 --
--- Indexes for table `users_online`
+-- Indexes for table `us_users_online`
 --
-ALTER TABLE `users_online`
+ALTER TABLE `us_users_online`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `users_session`
+-- Indexes for table `us_users_session`
 --
-ALTER TABLE `users_session`
+ALTER TABLE `us_users_session`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -751,74 +730,79 @@ ALTER TABLE `users_session`
 --
 
 --
--- AUTO_INCREMENT for table `field_defs`
+-- AUTO_INCREMENT for table `config_defs`
 --
-ALTER TABLE `field_defs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+ALTER TABLE `config_defs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
--- AUTO_INCREMENT for table `groups`
+-- AUTO_INCREMENT for table `us_field_defs`
 --
-ALTER TABLE `groups`
+ALTER TABLE `us_field_defs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+--
+-- AUTO_INCREMENT for table `us_groups`
+--
+ALTER TABLE `us_groups`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+--
+-- AUTO_INCREMENT for table `us_groups_menus`
+--
+ALTER TABLE `us_groups_menus`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 --
--- AUTO_INCREMENT for table `groups_menus`
+-- AUTO_INCREMENT for table `us_groups_pages`
 --
-ALTER TABLE `groups_menus`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+ALTER TABLE `us_groups_pages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 --
--- AUTO_INCREMENT for table `groups_pages`
+-- AUTO_INCREMENT for table `us_groups_roles_users`
 --
-ALTER TABLE `groups_pages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+ALTER TABLE `us_groups_roles_users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 --
--- AUTO_INCREMENT for table `groups_roles_users`
+-- AUTO_INCREMENT for table `us_groups_users_raw`
 --
-ALTER TABLE `groups_roles_users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+ALTER TABLE `us_groups_users_raw`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=163;
 --
--- AUTO_INCREMENT for table `groups_users_raw`
+-- AUTO_INCREMENT for table `us_grouptypes`
 --
-ALTER TABLE `groups_users_raw`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+ALTER TABLE `us_grouptypes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 --
--- AUTO_INCREMENT for table `grouptypes`
+-- AUTO_INCREMENT for table `us_menus`
 --
-ALTER TABLE `grouptypes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
---
--- AUTO_INCREMENT for table `menus`
---
-ALTER TABLE `menus`
+ALTER TABLE `us_menus`
   MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 --
--- AUTO_INCREMENT for table `pages`
+-- AUTO_INCREMENT for table `us_pages`
 --
-ALTER TABLE `pages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
+ALTER TABLE `us_pages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
 --
--- AUTO_INCREMENT for table `profiles`
+-- AUTO_INCREMENT for table `us_profiles`
 --
-ALTER TABLE `profiles`
+ALTER TABLE `us_profiles`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 --
--- AUTO_INCREMENT for table `settings`
+-- AUTO_INCREMENT for table `us_settings`
 --
-ALTER TABLE `settings`
+ALTER TABLE `us_settings`
   MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 --
--- AUTO_INCREMENT for table `users`
+-- AUTO_INCREMENT for table `us_users`
 --
-ALTER TABLE `users`
+ALTER TABLE `us_users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 --
--- AUTO_INCREMENT for table `users_online`
+-- AUTO_INCREMENT for table `us_users_online`
 --
-ALTER TABLE `users_online`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+ALTER TABLE `us_users_online`
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 --
--- AUTO_INCREMENT for table `users_session`
+-- AUTO_INCREMENT for table `us_users_session`
 --
-ALTER TABLE `users_session`
+ALTER TABLE `us_users_session`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
