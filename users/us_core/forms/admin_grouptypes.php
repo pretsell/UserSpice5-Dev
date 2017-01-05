@@ -64,13 +64,13 @@ $myForm = new Form([
             'table_head_cells' => '<th>'.lang('GROUPTYPE_MARK_TO_DELETE').'</th>'.
                 '<th>'.lang('GROUPTYPE_NAME_LABEL').'</th>'.
                 '<th>'.lang('GROUPTYPE_SHORT_NAME_LABEL').'</th>',
-            'table_data_cells' => '<td>{DELETE_CHECKBOX}</td>'.
+            'table_data_cells' => '<td>{CHECKBOX_ID}</td>'.
                 '<td><a href="'.$childForm.'?id={ID}">{NAME}</a></td>'.
                 '<td>{SHORT_NAME}</td>',
                 #'<td><a href="admin_grouptypes.php?id={grouptype_id}">{GROUPTYPE_NAME}</a></td>'.
             'nodata' => '<p>'.lang('GROUPTYPES_DO_NOT_EXIST').'</p>',
             'Table_Class' => 'table table-bordered table-condensed',
-            'Delete_Label' => lang('MARK_TO_DELETE'),
+            'Checkbox_Label' => lang('MARK_TO_DELETE'),
         ]),
     'delete' =>
         new FormField_ButtonDelete([

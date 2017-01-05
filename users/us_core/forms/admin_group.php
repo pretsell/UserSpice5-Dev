@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
- * FORM: admin_group.php
- *  - always called with ?id=n to identify the row to view/modify
+ * FORM: admin_group.php (also admin_role.php)
+ *  - when called with ?id=n it edits that row
+ *  - when called without ?id=n it creates a new row
  *
  * This script makes possible:
  * - modifying/deleting existing rows in table `groups`
@@ -55,13 +56,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 checkToken();
 
+/*
+ * Set up variables to track whether we are in ROLE or GROUP mode
+ */
 if (isset($mode) && $mode == 'ROLE') {
-    $modeName = 'Group Role';
-    $parentScript = 'admin_roles.php';
+    $parentPage = 'admin_roles.php';
+    $currentPage = 'admin_role.php';
 } else {
-    $modeName = 'Group';
     $mode = 'GROUP';
-    $parentScript = 'admin_groups.php';
+    $parentPage = 'admin_groups.php';
+    $currentPage = 'admin_group.php';
 }
 
 if (!($group_id = Input::get('id')) || !groupIdExists($group_id)) {
@@ -85,220 +89,242 @@ if ($groupDetails) {
 $grouptypesData = $db->queryAll('grouptypes')->results();
 $myForm = new Form([
     'toc' => new FormField_TabToc(['field' => 'toc', ]),
-    'tabs' => new FormTab_Contents ([
-        'groupInfo' => new FormTab_Pane ([
-            'name' => new FormField_Text ([
-                'dbfield' => 'groups.name',
-                'new_valid' => [
-                    'action' => ($creating ? 'add' : 'update'),
-                    'update_id' => $group_id,
-                ],
-            ]),
-            'short_name' => new FormField_Text ([
-                'dbfield' => 'groups.short_name',
-                'new_valid' => [
-                    'action' => ($creating ? 'add' : 'update'),
-                    'update_id' => $group_id,
-                ],
-            ]),
-            'grouptype_id' => new FormField_Select([
-                'dbfield' => 'groups.grouptype_id',
-                'repeat' => $grouptypesData,
-                'display' => lang($mode.'_GROUPTYPE_LABEL'),
-                'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_FROM_LIST_BELOW')],
-                'new_valid' => [], // in case they make it required
-                'keep_if' => (boolean)$grouptypesData,
-            ]),
-            'admin' => new FormField_Select([
-                'field' => 'admin',
-                'repeat' => [
-                    ['id'=>0, 'name'=>lang('GROUP_NOT_ADMIN')],
-                    ['id'=>1, 'name'=>lang('GROUP_MEMBERS_ARE_ADMIN')],
-                ],
-                'display' => lang('GROUP_IS_ADMIN'),
-            ]),
-            'deleteRolesWell' => new Form_Well([
-                'deleteRoles' => new FormField_Table ([
-                    'field' => 'deleteRoles',
-                    'table_head_cells' => '<th>'.lang('DELETE_SELECTED').'</th><th>'.lang('GROUP_ROLE_NAME_USER').'</th>',
-                    'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME} ({SHORT_NAME}): {FNAME} {LNAME} ({USERNAME})</td>',
-                    'nodata' => '<p>'.lang('NO_ROLES_ASSIGNED').'</p>',
-                ]),
-            ], [
-                'Well_Class'=>'well-sm',
-                #'debug' => 1,
-                'title'=>lang('DELETE_ROLE_ASSIGNMENTS'),
-                'delete_if' => ($mode == 'ROLE'),
-                'delete_if_empty' => true,
-            ]),
-            'newRoleWell' => new Form_Well([
-                'newRole' => new FormField_Select([
-                    'field' => 'newRole',
-                    'display' => lang('CHOOSE_ROLE'),
-                    # repeating data set below
-                    'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_ROLE')],
-                    'nodata' => '<p>'.lang('NO_ROLES_SETUP_GROUPTYPE').'</p>',
-                    'isdbfield' => false,
-                    'Hint_Text' => lang('GROUP_NEED_ROLE_AND_USER'),
-                ]),
-                'newRoleUser' => new FormField_Select([
-                    'field' => 'newRoleUser',
-                    'display' => lang('CHOOSE_GROUP_MEMBER'),
-                    # repeating data set below
-                    'idfield' => 'user_id',
-                    'placeholder_row' => ['user_id'=>null, 'name'=>lang('CHOOSE_GROUP_MEMBER')],
-                    'nodata' => '<p>'.lang('NO_MEMBERS_OF_GROUP').'</p>',
-                    'isdbfield' => false,
-                    'Hint_Text' => lang('GROUP_NEED_ROLE_AND_USER'),
-                ]),
-            ], [
-                'Well_Class' => 'well-sm',
-                'title' => lang('ASSIGN_NEW_ROLE_TO_GROUP'),
-                'delete_if' => ($mode == 'ROLE'),
-                'delete_if_empty' => true,
-            ]),
-        ], [
-            'active_tab'=>'active',
-            'tab_id'=>'groupInfo',
-            'title'=>lang($mode.'_INFORMATION_TITLE'),
-        ]),
-        'groupMembers'=> new FormTab_Pane ([
-            '<h2>'.lang('GROUP_MEMBERSHIP').'</h2>',
-            new Form_Col ([
-                '<h3>'.lang('SELECT_MEMBERS_TO_DELETE').'</h3>',
-                '<h4>'.lang($mode.'_SELECT_USER_DEL_MEMBERS').'</h4>',
-                'removeGroupUsers' => new FormField_Table ([
-                    'field' => 'removeGroupUsers',
-                    'Table_Class'=>'table-condensed',
-                    'isdbfield' => false,
-                    #'debug' => 0,
-                    'table_head_cells' => '<th>'.
-                        lang('SELECT_USER_BELOW').'</th><th>'.
-                        lang('NAME_USERS_MEMBERS').'</th>',
-                    'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME}</td>',
-                    'nodata' => '<p>'.lang('NO_USER_MEMBERS_OF_GROUP').'</p>',
-                    # repeating data set below
-                ]),
-                '<h4>'.lang('SELECT_GROUP_DEL_MEMBERS').'</h4>',
-                'removeGroupGroups' => new FormField_Table ([
-                    'field' => 'removeGroupGroups',
-                    'Table_Class'=>'table-condensed',
-                    'isdbfield' => false,
-                    #'debug' => 0,
-                    'table_head_cells' => '<th>'.
-                        lang('SELECT_GROUP_BELOW').'</th><th>'.
-                        lang('NAME_GROUPS_MEMBERS').'</th>',
-                    'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME}</td>',
-                    'nodata' => '<p>'.lang('NO_GROUP_MEMBERS_OF_GROUP').'</p>',
-                    'delete_if' => ($mode == 'ROLE'),
-                    # repeating data set below
-                ]),
-            ], ['Col_Class'=>'col-xs-12 col-sm-6']),
-            new Form_Col ([
-                '<h3>'.lang('SELECT_NONMEMBERS_TO_ADD').'</h3>',
-                '<h4>'.lang('SELECT_USER_ADD_MEMBERS').'</h4>',
-                'addGroupUsers' => new FormField_Table ([
-                    'field' => 'addGroupUsers',
-                    'Table_Class'=>'table-condensed',
-                    'isdbfield' => false,
-                    #'debug' => 0,
-                    'table_head_cells' => '<th>'.
-                        lang('SELECT_USER_BELOW').'</th><th>'.
-                        lang('NAME_USERS_NON_MEMBERS').'</th>',
-                    'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME}</td>',
-                    'nodata' => '<p>'.lang('NO_USERS_TO_ADD').'</p>',
-                    'delete_if' => ($mode == 'ROLE'),
-                    # repeating data will be set below
-                ]),
-                '<h4>'.lang('SELECT_GROUP_ADD_MEMBERS').'</h4>',
-                'addGroupGroups' => new FormField_Table ([
-                    'field' => 'addGroupGroups',
-                    'Table_Class'=>'table-condensed',
-                    'isdbfield' => false,
-                    #'debug' => 0,
-                    'table_head_cells' => '<th>'.
-                        lang('SELECT_GROUP_BELOW').'</th><th>'.
-                        lang('NAME_GROUPS_NON_MEMBERS').'</th>',
-                    'table_data_cells' => '<td>{CHECKBOX}</td><td>{NAME}</td>',
-                    'nodata' => '<p>'.lang('NO_GROUPS_TO_ADD').'</p>',
-                    'delete_if' => ($mode == 'ROLE'),
-                    # repeating data will be set below
-                ]),
-            ], ['Col_Class'=>'col-xs-12 col-sm-6']),
-        ], [
-            'tab_id'=>'groupMembers',
-            'title'=>lang('GROUP_MEMBERSHIP')
-        ]),
-        'groupAccess' => new FormTab_Pane ([
-            '<h2>'.lang('GROUP_ACCESS_PAGES').'</h2>',
-            new Form_Row ([
-                new Form_Col ([
-                    '<h3>'.lang('REMOVE_PAGE_ACCESS_GROUP').'</h3>',
-                    'removePage' => new FormField_Table ([
-                        'field' => 'removePage',
-                        'Table_Class'=>'table-sm',
-                        'isdbfield' => false,
-                        #'debug' => 0,
-                        'table_head_cells' => '<th>'.
-                            lang('SELECT_PAGE_BELOW').'</th><th>'.
-                            lang('NAME_ACCESSIBLE_PAGES').'</th>',
-                        'table_data_cells' => '<td>{CHECKBOX}</td><td>{PAGE}</td>',
-                        'nodata' => '<p>'.lang('GROUP_NO_ACCESS_PAGES').'</p>',
-                        # repeating data will be set below
+    'tabRow' => new Form_Row ([
+        'tabCol' => new Form_Col ([
+            'tabs' => new FormTab_Contents ([
+                'groupInfo' => new FormTab_Pane ([
+                    'is_role' => new FormField_Hidden ([
+                        'dbfield' => 'is_role',
+                        'value' => 1,
+                        'keep_if' => ($creating && $mode == 'ROLE'),
                     ]),
-                ],  ['Col_Class'=>'col-xs-12 col-sm-6 col-md-4']),
-                new Form_Col ([
-                    '<h3>'.lang('ADD_PAGE_ACCESS_GROUP').'</h3>',
-                    'addPage' => new FormField_Table ([
-                        'field' => 'addPage',
-                        'table_class' => 'table-sm',
-                        'isdbfield' => false,
-                        #'debug' => 0,
-                        'table_head_cells' => '<th>'.
-                            lang('SELECT_PAGE_BELOW').'</th><th>'.
-                            lang('NAME_INACCESSIBLE_PAGES').'</th>',
-                        'table_data_cells' => '<td>{CHECKBOX}</td><td>{PAGE}</td>',
-                        'nodata' => '<p>'.lang('GROUP_NO_PAGES_TO_ADD').'</p>',
-                        # repeating data will be set below
+                    'name' => new FormField_Text ([
+                        'dbfield' => 'groups.name',
+                        'display' => lang($mode.'_NAME'),
+                        'new_valid' => [
+                            'action' => ($creating ? 'add' : 'update'),
+                            'update_id' => $group_id,
+                        ],
                     ]),
-                ],  ['Col_Class'=>'col-xs-12 col-sm-6 col-md-4']),
-                new Form_Col ([
-                    '<h3>'.lang('PUBLIC_PAGES').'</h3>',
-                    'publicPages' => new FormField_Table ([
-                        'field' => 'publicPages',
-                        'Table_Class' => 'table-sm',
-                        'isdbfield' => false,
-                        #'debug' => 0,
-                        'table_head_cells' => '<th>'.
-                            lang('PUBLIC_PAGES').'</th>',
-                        'table_data_cells' => '<td>{PAGE}</td>',
-                        'nodata' => '<p>'.lang('GROUP_NO_PUBLIC_PAGES').'</p>',
-                        # repeating data will be set below
+                    'short_name' => new FormField_Text ([
+                        'dbfield' => 'groups.short_name',
+                        'display' => lang($mode.'_SHORT_NAME'),
+                        'new_valid' => [
+                            'action' => ($creating ? 'add' : 'update'),
+                            'update_id' => $group_id,
+                        ],
                     ]),
-                ],  ['Col_Class'=>'col-xs-12 col-sm-6 col-md-4']),
+                    'grouptype_id' => new FormField_Select([
+                        'dbfield' => 'groups.grouptype_id',
+                        'repeat' => $grouptypesData,
+                        'display' => lang($mode.'_GROUPTYPE'),
+                        'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_FROM_LIST_BELOW')],
+                        'new_valid' => [], // in case they make it required
+                        'keep_if' => (boolean)$grouptypesData,
+                    ]),
+                    'admin' => new FormField_Select([
+                        'field' => 'admin',
+                        'repeat' => [
+                            ['id'=>0, 'name'=>lang('GROUP_NOT_ADMIN')],
+                            ['id'=>1, 'name'=>lang('GROUP_MEMBERS_ARE_ADMIN')],
+                        ],
+                        'display' => lang('GROUP_IS_ADMIN'),
+                    ]),
+                    'deleteRolesWell' => new Form_Well([
+                        'deleteRoles' => new FormField_Table ([
+                            'field' => 'deleteRoles',
+                            'table_head_cells' => '<th>'.lang('MARK_TO_DELETE').'</th><th>'.lang('GROUP_ROLE_NAME_USER').'</th>',
+                            'table_data_cells' => '<td>{CHECKBOX_ID}</td><td>{NAME} ({SHORT_NAME}): {FNAME} {LNAME} ({USERNAME})</td>',
+                            'nodata' => '<p>'.lang('NO_ROLES_ASSIGNED').'</p>',
+                        ]),
+                    ], [
+                        'Well_Class'=>'well-sm',
+                        #'debug' => 1,
+                        'title'=>lang('DELETE_ROLE_ASSIGNMENTS'),
+                        'delete_if' => ($mode == 'ROLE'),
+                        'delete_if_empty' => true,
+                    ]),
+                    'newRoleWell' => new Form_Well([
+                        'newRole' => new FormField_Select([
+                            'field' => 'newRole',
+                            'display' => lang('CHOOSE_ROLE'),
+                            # repeating data set below
+                            'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_ROLE')],
+                            'nodata' => '<p>'.lang('NO_ROLES_SETUP_GROUPTYPE').'</p>',
+                            'isdbfield' => false,
+                            'Hint_Text' => lang('GROUP_NEED_ROLE_AND_USER'),
+                        ]),
+                        'newRoleUser' => new FormField_Select([
+                            'field' => 'newRoleUser',
+                            'display' => lang('CHOOSE_GROUP_MEMBER'),
+                            # repeating data set below
+                            'idfield' => 'user_id',
+                            'placeholder_row' => ['user_id'=>null, 'name'=>lang('CHOOSE_GROUP_MEMBER')],
+                            'nodata' => '<p>'.lang('NO_MEMBERS_OF_GROUP').'</p>',
+                            'isdbfield' => false,
+                            'Hint_Text' => lang('GROUP_NEED_ROLE_AND_USER'),
+                        ]),
+                    ], [
+                        'Well_Class' => 'well-sm',
+                        'title' => lang('ASSIGN_NEW_ROLE_TO_GROUP'),
+                        'delete_if' => ($mode == 'ROLE'),
+                        'delete_if_empty' => true,
+                    ]),
+                ], [
+                    'active_tab'=>'active',
+                    'tab_id'=>'groupInfo',
+                    'title'=>lang($mode.'_INFORMATION_TITLE'),
+                ]),
+                'groupMembers'=> new FormTab_Pane ([
+                    '<h2>'.lang('GROUP_MEMBERSHIP').'</h2>',
+                    new Form_Col ([
+                        '<h3>'.lang('SELECT_MEMBERS_TO_DELETE').'</h3>',
+                        '<h4>'.lang($mode.'_SELECT_USER_DEL_MEMBERS').'</h4>',
+                        'removeGroupUsers' => new FormField_Table ([
+                            'field' => 'removeGroupUsers',
+                            'Table_Class'=>'table-condensed',
+                            'isdbfield' => false,
+                            #'debug' => 0,
+                            'table_head_cells' => '<th>'.
+                                lang('SELECT_USER_BELOW').'</th><th>'.
+                                lang('NAME_USERS_MEMBERS').'</th>',
+                            'table_data_cells' => '<td>{CHECKBOX_ID}</td><td>{NAME}</td>',
+                            'nodata' => '<p>'.lang('NO_USER_MEMBERS_OF_GROUP').'</p>',
+                            # repeating data set below
+                        ]),
+                        new Form_Row ([
+                            '<h4>'.lang('SELECT_GROUP_DEL_MEMBERS').'</h4>',
+                            'removeGroupGroups' => new FormField_Table ([
+                                'field' => 'removeGroupGroups',
+                                'Table_Class'=>'table-condensed',
+                                'isdbfield' => false,
+                                #'debug' => 0,
+                                'table_head_cells' => '<th>'.
+                                    lang('SELECT_GROUP_BELOW').'</th><th>'.
+                                    lang('NAME_GROUPS_MEMBERS').'</th>',
+                                'table_data_cells' => '<td>{CHECKBOX_ID}</td><td>{NAME}</td>',
+                                'nodata' => '<p>'.lang('NO_GROUP_MEMBERS_OF_GROUP').'</p>',
+                                'delete_if' => ($mode == 'ROLE'),
+                                # repeating data set below
+                            ]),
+                        ], ['delete_if' => ($mode == 'ROLE') ]),
+                    ], [
+                        'Col_Class'=>'col-xs-12 col-sm-6']
+                    ),
+                    new Form_Col ([
+                        '<h3>'.lang('SELECT_NONMEMBERS_TO_ADD').'</h3>',
+                        '<h4>'.lang('SELECT_USER_ADD_MEMBERS').'</h4>',
+                        'addGroupUsers' => new FormField_Table ([
+                            'field' => 'addGroupUsers',
+                            'Table_Class'=>'table-condensed',
+                            'isdbfield' => false,
+                            #'debug' => 0,
+                            'table_head_cells' => '<th>'.
+                                lang('SELECT_USER_BELOW').'</th><th>'.
+                                lang('NAME_USERS_NON_MEMBERS').'</th>',
+                            'table_data_cells' => '<td>{CHECKBOX_ID}</td><td>{NAME}</td>',
+                            'nodata' => '<p>'.lang('NO_USERS_TO_ADD').'</p>',
+                            # repeating data will be set below
+                        ]),
+                        '<h4>'.lang('SELECT_GROUP_ADD_MEMBERS').'</h4>',
+                        'addGroupGroups' => new FormField_Table ([
+                            'field' => 'addGroupGroups',
+                            'Table_Class'=>'table-condensed',
+                            'isdbfield' => false,
+                            #'debug' => 0,
+                            'table_head_cells' => '<th>'.
+                                lang('SELECT_GROUP_BELOW').'</th><th>'.
+                                lang('NAME_GROUPS_NON_MEMBERS').'</th>',
+                            'table_data_cells' => '<td>{CHECKBOX_ID}</td><td>{NAME}</td>',
+                            'nodata' => '<p>'.lang('NO_GROUPS_TO_ADD').'</p>',
+                            # repeating data will be set below
+                        ]),
+                    ], [
+                        'Col_Class'=>'col-xs-12 col-sm-6',
+                        'delete_if' => ($mode == 'ROLE'),
+                    ]),
+                ], [
+                    'tab_id'=>'groupMembers',
+                    'title'=>lang('GROUP_MEMBERSHIP')
+                ]),
+                'groupAccess' => new FormTab_Pane ([
+                    '<h2>'.lang('GROUP_ACCESS_PAGES').'</h2>',
+                    new Form_Col ([
+                        '<h3>'.lang('REMOVE_PAGE_ACCESS_GROUP').'</h3>',
+                        'removePage' => new FormField_Table ([
+                            'field' => 'removePage',
+                            'Table_Class'=>'table-sm',
+                            'isdbfield' => false,
+                            #'debug' => 0,
+                            'table_head_cells' => '<th>'.
+                                lang('SELECT_PAGE_BELOW').'</th><th>'.
+                                lang('NAME_ACCESSIBLE_PAGES').'</th>',
+                            'table_data_cells' =>
+                                '<td>{CHECKBOX_ID}</td>'.
+                                '<td><a href="admin_page.php?id={ID}">{PAGE}</a></td>',
+                            'nodata' => '<p>'.lang('GROUP_NO_ACCESS_PAGES').'</p>',
+                            # repeating data will be set below
+                        ]),
+                    ],  ['Col_Class'=>'col-xs-12 col-sm-6 col-md-4']),
+                    new Form_Col ([
+                        '<h3>'.lang('ADD_PAGE_ACCESS_GROUP').'</h3>',
+                        'addPage' => new FormField_Table ([
+                            'field' => 'addPage',
+                            'table_class' => 'table-sm',
+                            'isdbfield' => false,
+                            #'debug' => 0,
+                            'table_head_cells' => '<th>'.
+                                lang('SELECT_PAGE_BELOW').'</th><th>'.
+                                lang('NAME_INACCESSIBLE_PAGES').'</th>',
+                            'table_data_cells' => '<td>{CHECKBOX_ID}</td>'.
+                                '<td><a href="admin_page.php?id={ID}">{PAGE}</a></td>',
+                            'nodata' => '<p>'.lang('GROUP_NO_PAGES_TO_ADD').'</p>',
+                            # repeating data will be set below
+                        ]),
+                    ],  ['Col_Class'=>'col-xs-12 col-sm-6 col-md-4']),
+                    new Form_Col ([
+                        '<h3>'.lang('PUBLIC_PAGES').'</h3>',
+                        'publicPages' => new FormField_Table ([
+                            'field' => 'publicPages',
+                            'Table_Class' => 'table-sm',
+                            'isdbfield' => false,
+                            #'debug' => 0,
+                            'table_head_cells' => '<th>'.
+                                lang('PUBLIC_PAGES').'</th>',
+                            'table_data_cells' =>
+                                '<td><a href="admin_page.php?id={ID}">{PAGE}</a></td>',
+                            'nodata' => '<p>'.lang('GROUP_NO_PUBLIC_PAGES').'</p>',
+                            # repeating data will be set below
+                        ]),
+                    ],  ['Col_Class'=>'col-xs-12 col-sm-6 col-md-4']),
+                ], [
+                    'tab_id' => 'groupAccess',
+                    'title' => lang('GROUP_ACCESS_TITLE'),
+                ]),
             ]),
-        ], [
-            'tab_id' => 'groupAccess',
-            'title' => lang('GROUP_ACCESS_TITLE'),
         ]),
     ]),
-    'save' => new FormField_ButtonSubmit([
-            'field' => 'save',
-            'display' => lang($mode.'_SAVE')
+    'btnRow' => new Form_Row ([
+        'btnCol' => new Form_Col ([
+            'save' => new FormField_ButtonSubmit([
+                    'field' => 'save',
+                    'display' => lang($mode.'_SAVE')
+                ]),
+            'save_and_new' => new FormField_ButtonSubmit([
+                    'field' => 'save_and_new',
+                    'display' => lang($mode.'_SAVE_AND_NEW')
+                ]),
+            'save_and_return' => new FormField_ButtonSubmit([
+                    'field' => 'save_and_return',
+                    'display' => lang($mode.'_SAVE_AND_RETURN')
+                ]),
+            'deleteGroup' => new FormField_ButtonDelete([
+                    'field' => 'deleteGroup',
+                    'display' => lang($mode.'_DELETE'),
+                    'value' => $group_id,
+                ]),
         ]),
-    'save_and_new' => new FormField_ButtonSubmit([
-            'field' => 'save_and_new',
-            'display' => lang($mode.'_SAVE_AND_NEW')
-        ]),
-    'save_and_return' => new FormField_ButtonSubmit([
-            'field' => 'save_and_return',
-            'display' => lang($mode.'_SAVE_AND_RETURN')
-        ]),
-    'deleteGroup' => new FormField_ButtonDelete([
-            'field' => 'deleteGroup',
-            'display' => lang($mode.'_DELETE'),
-            'value' => $group_id,
-        ]),
+    ]),
 ], [
     'table' => 'groups',
     'title' => ($creating ?
@@ -306,7 +332,7 @@ $myForm = new Form([
                     lang('CREATING_'.$mode.'_TITLE') :
                     // ADMIN_GROUP_TITLE -or- ADMIN_ROLE_TITLE
                     lang('ADMIN_'.$mode.'_TITLE', $groupDetails->name)),
-    'form_action' => 'admin_group.php?id='.$group_id,
+    'form_action' => $currentPage.'?id='.$group_id,
     #'debug' => 5,
 ]);
 $myForm->getField('toc')->setRepData(
@@ -322,7 +348,7 @@ if (Input::exists('post')) {
     if ($deletions = Input::get('deleteGroup', 'post')) {
         if ($deletion_count = deleteGroups($deletions, $errors)) {
             $successes[] = lang('GROUP_DELETIONS_SUCCESSFUL', array($deletion_count));
-            Redirect::to($parentScript);
+            Redirect::to($parentPage);
         } else {
             if (!$errors) {
                 $errors[] = lang('SQL_ERROR');
@@ -338,6 +364,11 @@ if (Input::exists('post')) {
             }
         } else {
             if ($myForm->updateIfValid($group_id, $errors)) {
+                if (!Input::get('save')) {
+                    // save-and-new or save-and-return
+                    $need_reload = true;
+                    $reload_msg = 'GROUP_UPDATE_SUCCESSFUL';
+                }
                 $successes[] = lang('GROUP_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
             }
         }
@@ -421,11 +452,23 @@ if (Input::exists('post')) {
         }
     }
 }
+
 # If we just created this new then we need to get the ?group_id=n into the
 # URL so that we have it preserved in a normal fashion
 if ($need_reload) {
-    Redirect::to(getPageLocation('admin_group.php'), "id=$group_id&msg=$reload_msg");
+    if (Input::get('save_and_return')) {
+        Redirect::to(getPageLocation($parentPage), "id=$group_id&msg=$reload_msg");
+    } elseif (Input::get('save_and_new')) {
+        Redirect::to(getPageLocation($currentPage), "id=$group_id&msg=$reload_msg");
+    } else {
+        // assume it was just 'save' and we need to specify id=n in URL
+        Redirect::to(getPageLocation($currentPage), "id=$group_id&msg=$reload_msg");
+    }
 }
+
+/*
+ * Now load up data for displaying the form
+ */
 $myForm->setFieldValues($db->queryById('groups', $group_id)->first());
 $groupDetails = fetchGroupDetails($group_id);
 if ($fld = $myForm->getField('deleteRoles')) {
@@ -470,4 +513,7 @@ if ($fld = $myForm->getField('newRoleUser')) {
 # data is loaded)
 $myForm->checkDeleteIfEmpty(true);
 
+/*
+ * Display the Form
+ */
 echo $myForm->getHTML(['errors'=>$errors, 'successes'=>$successes]);

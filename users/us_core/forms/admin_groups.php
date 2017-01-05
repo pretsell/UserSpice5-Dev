@@ -49,16 +49,16 @@ $myForm = new Form ([
             'table_head_cells' => '<th>'.lang($mode.'_DELETE').'</th>'.
                 '<th>'.lang($mode.'_NAME').'</th>'.
                 '<th>'.lang($mode.'_SHORT_NAME').'</th>'.
-                '<th>'.lang('GROUPTYPE_NAME_LABEL').'</th>'.
+                '<th>'.lang('GROUPTYPE_NAME').'</th>'.
                 ($mode == 'ROLE' ? '' : '<th>'.lang('ROLE_LIST_TITLE').'</th>'),
-            'table_data_cells' => '<td>{DELETE_CHECKBOX}</td>'.
+            'table_data_cells' => '<td>{CHECKBOX_ID}</td>'.
                 '<td><a href="'.$childForm.'?id={ID}">{NAME}</a></td>'.
                 '<td>{SHORT_NAME}</td>'.
                 '<td><a href="admin_grouptypes.php?id={grouptype_id}">{GROUPTYPE_NAME}</a></td>'.
                 ($mode == 'ROLE' ? '' : '<td>{ROLES}</td>'  ),
             'nodata' => '<p>'.lang('NO_ROLES_ASSIGNED').'</p>',
             'Table_Class' => 'table table-bordered table-condensed',
-            'Delete_Label' => lang('MARK_TO_DELETE'),
+            'Checkbox_Label' => lang('MARK_TO_DELETE'),
         ], [
             'debug' => 5,
             'Form_Name' => 'deleteGroupForm',
@@ -90,6 +90,7 @@ if(Input::exists('post')) {
 //List each group where is_role==n  n=0:(normal groups)/n=1:(role group)
 $groups = fetchAllGroups(); //Retrieve list of all groups
 $roleVal = (($mode == 'ROLE') ? 1 : 0);
+$groupData = [];
 foreach ($groups as $gd) {
     if ($gd->is_role != $roleVal) {
         continue;
