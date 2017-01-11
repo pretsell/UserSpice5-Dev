@@ -3,11 +3,10 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 05, 2017 at 12:12 PM
+-- Generation Time: Jan 11, 2017 at 04:28 PM
 -- Server version: 5.7.11
 -- PHP Version: 5.6.19
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
 
@@ -19,51 +18,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `us5`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `config_defs`
---
-
-CREATE TABLE `config_defs` (
-  `id` int(11) NOT NULL,
-  `code` varchar(50) COLLATE utf8_bin NOT NULL,
-  `val_type` enum('str','int','text','bool') COLLATE utf8_bin NOT NULL,
-  `allow_user_override` tinyint(1) NOT NULL DEFAULT '0',
-  `html_function_name` varchar(50) COLLATE utf8_bin NOT NULL,
-  `json_encoded` tinyint(1) NOT NULL DEFAULT '0',
-  `label` varchar(100) COLLATE utf8_bin NOT NULL,
-  `label2` varchar(100) COLLATE utf8_bin NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `config_opts`
---
-
-CREATE TABLE `config_opts` (
-  `id` int(11) NOT NULL,
-  `config_def_id` int(11) NOT NULL,
-  `seq` int(11) NOT NULL,
-  `option_val` varchar(250) COLLATE utf8_bin NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `config_vals`
---
-
-CREATE TABLE `config_vals` (
-  `id` int(11) NOT NULL,
-  `config_def_id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `val_int` int(11) DEFAULT NULL,
-  `val_str` varchar(500) COLLATE utf8_bin DEFAULT NULL,
-  `val_text` text COLLATE utf8_bin
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- --------------------------------------------------------
 
@@ -225,8 +179,8 @@ INSERT INTO `us_groups_pages` (`id`, `allow_deny`, `group_id`, `grouprole_id`, `
 (23, 'A', 1, NULL, 56, ''),
 (26, 'A', 2, NULL, 60, ''),
 (27, 'A', 1, NULL, 55, ''),
-(47, 'A', 57, NULL, 22, ''),
-(48, 'A', 57, NULL, 50, '');
+(53, 'A', 57, NULL, 93, ''),
+(60, 'A', 56, NULL, 93, '');
 
 -- --------------------------------------------------------
 
@@ -424,10 +378,11 @@ INSERT INTO `us_pages` (`id`, `page`, `private`) VALUES
 (85, '/UserSpice5-Dev/users/admin_grouptypes.php', 1),
 (86, '/UserSpice5-Dev/users/admin_grouptype.php', 1),
 (87, '/UserSpice5-Dev/users/nologin.php', 0),
-(93, '/UserSpice5-Dev/users/admin.php', 0),
+(93, '/UserSpice5-Dev/users/admin.php', 1),
 (94, '/UserSpice5-Dev/users/admin_general.php', 0),
 (95, '/UserSpice5-Dev/users/verify.php', 0),
-(96, '/UserSpice5-Dev/users/admin_pages_old.php', 0);
+(96, '/UserSpice5-Dev/users/admin_pages_old.php', 0),
+(97, '/UserSpice5-Dev/users/admin_page_old.php', 0);
 
 -- --------------------------------------------------------
 
@@ -570,7 +525,7 @@ CREATE TABLE `us_users_online` (
 
 INSERT INTO `us_users_online` (`id`, `ip`, `timestamp`, `user_id`, `session`) VALUES
 (2, '::1', '1483259458', 0, ''),
-(5, '::1', '1483617130', 1, ''),
+(5, '::1', '1483652955', 1, ''),
 (6, '::1', '1480108084', 2, ''),
 (7, '::1', '1483257100', 0, ''),
 (8, '::1', '1483257100', 0, ''),
@@ -620,13 +575,6 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 
 --
--- Indexes for table `config_defs`
---
-ALTER TABLE `config_defs`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`) USING BTREE;
-
---
 -- Indexes for table `us_field_defs`
 --
 ALTER TABLE `us_field_defs`
@@ -652,6 +600,7 @@ ALTER TABLE `us_groups_menus`
 --
 ALTER TABLE `us_groups_pages`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `group_id_2` (`group_id`,`page_id`),
   ADD KEY `group_id` (`group_id`),
   ADD KEY `page_id` (`page_id`),
   ADD KEY `page_id_2` (`page_id`),
@@ -730,11 +679,6 @@ ALTER TABLE `us_users_session`
 --
 
 --
--- AUTO_INCREMENT for table `config_defs`
---
-ALTER TABLE `config_defs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
---
 -- AUTO_INCREMENT for table `us_field_defs`
 --
 ALTER TABLE `us_field_defs`
@@ -753,7 +697,7 @@ ALTER TABLE `us_groups_menus`
 -- AUTO_INCREMENT for table `us_groups_pages`
 --
 ALTER TABLE `us_groups_pages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 --
 -- AUTO_INCREMENT for table `us_groups_roles_users`
 --
@@ -778,12 +722,12 @@ ALTER TABLE `us_menus`
 -- AUTO_INCREMENT for table `us_pages`
 --
 ALTER TABLE `us_pages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=98;
 --
 -- AUTO_INCREMENT for table `us_profiles`
 --
 ALTER TABLE `us_profiles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `us_settings`
 --
@@ -793,7 +737,7 @@ ALTER TABLE `us_settings`
 -- AUTO_INCREMENT for table `us_users`
 --
 ALTER TABLE `us_users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 --
 -- AUTO_INCREMENT for table `us_users_online`
 --
