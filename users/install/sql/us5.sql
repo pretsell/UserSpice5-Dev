@@ -49,7 +49,7 @@ CREATE TABLE `us_field_defs` (
   `is_numeric` tinyint(1) DEFAULT NULL,
   `valid_email` tinyint(1) DEFAULT NULL,
   `regex` varchar(500) COLLATE utf8_bin DEFAULT NULL,
-  `regex_display` varchar(500) COLLATE utf8_bin DEFAULT NULL COMMENT AS `This will enable a non-tech human readable display if someone asks for a regex match validation`
+  `regex_display` varchar(500) COLLATE utf8_bin DEFAULT NULL 
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 --
