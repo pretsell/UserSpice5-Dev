@@ -190,8 +190,8 @@ INSERT INTO `us_groups_pages` (`id`, `allow_deny`, `group_id`, `grouprole_id`, `
 
 CREATE TABLE `us_groups_roles_users` (
   `id` int(11) NOT NULL,
-  `group_id` int(11) DEFAULT NULL COMMENT AS `null = all groups`,
-  `role_group_id` int(11) DEFAULT NULL COMMENT AS `null = all roles`,
+  `group_id` int(11) DEFAULT NULL,
+  `role_group_id` int(11) DEFAULT NULL,
   `user_id` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
