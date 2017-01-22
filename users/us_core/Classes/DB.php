@@ -111,14 +111,17 @@ class US_DB {
 		return $this->delete($table, array('id', '=', $id));
 	}
 
-	public function action($action, $table, $where=array(), $orderBy=null) {
+	public function action($action, $table, $where=array(), $orderBy=null, $bindvals=[]) {
         global $T;
         if (@$T[$table]) {
             $table = $T[$table];
         }
 		$sql = "{$action} FROM ".$table;
 		$value = '';
-		if (count($where) == 3) {
+        if (!is_array($where)) {
+            $sql .= $where;
+            // $bindvals already set
+        } elseif (count($where) == 3) {
 			$field = $where[0];
 			$operator = $where[1];
 			$value = $where[2];
@@ -126,11 +129,12 @@ class US_DB {
 			if (in_array($operator, ['=', '>', '<', '>=', '<='])) {
 				$sql .= " WHERE {$field} {$operator} ?";
 			}
+            $bindvals = [$value];
 		}
         if ($orderBy) {
             $sql .= " ORDER BY " . implode(",", (array)$orderBy);
         }
-        return $this->query($sql, [$value]);
+        return $this->query($sql, $bindvals);
 	}
 
 	public function insert($table, $fields = array()) {
