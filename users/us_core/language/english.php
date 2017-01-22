@@ -33,6 +33,7 @@ $lang = array_merge($lang, array(
   'CHOOSE_FROM_LIST_BELOW'               => 'Choose from the list below',
   'READ_ONLY'                            => 'Read Only',
   'DELETE'                               => 'Delete',
+  'SAVE_CHANGES'                         => 'Save Changes',
   'MARK_TO_DELETE'                       => 'Mark for Deletion',
   'MARK_TO_CREATE'                       => 'Mark for Creation',
   'MARK_TO_ADD'                          => 'Mark to Add',
@@ -363,5 +364,8 @@ $lang = array_merge($lang, array(
   'PAGE_UPDATE_SUCCESSFUL'               => 'Successfully updated Page',
   'PAGE_SAVE'                            => 'Save Changes to Page',
   'PAGE_SAVE_AND_RETURN'                 => 'Save Changes and Return to Page List',
+  // other page titles
+  'FORGOT_PASSWORD_TITLE'                => 'Forgot Password',
+  'PASSWORD_RESET_TITLE'                 => 'Password Reset',
 
   ));

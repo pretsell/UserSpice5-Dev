@@ -32,4 +32,53 @@ by the UserSpice Team at http://UserSpice.com
 
 <body>
 <div class="container"> <!-- Page container may be fluid or not -->
-<?php require_once pathFinder('includes/navigation.php'); ?>
+<?php
+require_once pathFinder('includes/navigation.php');
+
+// handle breadcrumbs
+global $T;
+$db = DB::getInstance();
+if (isset($form_uri)) {
+    $uri = $form_uri;
+} else {
+    $uri = $_SERVER['PHP_SELF'];
+}
+$sql = "SELECT title_token, breadcrumb_parent_page_id, page
+        FROM $T[pages]
+        WHERE page = ?";
+$result = $db->query($sql, [$uri])->first();
+$parent_id = $result->breadcrumb_parent_page_id;
+$sql = "SELECT title_token, breadcrumb_parent_page_id, page
+        FROM $T[pages]
+        WHERE id = ?";
+$bc = [];
+do {
+    $bc[] = [
+        'title' => lang($result->title_token),
+        'page' => $result->page
+    ];
+    $result = $db->query($sql, [$parent_id])->first();
+    if ($result) {
+        $parent_id = $result->breadcrumb_parent_page_id;
+    } else {
+        $parent_id = null;
+    }
+} while ($parent_id);
+if ($result) {
+    $bc[] = [
+        'title' => lang($result->title_token),
+        'page' => $result->page
+    ];
+}
+//var_dump($bc);
+$out = '';
+foreach ($bc as $k=>$x) {
+    if ($k) {
+        $out = "<a href=\"$x[page]\">$x[title]</a>&nbsp;>>&nbsp;" . $out;
+    } else {
+        $out = $x['title']; // current page is not a link
+    }
+}
+if ($out) {
+    echo $out."<br />\n";
+}
