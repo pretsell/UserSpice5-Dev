@@ -35,7 +35,9 @@ by the UserSpice Team at http://UserSpice.com
 <?php
 require_once pathFinder('includes/navigation.php');
 
-// handle breadcrumbs
+/*
+ * display breadcrumbs, if any
+ */
 global $T;
 $db = DB::getInstance();
 if (isset($form_uri)) {
@@ -79,6 +81,6 @@ foreach ($bc as $k=>$x) {
         $out = $x['title']; // current page is not a link
     }
 }
-if ($out) {
+if ($k && $out) {
     echo $out."<br />\n";
 }

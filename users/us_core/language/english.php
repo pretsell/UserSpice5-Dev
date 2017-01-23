@@ -160,8 +160,8 @@ $lang = array_merge($lang, array(
   //Groups
   'ADMIN_GROUPS_TITLE'                   => 'Administrate Groups',
   'ADMIN_ROLES_TITLE'                    => 'Administrate Group Roles',
-  'ADMIN_GROUP_TITLE'                    => 'Configure Details for Group `%m1%`',
-  'ADMIN_ROLE_TITLE'                     => 'Configure Details for Group Role `%m1%`',
+  'ADMIN_GROUP_TITLE'                    => 'Administrate a Group',
+  'ADMIN_ROLE_TITLE'                     => 'Administrate a Group Role',
   'CREATING_ROLE_TITLE'                  => 'Creating Group Role',
   'CREATING_GROUP_TITLE'                 => 'Creating Group',
   'GROUP_INFORMATION_TITLE'              => 'Group Information',
@@ -367,5 +367,6 @@ $lang = array_merge($lang, array(
   // other page titles
   'FORGOT_PASSWORD_TITLE'                => 'Forgot Password',
   'PASSWORD_RESET_TITLE'                 => 'Password Reset',
+  'ADMIN_TITLE'                          => 'UserSpice Administration Hub',
 
   ));
