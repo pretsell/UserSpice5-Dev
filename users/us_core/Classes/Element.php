@@ -59,12 +59,13 @@
  *   replace ALL elements (set to true).
  */
 abstract class US_Element {
-    protected $_db=null;
-    protected $_deleteMe=false;
-    protected $_deleteIfEmpty=false;
+    protected $_db=null,
+        $_deleteMe=false,
+        $_deleteIfEmpty=false,
+        $_dbTable=null; // used for form processing, editing the DB
     public $debug = -1;
     public $elementList = [];
-    public $repElement = null;
+    public $repElement = null; // name of repeating element from $elementList ('fields' for Form)
     public $repData = [];
     public $repMacroAliases = [];
     public $repEmptyAlternateReplacesAll = false;
@@ -96,6 +97,11 @@ abstract class US_Element {
         switch (strtolower($name)) {
             case 'elements':
                 $this->setElementList($val);
+                return true;
+                break;
+            case 'table':
+            case 'dbtable':
+                $this->setDBTable($val);
                 return true;
                 break;
             case 'debug':
@@ -276,6 +282,12 @@ abstract class US_Element {
             $this->debug(4, "::getHTMLRepElement(): html=$html");
         }
         return $html;
+    }
+    public function getDBTable() {
+        return $this->_dbTable;
+    }
+    public function setDBTable($table) {
+        $this->_dbTable = $table;
     }
     public function getDeleteIfEmpty() {
         return $this->_deleteIfEmpty;

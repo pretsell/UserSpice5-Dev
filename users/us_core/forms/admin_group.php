@@ -225,6 +225,18 @@ $myForm = new Form([
                             'table_data_cells' => '<td>{CHECKBOX_ID}</td><td>{NAME}</td>',
                             'nodata' => '<p>'.lang('NO_USERS_TO_ADD').'</p>',
                             # repeating data will be set below
+                    		'sql_cols' => "users.id as id, CONCAT(fname, ' ', lname, ' (', username, ')') AS name, 'user' AS group_or_user",
+            				'sql_from' => "$T[users] users",
+            				'sql_where'=> "NOT EXISTS (
+                    						SELECT *
+                    						FROM $T[groups_users_raw]
+                    						WHERE users.id = user_id
+                    						AND user_is_group = 0
+                    						AND group_id = ?)",
+                            'sql_order'=> "fname, lname, id",
+                            'sql_bindvals'=> [$group_id],
+                            'pageItems' => 3,
+                            'pageVarName' => 'aguPage',
                         ]),
                         '<h4>'.lang('SELECT_GROUP_ADD_MEMBERS').'</h4>',
                         'addGroupGroups' => new FormField_Table ([
@@ -238,6 +250,21 @@ $myForm = new Form([
                             'table_data_cells' => '<td>{CHECKBOX_ID}</td><td>{NAME}</td>',
                             'nodata' => '<p>'.lang('NO_GROUPS_TO_ADD').'</p>',
                             # repeating data will be set below
+                            'debug' =>  1,
+                    		'sql_cols' => "groups.id as id, groups.name as name, 'group' AS group_or_user",
+            				'sql_from' => "$T[groups] groups ",
+            				'sql_where'=> "id != ?
+                        					AND NOT EXISTS (
+                        						SELECT *
+                        						FROM $T[groups_users_raw]
+                        						WHERE groups.id = user_id
+                        						AND user_is_group = 1
+                        						AND group_id = ?
+                        					) ",
+                            'sql_order'=> "name, id",
+                            'sql_bindvals'=> [$group_id, $group_id],
+                            'pageItems' => 3,
+                            'pageVarName' => 'aggPage',
                         ]),
                     ], [
                         'Col_Class'=>'col-xs-12 col-sm-6',
@@ -485,6 +512,7 @@ if ($fld = $myForm->getField('removeGroupGroups')) {
     $groupMembers_groups = fetchGroupMembers_raw($group_id, true, false);
     $fld->setRepData($groupMembers_groups);
 }
+/*
 if ($fld = $myForm->getField('addGroupUsers')) {
     $nonGroupMembers_users = fetchNonGroupMembers_raw($group_id, false, true);
     $fld->setRepData($nonGroupMembers_users);
@@ -493,6 +521,7 @@ if ($fld = $myForm->getField('addGroupGroups')) {
     $nonGroupMembers_groups = fetchNonGroupMembers_raw($group_id, true, false);
     $fld->setRepData($nonGroupMembers_groups);
 }
+*/
 $groupPages = fetchPagesByGroup($group_id);
 $myForm->getField('removePage')->setRepData($groupPages);
 $nonGroupPages = fetchPagesNotByGroup($group_id, true);

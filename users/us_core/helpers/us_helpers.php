@@ -581,17 +581,27 @@ function securePage($uri=null) {
 	$db = DB::getInstance();
 
     if (is_null($uri)) {
-        $uri = $_SERVER['PHP_SELF'];
+        $pages = [$uri];
+    } else {
+        $pages = [];
+    }
+    $save_uri = $uri;
+    if (($uri = $_SERVER['PHP_SELF']) != $save_uri) {
+        $pages[] = $uri = $_SERVER['PHP_SELF'];
     }
     if (substr($uri, 0, strlen(US_URL_ROOT)) == US_URL_ROOT) {
-    	$page=substr($uri,strlen(US_URL_ROOT));
-    } else {
-        $page = $uri;
+    	$pages[] = substr($uri,strlen(US_URL_ROOT));
     }
 	//bold($page);
 
-	//retrieve page details
-	$query = $db->query("SELECT id, page, private FROM $T[pages] WHERE page = ?",[$page]);
+	//retrieve page details, whichever is the first to be found
+    // normal priority: (1) $formName, (2) PHP_SELF, (3) PHP_SELF without US_URL_ROOT
+    foreach ($pages as $page) {
+    	$query = $db->query("SELECT id, page, private FROM $T[pages] WHERE page = ?",[$page]);
+        if ($query->count() > 0) {
+            break;
+        }
+    }
 	if ($query->count() == 0) {
     	$_SESSION['securePageRequest']= $uri;
         bold($page);

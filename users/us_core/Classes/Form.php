@@ -9,11 +9,9 @@ class US_Form extends Element {
 	protected $_formName,
         $_fields=[],
         $_validateObject=null,
-        $_validatePassed=false,
-        $_dbTable=null;
-    # These flags determine whether the corresponding blocks
-    # are used for this form. They do not have get...() or
-    # set...() functions and can be set directly.
+        $_validatePassed=false;
+    # These are the elements (each corresponding to $HTML_*) which
+    # will be output in getHTML().
     public $elementList = [
         'Header', 'openContainer', 'AdminDashboard',
         'TitleAndResults', 'openForm', 'CSRF', 'openRow', 'openCol',
@@ -100,11 +98,6 @@ class US_Form extends Element {
             case 'title':
                 # NOTE: may fall through from above
                 $this->setMacro('Form_Title', $val);
-                return true;
-                break;
-            case 'table':
-            case 'dbtable':
-                $this->setDBTable($val);
                 return true;
                 break;
             case 'active_tab':
@@ -198,12 +191,6 @@ class US_Form extends Element {
     }
     public function setTabId($val) {
         $this->MACRO_Tab_Id = $val;
-    }
-    public function setDBTable($table) {
-        $this->_dbTable = $table;
-    }
-    public function getDBTable() {
-        return $this->_dbTable;
     }
 	public function setAction($action) {
 		$this->MACRO_Form_Action=$action;

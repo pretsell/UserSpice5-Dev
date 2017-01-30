@@ -272,6 +272,7 @@ abstract class US_FormField_Table extends FormField {
             ',
         $HTML_Post = '
             </table>
+            {PAGE_INDEX}
             </div> <!-- {DIV_CLASS} Table (name={FIELD_NAME}) -->
             ',
         $HTML_Checkbox_Id = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{ID}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',

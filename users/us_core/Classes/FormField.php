@@ -1,27 +1,27 @@
 <?php
 /*
  * Class inheritance related to Form Fields:
- * The rule with UserSpice is "Do NOT modify files under us_core/ - make the change
- * under local/ instead." For these Form Fields the way to do that is to use the
- * classes defined in local/Classes/FormFieldTypes.php and to make modifications only
- * to that file and local/Classes/FormField.php.
+ * The rule with UserSpice is "Do NOT modify files under us_core/ - make the
+ * change under local/ instead." For these Form Fields the way to do that is to
+ * use the classes defined in local/Classes/FormFieldTypes.php and to make
+ * modifications only to that file and local/Classes/FormField.php.
  *
- * us_core/Classes/FormField.php (this) defines class "US_FormField" which is just
- * the parent class. This class is abstract. Do not modify this file.
+ * us_core/Classes/FormField.php (this) defines class "US_FormField" which is
+ * just the parent class. This class is abstract. Do not modify this file.
  *
- * local/Classes/FormField.php in turn defines class "FormField" which inherits from
- * class "US_FormField". This class is abstract. Feel free to make changes to
+ * local/Classes/FormField.php in turn defines class "FormField" which inherits
+ * from class "US_FormField". Feel free to make changes to
  * local/Classes/FormField.php.
  *
  * us_core/Classes/FormFieldTypes.php in turn defines several classes such as
  * "US_FormField_Text", "US_FormField_Button", "US_FormField_Hidden", etc. which
- * inherit from class "FormField". These are abstract. Do not modify this file.
+ * inherit from class "FormField". Do not modify this file.
  *
  * local/Classes/FormFieldTypes.php in turn defines several classes such as
  * "FormField_Text", "FormField_Button", "FormField_Hidden", etc. which inherit
- * from the classes mentioned above which are named the same but with a "US_" prefix.
- * THESE ARE THE CLASSES YOU SHOULD USE IN YOUR CODE TO DEFINE FORM FIELDS!
- * Feel free to modify local/Classes/FormFieldTypes.php.
+ * from the classes mentioned above which are named the same but with a "US_"
+ * prefix. THESE ARE THE CLASSES YOU SHOULD USE IN YOUR CODE TO DEFINE FORM
+ * FIELDS! Feel free to modify local/Classes/FormFieldTypes.php.
  */
 abstract class US_FormField extends Element {
     protected $_validateObject=null,
@@ -33,7 +33,20 @@ abstract class US_FormField extends Element {
         $_fieldValue=null,
         $_fieldNewValue=null,
         $_fieldType=null, // should be set by inheriting classes
-        $_isDBField=true; // whether this is a field in the DB
+        $_isDBField=true, // whether this is from the primary table in the DB
+        # for repeating elements, this class can control the SELECT
+        # rather than setting it manually by setRepData(). This allows
+        # things like pagination,
+        $_sqlCols='',  // SELECT <this part here>
+        $_sqlFrom='',  //   FROM <this part here>
+        $_sqlWhere='', //  WHERE <this part here>
+        $_sqlGroup='', //  <any GROUP BY or HAVING or etc>
+        $_sqlOrder='', //  ORDER BY <this part here>
+        $_sqlBindVals='',//bind values matching ? or :var in sqlWhere
+        $_pageItems=0, // paginates if non-zero and isRepeating() (i.e., this is the flag to turn on paginating)
+        $_curPage=0,   // current page
+        $_pageVarName='page',
+        $_totalPages=0;// total number of pages
     public $repEmptyAlternateReplacesAll = true;
     public
         $HTML_Pre = '
@@ -48,10 +61,9 @@ abstract class US_FormField extends Element {
         $HTML_Post = '
             </div> <!-- {DIV_CLASS} (type={TYPE} id={FIELD_ID}, name={FIELD_NAME}) -->',
         $HTML_Script = '',
+        $HTML_Page_Index = '<a href="?{PAGE_VAR_NAME}={PAGE_NUM}">{PAGE_NUM}</a>&nbsp;',
+        $HTML_CurPage_Index = '<strong>{PAGE_NUM}</strong>&nbsp;',
         $elementList = ['Pre', 'Input', 'Post'];
-    # Commented-out values below are added just-in-time prior to replacement
-    # (see self::getHTML()) Note that some replacement macros may be set/used
-    # in self::setRepeatValues() as well.
     public
         $MACRO_Div_Class = 'form-group',
         $MACRO_Label_Class = 'control-label',
@@ -66,7 +78,8 @@ abstract class US_FormField extends Element {
         $MACRO_Placeholder = '',
         $MACRO_Extra_Attrib = '',
         $MACRO_Value = '',
-        $MACRO_Disabled = '';
+        $MACRO_Disabled = '',
+        $MACRO_Page_Index = '';
 
     public function __construct($opts=[]) {
         global $T;
@@ -147,6 +160,48 @@ abstract class US_FormField extends Element {
                 $this->setFieldId($val);
                 return true;
                 break;
+            case 'sql_cols':
+            case 'sqlcols':
+                $this->setSQLCols($val);
+                return true;
+                break;
+            case 'sql_from':
+            case 'sqlfrom':
+                $this->setSQLFrom($val);
+                return true;
+                break;
+            case 'sql_where':
+            case 'sqlwhere':
+                $this->setSQLWhere($val);
+                return true;
+                break;
+            case 'sql_group':
+            case 'sqlgroup':
+                $this->setSQLGroup($val);
+                return true;
+                break;
+            case 'sql_order':
+            case 'sqlorder':
+                $this->setSQLOrder($val);
+                return true;
+                break;
+            case 'sql_bindvals':
+            case 'sqlbindvals':
+                $this->setSQLBindVals($val);
+                return true;
+                break;
+            case 'page_items':
+            case 'pageitems':
+                $this->setPageItems($val);
+                return true;
+                break;
+            case 'page_var_name':
+            case 'pagevar_name':
+            case 'page_varname':
+            case 'pagevarname':
+                $this->setPageVarName($val);
+                return true;
+                break;
         }
         return parent::handle1Opt($name, $val);
     }
@@ -165,7 +220,60 @@ abstract class US_FormField extends Element {
         return parent::getMacros($s, $opts);
     }
 
+    public function calcRepData($insist=false) {
+        $this->debug(1, '::calcRepData(): Entering');
+        if (!$this->isRepeating() || ($this->getRepData() && !$insist)) {
+            return false;
+        }
+        $this->debug(2, '::calcRepData(): Continuing');
+        $cols = $this->getSQLCols();
+        $from = $this->getSQLFrom();
+        $where = $this->getSQLWhere();
+        $groupBy = $this->getSQLGroup();
+        $order = $this->getSQLOrder();
+        $bindVals = $this->getSQLBindVals();
+        $pageItems = $this->getPageItems();
+        // these are required elements - use DUAL in the (unlikely) case
+        // where you don't have a FROM table; use 1=1 in the case where
+        // you don't have a WHERE clause
+        if (!$cols || !$from || !$where) {
+            return false;
+        }
+        $this->debug(2, '::calcRepData(): Still Continuing');
+        if ($pageItems) {
+            if ($this->getCurPage() < 1) {
+                dbg('varname='.$this->getPageVarName());
+                if (!$cur = Input::get($this->getPageVarName())) {
+                    $cur = 1;
+                }
+                $this->setCurPage($cur);
+            }
+            // paginating
+            // calculate total number of pages
+            $sql = "SELECT COUNT(*) AS c FROM $from $groupBy WHERE $where";
+            $result = $this->_db->query($sql, $bindVals)->first();
+            $totalPages = ceil($result->c / $pageItems);
+            $this->setTotalPages($totalPages);
+            $curPage = $this->getCurPage();
+            if ($curPage > $totalPages) {
+                $curPage = $totalPages;
+            }
+            $offset = max(0, ($curPage - 1)) * $pageItems;
+            $this->setPageIndex();
+        }
+        $sql = "SELECT $cols FROM $from $groupBy WHERE $where";
+        if ($order) {
+            $sql .= " ORDER BY $order";
+        }
+        if ($pageItems) { // paginating
+            $sql .= " LIMIT $offset,$pageItems";
+        }
+        $this->debug(3, "::calcRepData(): sql=$sql");
+        $this->setRepData($this->_db->query($sql, $bindVals)->results());
+        return (boolean)$this->getRepData();
+    }
     public function setRepData($val) {
+        $this->debug(1, '::setRepData(y): Entering');
         # convert from object ($data->id, $data->name) to associative array
         # ($data['id'], $data['name']) if needed
         if (sizeof($val)>0 && is_object($val[0])) {
@@ -179,6 +287,8 @@ abstract class US_FormField extends Element {
         }
         #dbg("setRepData(): values follow (class=".get_class($this).")");
         #var_dump($this->repData);
+        $this->debug(0, '::setRepData(): '.print_r($this->repData,true));
+        return (boolean)$this->repData;
     }
     public function describeValidation() {
         return $this->getValidator()->describe($this->_fieldName);
@@ -194,6 +304,82 @@ abstract class US_FormField extends Element {
     public function isChanged() {
         return ($this->_fieldNewValue != $this->_fieldValue);
     }
+	public function getSQLCols(){
+		return $this->_sqlCols;
+	}
+	public function setSQLCols($val){
+		$this->_sqlCols = $val;
+	}
+	public function getSQLFrom(){
+		return $this->_sqlFrom;
+	}
+	public function setSQLFrom($val){
+		$this->_sqlFrom = $val;
+	}
+	public function getSQLWhere(){
+		return $this->_sqlWhere;
+	}
+	public function setSQLWhere($val){
+		$this->_sqlWhere = $val;
+	}
+	public function getSQLGroup(){
+		return $this->_sqlGroup;
+	}
+	public function setSQLGroup($val){
+		$this->_sqlGroup = $val;
+	}
+	public function getSQLOrder(){
+		return $this->_sqlOrder;
+	}
+	public function setSQLOrder($val){
+		$this->_sqlOrder = $val;
+	}
+	public function getSQLBindVals(){
+		return $this->_sqlBindVals;
+	}
+	public function setSQLBindVals($val){
+		$this->_sqlBindVals = $val;
+	}
+	public function getPageItems(){
+		return $this->_pageItems;
+	}
+	public function setPageItems($val){
+		$this->_pageItems = $val;
+	}
+	public function getCurPage(){
+		return $this->_curPage;
+	}
+	public function setCurPage($val){
+		$this->_curPage = $val;
+	}
+	public function getPageVarName(){
+		return $this->_pageVarName;
+	}
+	public function setPageVarName($val){
+		$this->_pageVarName = $val;
+	}
+	public function getTotalPages(){
+		return $this->_totalPages;
+	}
+	public function setTotalPages($val){
+		$this->_totalPages = $val;
+	}
+	public function setPageIndex(){
+		$this->MACRO_Page_Index = '';
+        #dbg("curpage=".$this->getCurPage().', totalpages='.$this->getTotalPages());
+        if ($this->getTotalPages() > 1) { // don't bother printing links if just 1
+            $macros = ['{PAGE_VAR_NAME}'=>$this->getPageVarName(), '{LAST_PAGE_NUM}'=>$this->getTotalPages()];
+            for ($i = max(1, $this->getCurPage()-5); $i <= min($this->getTotalPages(), $this->getCurPage()+5); $i++) {
+                dbg("Processing $i");
+                $macros['{PAGE_NUM}'] = $i;
+                if ($i == $this->getCurPage()) {
+                    $this->MACRO_Page_Index .= str_replace(array_keys($macros), array_values($macros), $this->HTML_CurPage_Index);
+                } else {
+                    $this->MACRO_Page_Index .= str_replace(array_keys($macros), array_values($macros), $this->HTML_Page_Index);
+                }
+            }
+        }
+	}
 	public function getPlaceholder(){
 		return $this->MACRO_Placeholder;
 	}
@@ -317,6 +503,10 @@ abstract class US_FormField extends Element {
         }
     }
 
+    public function getHTML($opts=[]) {
+        $this->calcRepData();
+        return parent::getHTML($opts);
+    }
     public function getHTMLScripts() {
         #dbg("::getHTMLScripts - ".$this->HTML_Script);
         return $this->HTML_Script;
