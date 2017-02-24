@@ -45,7 +45,11 @@ class US_Config {
         # we cannot use normal DB class because that class relies on this class
         # to get dbHost, dbName, etc. So, instead, we use PDO() directly.
 		$dbConx = new PDO('mysql:host='.$host.';dbname='.$dbName, $user, $passwd, $opts);
-		$this->_site_settings = $dbConx->query("SELECT * FROM {$prefix}settings")->fetch(PDO::FETCH_OBJ);
+		if ($stmt = $dbConx->query("SELECT * FROM {$prefix}settings")) {
+    		$this->_site_settings = $stmt->fetch(PDO::FETCH_OBJ);
+        } else {
+            $this->_site_settings = new stdClass;
+        }
 	}
 	public function get($path=null, $default=null) {
 		#echo "DEBUG: Config::get($path, $default): Entering<br />\n";

@@ -243,14 +243,13 @@ $myForm = new Form([
                             'field' => 'addGroupGroups',
                             'Table_Class'=>'table-condensed',
                             'isdbfield' => false,
-                            #'debug' => 0,
                             'table_head_cells' => '<th>'.
                                 lang('SELECT_GROUP_BELOW').'</th><th>'.
                                 lang('NAME_GROUPS_NON_MEMBERS').'</th>',
                             'table_data_cells' => '<td>{CHECKBOX_ID}</td><td>{NAME}</td>',
                             'nodata' => '<p>'.lang('NO_GROUPS_TO_ADD').'</p>',
                             # repeating data will be set below
-                            'debug' =>  1,
+                            #'debug' =>  0,
                     		'sql_cols' => "groups.id as id, groups.name as name, 'group' AS group_or_user",
             				'sql_from' => "$T[groups] groups ",
             				'sql_where'=> "id != ?
@@ -512,16 +511,6 @@ if ($fld = $myForm->getField('removeGroupGroups')) {
     $groupMembers_groups = fetchGroupMembers_raw($group_id, true, false);
     $fld->setRepData($groupMembers_groups);
 }
-/*
-if ($fld = $myForm->getField('addGroupUsers')) {
-    $nonGroupMembers_users = fetchNonGroupMembers_raw($group_id, false, true);
-    $fld->setRepData($nonGroupMembers_users);
-}
-if ($fld = $myForm->getField('addGroupGroups')) {
-    $nonGroupMembers_groups = fetchNonGroupMembers_raw($group_id, true, false);
-    $fld->setRepData($nonGroupMembers_groups);
-}
-*/
 $groupPages = fetchPagesByGroup($group_id);
 $myForm->getField('removePage')->setRepData($groupPages);
 $nonGroupPages = fetchPagesNotByGroup($group_id, true);

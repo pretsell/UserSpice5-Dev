@@ -83,32 +83,35 @@ class US_Validate{
 					#dbg( "DEBUG: k=$k<br />\n");
 					switch ($k) {
 						case 'min':
-							$rtn[] = 'Min '.$r.' character'.($r>1?'s':'').' ';
+							$rtn[] = lang('VALID_MIN_CHARS', $r).' ';
 							break;
 						case 'max':
-							$rtn[] = 'Max '.$r.' characters ';
+							$rtn[] = lang('VALID_MAX_CHARS', $r).' ';
 							break;
 						case 'required':
-							if ($r) $rtn[] = 'Required ';
-							else $rtn[] = 'Optional ';
+							if ($r) $rtn[] = lang('VALID_REQUIRED').' ';
+							else $rtn[] = lang('VALID_OPTIONAL').' ';
 							break;
 						case 'unique':
 						case 'unique_add':
 						case 'unique_update':
-							$rtn[] = 'Must be Unique in the database ';
+							$rtn[] = lang('VALID_MUST_BE_UNIQUE').' ';
 							break;
 						case 'is_numeric':
-							$rtn[] = 'Must be a Numeric value ';
+							$rtn[] = lang('VALID_MUST_BE_NUM').' ';
 							break;
 						case 'valid_email':
-							$rtn[] = 'Must be formatted as a Valid email ';
+							$rtn[] = lang('VALID_MUST_BE_EMAIL').' ';
 							break;
 						case 'regex':
 							$rtn[] = $ruleList[$f]['regex_display'].' ';
 							break;
 						case 'matches':
 						case 'match_field':
-							$rtn[] = 'Must match '.$ruleList[$r]['display'].' ';
+                        echo " r=$r<br />\n";
+                        var_dump($ruleList[$r]);
+                        var_dump($this->_ruleList);
+							$rtn[] = lang('VALID_MUST_MATCH', $ruleList[$r]['display']).' ';
 							break;
 					}
 				}
@@ -128,6 +131,9 @@ class US_Validate{
             #dbg($item);
             #var_dump($rules);
 			$item = sanitize($item);
+            if (!isset($rules['display'])) {
+    			$rules['display'] = $item; // poor default, but that's what we've got
+            }
 			$display = $rules['display'];
 			foreach ($rules as $rule => $rule_value) {
                 #dbg("Validate::check(): rule=$rule<br />\n");
@@ -140,26 +146,26 @@ class US_Validate{
                 #dbg("Validate::check(): rule=$rule, rule_value=$rule_value, value='$value'<br />\n");
 				if ($rule === 'required' && $rule_value && empty($value)) {
                     #dbg("ERROR - required<br />\n");
-					$this->addError(["{$display} is required",$item]);
+					$this->addError([lang('VALID_ERR_REQUIRED', $display),$item]);
 				} elseif (!empty($value)) {
                     #dbg("Validate::check(): rule=$rule, rule_value=$rule_value item=$item<br />\n");
 					switch ($rule) {
 						case 'min':
 							if (strlen($value) < $rule_value) {
-								$this->addError(["{$display} must be a minimum of {$rule_value} characters.",$item]);
+								$this->addError([lang('VALID_ERR_MIN_CHAR',[$display,$rule_value]),$item]);
 							}
 							break;
 
 						case 'max':
 							if (strlen($value) > $rule_value) {
-								$this->addError(["{$display} must be a maximum of {$rule_value} characters.",$item]);
+								$this->addError([lang('VALID_ERR_MAX_CHAR',[$display,$rule_value]),$item]);
 							}
 							break;
 
 						case 'matches':
 							if ($value != $source[$rule_value]) {
 								$match = $items[$rule_value]['display'];
-								$this->addError(["{$match} and {$display} must match.",$item]);
+								$this->addError([lang('VALID_ERR_MUST_MATCH', [$match, $display]),$item]);
 							}
 							break;
 
@@ -167,7 +173,7 @@ class US_Validate{
 						case 'unique_add':
 							$check = $this->_db->get($rule_value, array($item, '=', $value));
 							if ($check->count()) {
-								$this->addError(["{$display} already exists. Please choose another {$display}.",$item]);
+								$this->addError([lang('VALID_ERR_NOT_UNIQUE', $display),$item]);
 							}
 							break;
 
@@ -184,26 +190,26 @@ class US_Validate{
 							$query = "SELECT * FROM {$table} WHERE id != ? AND {$item} = ?";
 							$check = $this->_db->query($query, [$id, $value]);
 							if ($check->count()) {
-								$this->addError(["{$display} already exists. Please choose another {$display}.",$item]);
+								$this->addError([lang('VALID_ERR_NOT_UNIQUE', $display),$item]);
 							}
 							break;
 
 						case 'regex':
 							if (!preg_match($rule_value, $value)) {
 								$regex_display = $rules['regex_display'];
-								$this->addError(["{$display} must match '$regex_display'. Please try again.",$item]);
+								$this->addError([lang('VALID_ERR_BAD_REGEX', [$display, $regex_display]),$item]);
 							}
 							break;
 
 						case 'is_numeric':
 							if (!is_numeric($value)) {
-								$this->addError(["{$display} has to be a number. Please use a numeric value.",$item]);
+								$this->addError([lang('VALID_ERR_MUST_BE_NUM', $display),$item]);
 							}
 							break;
 
 						case 'valid_email':
 							if (!filter_var($value,FILTER_VALIDATE_EMAIL)) {
-								$this->addError(["{$display} must be a valid email address.",$item]);
+								$this->addError([lang('VALID_ERR_MUST_BE_EMAIL', $display),$item]);
 							}
 							break;
 					}

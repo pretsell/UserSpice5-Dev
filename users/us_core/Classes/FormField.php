@@ -242,7 +242,7 @@ abstract class US_FormField extends Element {
         $this->debug(2, '::calcRepData(): Still Continuing');
         if ($pageItems) {
             if ($this->getCurPage() < 1) {
-                dbg('varname='.$this->getPageVarName());
+                #dbg('varname='.$this->getPageVarName());
                 if (!$cur = Input::get($this->getPageVarName())) {
                     $cur = 1;
                 }
@@ -370,7 +370,7 @@ abstract class US_FormField extends Element {
         if ($this->getTotalPages() > 1) { // don't bother printing links if just 1
             $macros = ['{PAGE_VAR_NAME}'=>$this->getPageVarName(), '{LAST_PAGE_NUM}'=>$this->getTotalPages()];
             for ($i = max(1, $this->getCurPage()-5); $i <= min($this->getTotalPages(), $this->getCurPage()+5); $i++) {
-                dbg("Processing $i");
+                #dbg("Processing $i");
                 $macros['{PAGE_NUM}'] = $i;
                 if ($i == $this->getCurPage()) {
                     $this->MACRO_Page_Index .= str_replace(array_keys($macros), array_values($macros), $this->HTML_CurPage_Index);

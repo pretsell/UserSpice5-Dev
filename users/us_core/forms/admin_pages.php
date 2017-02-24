@@ -10,7 +10,7 @@ if (Input::exists()) {
 }
 
 //Get list of php files for each $path
-$paths=configGet('page_paths');
+$paths=configGet('us_page_path', US_URL_ROOT);
 $pages=[];
 foreach ((array)$paths as $path){
     if (substr($path, -1, 1) != '/') {
@@ -119,6 +119,10 @@ $myForm = new Form ([
         'nodata' => '<p>'.lang('NO_PAGES').'</p>',
         'searchable' => true,
     ]),
+    'save' => new FormField_ButtonSubmit([
+        'field' => 'save',
+        'display' => lang('SAVE_CHANGES'),
+    ])
 ], [
     'title' => lang('ADMIN_PAGES_TITLE'),
 ]);

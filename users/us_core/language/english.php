@@ -369,4 +369,22 @@ $lang = array_merge($lang, array(
   'PASSWORD_RESET_TITLE'                 => 'Password Reset',
   'ADMIN_TITLE'                          => 'UserSpice Administration Hub',
 
+  // Validation (.../Classes/Validate.php)
+  'VALID_REQUIRED'                       => 'Required',
+  'VALID_ERR_REQUIRED'                   => '%m1% is required',
+  'VALID_OPTIONAL'                       => 'Optional',
+  'VALID_MIN_CHARS'                      => 'Minimum %m1% characters',
+  'VALID_ERR_MIN_CHARS'                  => '%m1% must be a minimum of %m2% characters.',
+  'VALID_MAX_CHARS'                      => 'Maximum %m1% characters',
+  'VALID_ERR_MAX_CHARS'                  => '%m1% must be a maximum of %m2% characters.',
+  'VALID_MUST_BE_UNIQUE'                 => 'Must be unique in the database',
+  'VALID_MUST_BE_NUM'                    => 'Must be numeric',
+  'VALID_MUST_BE_EMAIL'                  => 'Must be a valid email address',
+  'VALID_MUST_MATCH'                     => 'Must match %m1%',
+  'VALID_ERR_MUST_MATCH'                 => '%m1% and %m2% must match',
+  'VALID_ERR_NOT_UNIQUE'                 => '%m1% already exists. Please choose another %m1%.',
+  'VALID_ERR_BAD_REGEX'                  => '%m1% must match "%m2%". Please try again.',
+  'VALID_ERR_MUST_BE_NUM'                => '%m1% has to be a number. Please use a numeric value.',
+  'VALID_ERR_MUST_BE_EMAIL'              => '%m1% must be a valid email address.',
+
   ));

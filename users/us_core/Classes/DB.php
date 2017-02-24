@@ -75,7 +75,7 @@ class US_DB {
 		return $this;
 	}
 
-    public function queryAll($table, $where=[], $orderBy=null) {
+    public function queryAll($table, $where=[], $orderBy=null, $bindvals=[]) {
 		return $this->action('SELECT *', $table, $where, $orderBy);
     }
 	public function findAll($table, $where=[], $orderBy=null) {

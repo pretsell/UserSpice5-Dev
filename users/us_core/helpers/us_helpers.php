@@ -143,49 +143,6 @@ function fetchGroupMembers_raw($group_id, $include_groups=true, $include_users=t
 	#echo "DEBUG: count=".$query->count()."<br />\n";
 	return $query->results();
 }
-//Retrieve list of users/groups who are NOT members of a given group (NO NESTING)
-function fetchNonGroupMembers_raw($group_id, $include_groups=true, $include_users=true) {
-    global $T;
-	$db = DB::getInstance();
-    $sql = '';
-    $bindvals = [];
-	if ($include_users) {
-		$sql .= "SELECT users.id as id, CONCAT(fname, ' ', lname, ' (', username, ')') AS name, 'user' AS group_or_user
-					FROM $T[users] users
-					WHERE NOT EXISTS (
-						SELECT *
-						FROM $T[groups_users_raw]
-						WHERE users.id = user_id
-						AND user_is_group = 0
-						AND group_id = ?
-					) ";
-        $bindvals[] = $group_id;
-    }
-    if ($include_users && $include_groups) {
-        $sql .= " UNION ";
-    }
-    if ($include_groups) {
-		$sql .= "SELECT groups.id as id, groups.name as name, 'group' AS group_or_user
-						FROM $T[groups] groups ";
-        if ($group_id) {
-            $sql .= "WHERE id != ?
-					AND NOT EXISTS (
-						SELECT *
-						FROM $T[groups_users_raw]
-						WHERE groups.id = user_id
-						AND user_is_group = 1
-						AND group_id = ?
-					) ";
-    		$bindvals[] = $group_id;
-    		$bindvals[] = $group_id;
-        }
-	}
-	#echo "DEBUG: group_id = $group_id, sql=$sql<br />\n";
-	$query = $db->query($sql,$bindvals);
-	#echo "DEBUG: count=".$query->count()."<br />\n";
-	return $query->results();
-}
-
 //Retrieve list of users who are members of a given group
 function fetchUsersByGroup($group_id) {
     global $T;
@@ -545,7 +502,12 @@ function pathFinder($file, $root=null, $configPathToken=null, $defaultPath=null)
     return false;
 }
 
-function getPageLocation($page) {
+# configGet(us_page_path) (set in local/config.php) can be (1) an array of
+# multiple paths or (2) a semi-colon (or colon) delimited string of multiple
+# paths or (3) a simple single path. If not set it defaults to US_URL_ROOT.
+# Always returns an array.
+# The paths returned represent potential location where pages might be found.
+function getPagePath() {
     $path = configGet('us_page_path', US_URL_ROOT);
     if (!is_array($path)) {
         foreach ([':', ';'] as $delim) {
@@ -555,6 +517,11 @@ function getPageLocation($page) {
             }
         }
     }
+    return (array)$path;
+}
+
+function getPageLocation($page) {
+    $path = getPagePath();
     foreach ((array)$path as $p) {
         if (file_exists(US_ROOT_DIR.$p.$page)) {
             return $p.$page;

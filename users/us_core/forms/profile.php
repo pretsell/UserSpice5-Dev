@@ -42,17 +42,17 @@ Process form data if submitted
 */
 
 $validation = new Validate([
-	'username'=>['action'=>'update', 'update_id'=>$id],
-	'fname',
-	'lname',
-	'email'=>['action'=>'update', 'update_id'=>$id],
+	'users.username'=>['action'=>'update', 'update_id'=>$id],
+	'users.fname',
+	'users.lname',
+	'users.email'=>['action'=>'update', 'update_id'=>$id],
 	'old' => array(
 	  'display' => 'Old Password',
 	  'required' => false, // only required if changing pass
 	),
-	'password' => ['required'=>false], // only required if changing pass
+	'users.password' => ['required'=>false], // only required if changing pass
 	'confirm' => ['required'=>false], // only required if changing pass
-	'bio',
+	'users.bio',
 ]);
 $fldList = [ 'username', 'fname', 'lname', 'email', 'timezone_string', 'bio' ];
 if (Input::exists()) {
