@@ -1,29 +1,79 @@
 <?php
 
-abstract class ActionResponse {
-    protected $token=null;
-    protected function Action() {
-        $redirect_destination = configGet('redirect_'.$this->token);
-        Redirect::to(US_URL_ROOT.$redirect_destination);
+abstract class StateResponse {
+    protected $state=null;
+    protected $dflt_redirect = 'index.php';
+    protected $do_redirect = true;
+    protected $do_logging = true;
+    public function respond($do_redirect=true) {
+        dbg("StateResponse->respond: Entering<br />\n");
+        if ($this->do_logging) {
+            global $user;
+            $db = DB::getInstance();
+            if ($user && is_object($user)) {
+                $user_id = $user->data()->id;
+            } else {
+                $user_id = null;
+            }
+            $fields = [
+                'user_id' => $user_id,
+                'page' => $_SERVER['PHP_SELF'],
+                'state' => $this->state,
+                'ip' => ipCheck(),
+            ];
+            dbg("respond: Logging <pre>".print_r($fields,true)."</pre><br />\n")    ;
+            $db->insert('audit', $fields);
+            if ($db->error()) {
+                dbg("DB ERRORS!".$db->errorString());
+            }
+        }
+
+        if ($this->do_redirect && $do_redirect) {
+            $redirect_destination = configGet('redirect_'.$this->state, pathFinder($dflt_redirect));
+            Redirect::to(US_URL_ROOT.$redirect_destination);
+        }
     }
 }
 
-class US_ActionResponse_Logout extends ActionResponse {
-    protected $token = 'logout';
+class US_StateResponse_Logout extends StateResponse {
+    protected $state = 'logout';
+    #protected $dflt_redirect = 'index.php';
 }
 
-class US_ActionResponse_Login extends ActionResponse {
-    protected $token = 'login';
+class US_StateResponse_Login extends StateResponse {
+    protected $state = 'login';
+    #protected $dflt_redirect = 'index.php';
+    public function respond($do_redirect=true) {
+        parent::respond(false); // don't redirect
+        # If the user tried to go to a given page (other than login.php) and redirect_referrer_login
+        # is turned on, then now that we are logged in go to that page.
+    	if (@$_SESSION['securePageRequest'] && basename($_SESSION['securePageRequest']) != 'login.php' && configGet('redirect_referrer_login')) {
+    		$securePageRequest=$_SESSION['securePageRequest'];
+    		unset($_SESSION['securePageRequest']);
+    		Redirect::to($securePageRequest);
+    	} else {
+            # Modify the post-login redirect destination by modifying redirect_login in the
+            # `settings` database table
+            if ($this->do_redirect && $do_redirect) {
+                # Modify the post-login redirect destination by modifying redirect_login in the
+                # `settings` database table (admin_settings.php)
+        		#Redirect::to(configGet('redirect_login'));
+            }
+    	}
+    }
 }
 
-class US_ActionResponse_Blocked extends ActionResponse {
-    protected $token = 'blocked';
+class US_StateResponse_Blocked extends StateResponse {
+    protected $state = 'blocked';
+    protected $dflt_redirect = 'blocked.php';
 }
 
-class US_ActionResponse_Nologin extends ActionResponse {
-    protected $token = 'nologin';
+class US_StateResponse_NoLogin extends StateResponse {
+    protected $state = 'nologin';
+    protected $dflt_redirect = 'nologin.php';
 }
 
-class US_ActionResponse_Deny_NoPerm extends ActionResponse {
-    protected $token = 'deny_noperm';
+class US_StateResponse_DenyNoPerm extends StateResponse {
+    protected $state = 'deny_noperm';
+    #protected $dflt_redirect = 'index.php';
 }

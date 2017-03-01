@@ -1,21 +1,16 @@
 <?php
 
-class ActionResponse_Logout extends US_ActionResponse_Logout {
-    protected $token = 'logout';
+class StateResponse_Logout extends US_StateResponse_Logout {
 }
 
-class ActionResponse_Login extends US_ActionResponse_Login {
-    protected $token = 'login';
+class StateResponse_Login extends US_StateResponse_Login {
 }
 
-class ActionResponse_Blocked extends US_ActionResponse_Blocked {
-    protected $token = 'blocked';
+class StateResponse_Blocked extends US_StateResponse_Blocked {
 }
 
-class ActionResponse_NoLogin extends US_ActionResponse_NoLogin {
-    protected $token = 'nologin';
+class StateResponse_NoLogin extends US_StateResponse_NoLogin {
 }
 
-class ActionResponse_DenyNoPerm extends US_ActionResponseDenyNoPerm {
-    protected $token = 'deny_noperm';
+class StateResponse_DenyNoPerm extends US_StateResponse_DenyNoPerm {
 }
