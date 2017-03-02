@@ -434,23 +434,6 @@ function deleteGroupsRolesUsers($gru_ids, $fix_groups_users_too=false) {
 	return $i;
 }
 
-function defaultPage($type) {
-	if ($page = configGet('redirect/default_'.$type.'_page'))
-		return $page;
-	switch ($type) {
-		case 'blocked':
-			$page = 'blocked.php';
-			break;
-		case 'nologin':
-		 	$page = configGet('redirect_deny_noperm', 'nologin.php');
-			break;
-		default:
-		 	$page = 'index.php';
-			break;
-	}
-	return $page;
-}
-
 //Check token, die if bad
 function checkToken($name='csrf', $method='post') {
 	if (Input::exists($method)) {
@@ -539,7 +522,8 @@ function securePage($uri=null) {
 	// dnd($user);
 	if (isset($user) && $user->data() != null) {
 		if ($user->data()->permissions==0) {
-			Redirect::to(defaultPage('blocked'));
+            $blocked_response = new StateResponse_Blocked;
+            $blocked_response->respond();
 		}
 		if ($user->isAdmin())
 			return true;
@@ -583,14 +567,16 @@ function securePage($uri=null) {
 		return true;
 	} elseif (!$user->isLoggedIn()) { //If user is not logged in, deny access
     	$_SESSION['securePageRequest']= $uri;
-		Redirect::to(defaultPage('nologin'));
+        $nologin_response = new StateResponse_DenyNoLogin;
+        $nologin_response->respond();
 		return false;
 	} elseif (userHasPageAuth($pageID, $user->data()->id)) {
         return true;
     } else {
     	# We've tried everything - send them to the default page
         unset($_SESSION['securePageRequest']);
-        Redirect::to(US_URL_ROOT.configGet('redirect_deny_noperm'));
+        $deny_response = new StateResponse_DenyNoPerm;
+        $deny_response->respond();
         return false;
     }
 }
