@@ -117,6 +117,13 @@ EOF;
 
 if (@$_POST['save']) {
     $errors = [];
+    /*
+     * Check database credentials
+     */
+    # THIS IS NOT DONE...
+    dbg("Not checking DB credentials yet");
+    # Check if our database credentials are valid or not and set $errors appropriately...
+
     if (file_exists($cfgPath) && !@$_POST['overwrite_cfgpath']) {
         $errors['overwrite_cfgpath'] = "$cfgPath already exists. Please confirm overwrite.";
     }

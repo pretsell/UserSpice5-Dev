@@ -7,28 +7,40 @@
 
 require_once('init.php');
 $prefix = configGet('mysql/prefix');
-echo "At some point we need to make sure this is the same thing we used in mkpages.php<br />\n";
+$engine = "MyISAM";
+$charset = "utf8";
+$collate = "utf8_bin";
+echo "At some point we need to make sure this is the same US_PAGE_PATH we used in mkpages.php<br />\n";
 $US_PAGE_PATH = getPagePath();
 $US_PAGE_PATH = array_pop($US_PAGE_PATH);
 if (substr($US_PAGE_PATH, -1, 1) == '/') {
     $US_PAGE_PATH = substr($US_PAGE_PATH, 0, -1); // strip trailing slash
 }
-$sql_commands = [
+$init_commands = [
+    "CREATE TABLE `{$prefix}audit` (
+          `id` int(11) NOT NULL,
+          `user_id` int(11) DEFAULT NULL,
+          `page` varchar(250) COLLATE $collate NOT NULL,
+          `state` varchar(25) COLLATE $collate NOT NULL,
+          `ip` varchar(80) COLLATE $collate NOT NULL,
+          `viewed` tinyint(1) NOT NULL,
+          `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=$engine DEFAULT CHARSET=$charset COLLATE=$collate",
     "CREATE TABLE `{$prefix}field_defs` (
           `id` int(11) NOT NULL,
-          `name` varchar(50) COLLATE utf8_bin NOT NULL,
-          `alias` varchar(50) COLLATE utf8_bin DEFAULT NULL,
-          `display_lang` varchar(50) COLLATE utf8_bin NOT NULL,
+          `name` varchar(50) COLLATE $collate NOT NULL,
+          `alias` varchar(50) COLLATE $collate DEFAULT NULL,
+          `display_lang` varchar(50) COLLATE $collate NOT NULL,
           `min` int(11) DEFAULT NULL,
           `max` int(11) DEFAULT NULL,
           `required` tinyint(1) DEFAULT NULL,
-          `unique_in_table` varchar(50) COLLATE utf8_bin DEFAULT NULL,
-          `match_field` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+          `unique_in_table` varchar(50) COLLATE $collate DEFAULT NULL,
+          `match_field` varchar(50) COLLATE $collate DEFAULT NULL,
           `is_numeric` tinyint(1) DEFAULT NULL,
           `valid_email` tinyint(1) DEFAULT NULL,
-          `regex` varchar(500) COLLATE utf8_bin DEFAULT NULL,
-          `regex_display` varchar(500) COLLATE utf8_bin DEFAULT NULL
-        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin",
+          `regex` varchar(500) COLLATE $collate DEFAULT NULL,
+          `regex_display` varchar(500) COLLATE $collate DEFAULT NULL
+      ) ENGINE=$engine DEFAULT CHARSET=$charset COLLATE=$collate",
     "INSERT INTO `{$prefix}field_defs` (`id`, `name`, `alias`, `display_lang`, `min`, `max`, `required`, `unique_in_table`, `match_field`, `is_numeric`, `valid_email`, `regex`, `regex_display`) VALUES
         (1, 'users.username', 'username', 'USERNAME', 1, 150, 1, 'users', NULL, NULL, NULL, '/^[^\\\\t !@#$%^&*(){}\\\\[\\\\]`~\\\\|]*$/', 'No spaces or special characters'),
         (2, 'users.fname', 'fname', 'FNAME', 1, 150, 1, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -49,7 +61,7 @@ $sql_commands = [
           `short_name` varchar(25) DEFAULT NULL,
           `admin` tinyint(1) NOT NULL,
           `is_role` tinyint(1) NOT NULL DEFAULT '0'
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}groups` (`id`, `grouptype_id`, `name`, `short_name`, `admin`, `is_role`) VALUES
         (1, 0, 'Users', '', 0, 0),
         (2, 0, 'Administrators', '', 1, 0),
@@ -62,7 +74,7 @@ $sql_commands = [
           `id` int(11) NOT NULL,
           `group_id` int(11) NOT NULL,
           `menu_id` int(11) NOT NULL
-        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset COLLATE=$collate",
     "INSERT INTO `{$prefix}groups_menus` (`id`, `group_id`, `menu_id`) VALUES
         (22, 2, 37),
         (20, 1, 4),
@@ -95,7 +107,7 @@ $sql_commands = [
           `grouprole_id` int(11) DEFAULT NULL,
           `page_id` int(15) NOT NULL,
           `auth` varchar(50) NOT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}groups_pages` (`id`, `allow_deny`, `group_id`, `grouprole_id`, `page_id`, `auth`) VALUES
         (2, 'A', 2, NULL, 27, ''),
         (3, 'A', 1, NULL, 24, ''),
@@ -123,7 +135,7 @@ $sql_commands = [
           `group_id` int(11) DEFAULT NULL,
           `role_group_id` int(11) DEFAULT NULL,
           `user_id` int(11) NOT NULL
-        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset COLLATE=$collate",
     "INSERT INTO `{$prefix}groups_roles_users` (`id`, `group_id`, `role_group_id`, `user_id`) VALUES
         (6, 41, 8, 4),
         (7, 43, 14, 1),
@@ -138,7 +150,7 @@ $sql_commands = [
           `group_id` int(11) NOT NULL,
           `user_id` int(11) NOT NULL,
           `user_is_group` tinyint(1) NOT NULL DEFAULT '0'
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}groups_users_raw` (`id`, `group_id`, `user_id`, `user_is_group`) VALUES
         (100, 1, 1, 0),
         (102, 1, 2, 0),
@@ -153,9 +165,9 @@ $sql_commands = [
         (162, 58, 2, 0)",
     "CREATE TABLE `{$prefix}grouptypes` (
           `id` int(11) NOT NULL,
-          `name` varchar(150) CHARACTER SET utf8 NOT NULL,
-          `short_name` varchar(15) CHARACTER SET utf8 NOT NULL
-        ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin",
+          `name` varchar(150) NOT NULL,
+          `short_name` varchar(15) NOT NULL
+      ) ENGINE=$engine DEFAULT CHARSET=$charset COLLATE=$collate",
     "INSERT INTO `{$prefix}grouptypes` (`id`, `name`, `short_name`) VALUES
         (8, 'International Division', 'ID'),
         (9, 'Region', 'Region'),
@@ -173,7 +185,7 @@ $sql_commands = [
           `link_args` varchar(500) NOT NULL DEFAULT '',
           `page_id` int(11) DEFAULT NULL,
           `icon_class` varchar(255) NOT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}menus` (`id`, `menu_title`, `parent`, `dropdown`, `logged_in`, `display_order`, `label`, `link`, `link_args`, `page_id`, `icon_class`) VALUES
         (1, 'main', -1, 0, 1, 0, 'Home', '', '', NULL, 'fa fa-fw fa-home'),
         (2, 'main', -1, 0, 1, 2, 'Dashboard', '', '', 4, 'fa fa-fw fa-cogs'),
@@ -211,7 +223,7 @@ $sql_commands = [
           `private` int(11) NOT NULL DEFAULT '0',
           `title_token` varchar(100) DEFAULT NULL,
           `breadcrumb_parent_page_id` int(11) DEFAULT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}pages` (`id`, `page`, `private`, `title_token`, `breadcrumb_parent_page_id`) VALUES
         (6, '{$US_PAGE_PATH}/admin_pages.php', 1, 'ADMIN_PAGES_TITLE', 14),
         (14, '{$US_PAGE_PATH}/forgot_password.php', 0, 'FORGOT_PASSWORD_TITLE', 15),
@@ -258,7 +270,7 @@ $sql_commands = [
           `id` int(11) NOT NULL,
           `user_id` int(11) NOT NULL,
           `bio` text NOT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}profiles` (`id`, `user_id`, `bio`) VALUES
         (1, 3, 'This is your bio'),
         (2, 4, 'This is your bio'),
@@ -313,7 +325,7 @@ $sql_commands = [
           `gcallback` varchar(255) NOT NULL,
           `fbcallback` varchar(255) NOT NULL,
           `allow_username_change` tinyint(1) NOT NULL DEFAULT '1'
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}settings` (`id`, `site_name`, `site_url`, `install_location`, `copyright_message`, `version`, `site_language`, `site_offline`, `debug_mode`, `query_count`, `track_guest`, `recaptcha`, `force_ssl`, `css_sample`, `css1`, `css2`, `css3`, `mail_method`, `smtp_server`, `smtp_port`, `smtp_transport`, `email_login`, `email_pass`, `from_name`, `from_email`, `email_act`, `recaptcha_private`, `recaptcha_public`, `email_verify_template`, `forgot_password_template`, `redirect_login`, `redirect_logout`, `redirect_deny_nologin`, `redirect_deny_noperm`, `redirect_referrer_login`, `session_timeout`, `allow_remember_me`, `backup_dest`, `agreement`, `glogin`, `fblogin`, `gid`, `gsecret`, `fbid`, `fbsecret`, `gcallback`, `fbcallback`, `allow_username_change`) VALUES
         (1, 'UserSpice5', 'http://localhost/UserSpice5-Dev/', '', 'US', '5.0.0a', 'english.php', 0, 1, 1, 1, 0, 0, 1, 'us_core/css/color_schemes/standard.css', 'us_core/css/blank.css', 'us_core/css/blank.css', 'smtp', '', 25, 'TLS', '', '', 'UserSpice Admin', '', 0, '', '', '&lt;p&gt;Congratulations {{fname}},&lt;/p&gt;\n&lt;p&gt;Thanks for signing up Please click the link below to verify your email address.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Once you verify your email address you will be ready to login!&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;', '&lt;p&gt;Hello {{fname}},&lt;/p&gt;\n&lt;p&gt;You are receiving this email because a request was made to reset your password. If this was not you, you may disgard this email.&lt;/p&gt;\n&lt;p&gt;If this was you, click the link below to continue with the password reset process.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;', 'profile.php', 'index.php', 'login.php', 'index.php', 1, 86400, 1, 'backup_userspice/', 'Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our privacy policy govern our relationship with you in relation to this website. If you disagree with any part of these terms and conditions, please do not use our website.\r\n\r\nThe use of this website is subject to the following terms of use:\r\n\r\nThe content of the pages of this website is for your general information and use only. It is subject to change without notice.\r\n\r\nThis website uses cookies to monitor browsing preferences. If you do allow cookies to be used, the following personal information may be stored by us for use by third parties.\r\n\r\nNeither we nor any third parties provide any warranty or guarantee as to the accuracy, timeliness, performance, completeness or suitability of the information and materials found or offered on this website for any particular purpose.\r\n\r\nYou acknowledge that such information and materials may contain inaccuracies or errors and we expressly exclude liability for any such inaccuracies or errors to the fullest extent permitted by law.\r\n\r\nYour use of any information or materials on this website is entirely at your own risk, for which we shall not be liable. It shall be your own responsibility to ensure that any products, services or information available through this website meet your specific requirements.\r\n\r\nThis website contains material which is owned by or licensed to us. This material includes, but is not limited to, the design, layout, look, appearance and graphics. Reproduction is prohibited other than in accordance with the copyright notice, which forms part of these terms and conditions.\r\nAll trade marks reproduced in this website which are not the property of, or licensed to, the operator are acknowledged on the website.\r\n\r\nUnauthorised use of this website may give rise to a claim for damages and/or be a criminal offence.\r\n\r\nFrom time to time this website may also include links to other websites. These links are provided for your convenience to provide further information. They do not signify that we endorse the website(s). We have no responsibility for the content of the linked website(s).', 0, 0, '', '', '', '', 'https://us.raysee.net/users/helpers/gcallback.php', 'https://us.raysee.net/users/helpers/fbcallback.php', 1)",
     "CREATE TABLE `{$prefix}users` (
@@ -345,7 +357,7 @@ $sql_commands = [
           `bio` longtext NOT NULL,
           `google_uid` varchar(255) NOT NULL,
           `facebook_uid` varchar(255) NOT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+      ) ENGINE=$engine DEFAULT CHARSET=$charset",
     // note that single quotes are necessary on the data below due to the dollar-signs
     "INSERT INTO `{$prefix}users` (`id`, `email`, `username`, `password`, `fname`, `lname`, `permissions`, `logins`, `account_owner`, `account_id`, `company`, `stripe_cust_id`, `billing_phone`, `billing_srt1`, `billing_srt2`, `billing_city`, `billing_state`, `billing_zip_code`, `timezone_string`, `join_date`, `last_login`, `email_verified`, `vericode`, `title`, `active`, `bio`, `google_uid`, `facebook_uid`) VALUES ".
        '(1, "userspicephp@gmail.com", "admin", "$2y$12$iE87plmPoyV1rjoZPZENLOi55frC3HrQAz70VI/ud.mzbco2wz/1S", "Admin", "User", 1, 319, 1, 0, "UserSpice", "", "", "", "", "", "", "", "America/Toronto", "2016-01-01 00:00:00", "2016-12-31 13:40:06", 1, "322418", "", 0, "&lt;p&gt;This is the admin user default bio&lt;/p&gt;", "", ""),
@@ -356,16 +368,17 @@ $sql_commands = [
           `timestamp` varchar(15) NOT NULL,
           `user_id` int(10) NOT NULL,
           `session` varchar(50) NOT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "CREATE TABLE `{$prefix}users_session` (
           `id` int(11) NOT NULL,
           `user_id` int(11) NOT NULL,
           `hash` varchar(255) NOT NULL,
           `uagent` text
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        ) ENGINE=$engine DEFAULT CHARSET=$charset",
+    #"DROP VIEW IF EXISTS `{$prefix}groups_groups`",
     #"CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `{$prefix}groups_groups`  AS  select ((`groups`.`id` * 10000) + `groups`.`id`) AS `id`,`groups`.`id` AS `parent_id`,`groups`.`id` AS `child_id` from `{$prefix}groups` `groups` union select ((`ug1`.`group_id` * 10000) + `ug1`.`user_id`) AS `id`,`ug1`.`group_id` AS `parent_id`,`ug1`.`user_id` AS `child_id` from `{$prefix}groups_users_raw` `ug1` where (`ug1`.`user_is_group` = 1) union select ((`ug1`.`group_id` * 10000) + `ug2`.`user_id`) AS `id`,`ug1`.`group_id` AS `parent_id`,`ug2`.`user_id` AS `child_id` from (`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`user_id` = `ug2`.`group_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) union select ((`ug1`.`group_id` * 10000) + `ug3`.`user_id`) AS `id`,`ug1`.`group_id` AS `group_id`,`ug3`.`user_id` AS `user_id` from ((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) union select ((`ug1`.`group_id` * 10000) + `ug4`.`user_id`) AS `id`,`ug1`.`group_id` AS `group_id`,`ug4`.`user_id` AS `user_id` from (((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `{$prefix}groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1))",
-    "DROP TABLE IF EXISTS `{$prefix}groups_users`",
-    "CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `{$prefix}groups_users`  AS  select `{$prefix}groups_users_raw`.`id` AS `id`,`{$prefix}groups_users_raw`.`user_id` AS `user_id`,`{$prefix}groups_users_raw`.`group_id` AS `group_id`,0 AS `nested` from `{$prefix}groups_users_raw` where (`{$prefix}groups_users_raw`.`user_is_group` = 0) union select (`ug1`.`user_id` + (`ug2`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug2`.`group_id` AS `group_id`,1 AS `nested` from (`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug3`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug3`.`group_id` AS `group_id`,1 AS `nested` from ((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug4`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug4`.`group_id` AS `group_id`,1 AS `nested` from (((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `{$prefix}groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug5`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug5`.`group_id` AS `group_id`,1 AS `nested` from ((((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `{$prefix}groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) join `{$prefix}groups_users_raw` `ug5` on((`ug4`.`group_id` = `ug5`.`user_id`))) where ((`ug5`.`user_is_group` = 1) and (`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) ",
+    "DROP VIEW IF EXISTS `{$prefix}groups_users`",
+    "CREATE VIEW `{$prefix}groups_users`  AS  select `{$prefix}groups_users_raw`.`id` AS `id`,`{$prefix}groups_users_raw`.`user_id` AS `user_id`,`{$prefix}groups_users_raw`.`group_id` AS `group_id`,0 AS `nested` from `{$prefix}groups_users_raw` where (`{$prefix}groups_users_raw`.`user_is_group` = 0) union select (`ug1`.`user_id` + (`ug2`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug2`.`group_id` AS `group_id`,1 AS `nested` from (`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug3`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug3`.`group_id` AS `group_id`,1 AS `nested` from ((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug4`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug4`.`group_id` AS `group_id`,1 AS `nested` from (((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `{$prefix}groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug5`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug5`.`group_id` AS `group_id`,1 AS `nested` from ((((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `{$prefix}groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) join `{$prefix}groups_users_raw` `ug5` on((`ug4`.`group_id` = `ug5`.`user_id`))) where ((`ug5`.`user_is_group` = 1) and (`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) ",
     "ALTER TABLE `{$prefix}field_defs`
           ADD PRIMARY KEY (`id`),
           ADD UNIQUE KEY `name` (`name`)",
@@ -440,18 +453,67 @@ $sql_commands = [
           MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3",
 ];
 
+# If you update this, please be sure to update $us_tables initialization in
+# users/us_core/includes/init.php as well.
+$us_tables=['field_defs', 'groups', 'groups_menus', 'groups_pages', 'groups_roles_users',
+    'groups_users', 'groups_users_raw', 'grouptypes', 'menus', 'pages', 'profiles',
+    'settings', 'users', 'users_online', 'users_session', ];
+
 $db = DB::getInstance();
-$errcount=0;
-foreach ($sql_commands as $sql) {
-    $db->query($sql);
-    if ($e = $db->error()) {
-        var_dump($e);
-        echo "SQL PROBLEM: $sql<br />\n";
-        $errcount++;
+$existing_tables = [];
+foreach ($us_tables as $t) {
+    $sql = "SELECT * FROM {$prefix}$t WHERE 1=2";
+    if (!$db->query($sql)->error()) {
+        $existing_tables[] = $t;
     }
 }
-if ($errcount) {
-    echo "Completed with $errcount errors. Installation was NOT successful.<br />\n";
+if (@$_POST['save']) {
+    if ($existing_tables) {
+        foreach ($existing_tables as $t) {
+            $sql = "DROP TABLE {$prefix}$t";
+            $db->query($sql);
+        }
+    }
+    $errcount=0;
+    foreach ($init_commands as $sql) {
+        $db->query($sql);
+        if ($e = $db->error()) {
+            var_dump($e);
+            echo "SQL PROBLEM: $sql<br />\n";
+            $errcount++;
+        }
+    }
+    if ($errcount) {
+        echo "Completed with $errcount errors. Installation was NOT successful.<br />\n";
+    } else {
+        echo "Database initialized successfully. Theoretically you are good to go!";
+    }
 } else {
-    echo "Database initialized successfully. Theoretically you are good to go!";
+    if ($existing_tables) {
+        $continue_msg = "<h2>These tables already exist in the database:</h2><ul>\n";
+        foreach ($existing_tables as $t) {
+            $continue_msg .= "<li>$t";
+            if ($prefix) {
+                $continue_msg .= " ({$prefix}$t with prefix)";
+            }
+            $continue_msg .= "</li>\n";
+        }
+        $continue_msg .= "</ul>\n";
+        $button_label = 'DELETE and Install';
+        $continue_msg .= "<h2>Press '$button_label' to delete (drop) these tables and all data in them and initialize the database from scratch. ALL EXISTING DATA WILL BE LOST. There is no undo on this action!</h2>\n";
+    } else {
+        $button_label = 'Continue';
+        $continue_msg = "<h2>Everything looks good. No tables will be overwritten in the database. Press '$button_label' to initialize the database.</h2>\n";
+    }
+?>
+    <html><head></head>
+    <body>
+        <?= $continue_msg ?>
+        <br />
+        <form method="post">
+            <input type="submit" name="save" value="<?= $button_label ?>" />
+        </form>
+    </body>
+    </html>
+<?php
 }
