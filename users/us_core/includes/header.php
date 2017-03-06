@@ -36,7 +36,7 @@ by the UserSpice Team at http://UserSpice.com
 require_once pathFinder('includes/navigation.php');
 
 /*
- * display breadcrumbs, if any
+ * calculate & display breadcrumbs, if any
  */
 global $T;
 $db = DB::getInstance();
@@ -45,35 +45,40 @@ if (isset($form_uri)) {
 } else {
     $uri = $_SERVER['PHP_SELF'];
 }
+$bc = [];
 $sql = "SELECT title_token, breadcrumb_parent_page_id, page
         FROM $T[pages]
         WHERE page = ?";
 $result = $db->query($sql, [$uri])->first();
-$parent_id = $result->breadcrumb_parent_page_id;
-$sql = "SELECT title_token, breadcrumb_parent_page_id, page
-        FROM $T[pages]
-        WHERE id = ?";
-$bc = [];
-do {
-    $bc[] = [
-        'title' => lang($result->title_token),
-        'page' => $result->page
-    ];
-    $result = $db->query($sql, [$parent_id])->first();
-    if ($result) {
-        $parent_id = $result->breadcrumb_parent_page_id;
-    } else {
-        $parent_id = null;
-    }
-} while ($parent_id);
 if ($result) {
-    $bc[] = [
-        'title' => lang($result->title_token),
-        'page' => $result->page
-    ];
+    $parent_id = $result->breadcrumb_parent_page_id;
+    $sql = "SELECT title_token, breadcrumb_parent_page_id, page
+            FROM $T[pages]
+            WHERE id = ?";
+    do {
+        $bc[] = [
+            'title' => lang($result->title_token),
+            'page' => $result->page
+        ];
+        $result = $db->query($sql, [$parent_id])->first();
+        if ($result) {
+            $parent_id = $result->breadcrumb_parent_page_id;
+        } else {
+            $parent_id = null;
+        }
+    } while ($parent_id);
+    if ($result) {
+        $bc[] = [
+            'title' => lang($result->title_token),
+            'page' => $result->page
+        ];
+    }
+} else {
+    $parent_id = null;
 }
 //var_dump($bc);
 $out = '';
+$k = false;
 foreach ($bc as $k=>$x) {
     if ($k) {
         $out = "<a href=\"$x[page]\">$x[title]</a>&nbsp;>>&nbsp;" . $out;
