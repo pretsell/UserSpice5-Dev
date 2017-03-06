@@ -42,7 +42,7 @@ abstract class US_FormField extends Element {
         $_sqlWhere='', //  WHERE <this part here>
         $_sqlGroup='', //  <any GROUP BY or HAVING or etc>
         $_sqlOrder='', //  ORDER BY <this part here>
-        $_sqlBindVals='',//bind values matching ? or :var in sqlWhere
+        $_sqlBindVals=[],//bind values matching ? or :var in sqlWhere
         $_pageItems=0, // paginates if non-zero and isRepeating() (i.e., this is the flag to turn on paginating)
         $_curPage=0,   // current page
         $_pageVarName='page',
@@ -130,15 +130,9 @@ abstract class US_FormField extends Element {
                 break;
             case 'new_valid':
             case 'new_validate':
-                if (!isset($val['display']) && ($d = $this->getFieldLabel())) {
-                    $val['display'] = $d;
-                }
-                $args = [$this->_dbFieldName => $val];
-                $val = new Validate($args);
-                # NOTE: No break - falling through to 'valid' with $val set
             case 'valid':
             case 'validate':
-                # NOTE: We could be falling through from above with no break
+            case 'validate_object':
                 $this->setValidator($val);
                 return true;
                 break;
@@ -213,10 +207,10 @@ abstract class US_FormField extends Element {
         $this->MACRO_Label_Text = $this->getFieldLabel();
         $this->MACRO_Value = $this->getFieldValue();
         $this->MACRO_Required_Attrib = ($this->getRequired() ? 'required' : '');
-        $this->MACRO_Hint_Class = $this->getHintClass();
         if (!$this->MACRO_Hint_Text && $this->hasValidation()) {
             $this->MACRO_Hint_Text = $this->getValidator()->describe($this->_fieldName);
         }
+        $this->MACRO_Hint_Class = $this->getHintClass();
         return parent::getMacros($s, $opts);
     }
 
@@ -296,11 +290,30 @@ abstract class US_FormField extends Element {
     public function getHintClass() {
         if ($this->getRequired()) {
             return $this->MACRO_Hint_Class_Required;
-        } else {
+        } elseif ($this->MACRO_Hint_Text) {
             return $this->MACRO_Hint_Class_Not_Required;
+        } else {
+            return '';
         }
     }
 
+    // For easy coding forms the key to the __construct hash on the field
+    // list (1st arg) can provide both the field name and the display labels
+    public function setDefaults($k) {
+        if (!$this->getFieldName()) {
+            $this->setFieldName($k);
+        }
+        if (!$this->getDBFieldName()) {
+            $this->setDBFieldName($k);
+        }
+        $prettyText = ucwords(str_replace('_', ' ', $k));
+        if (!$this->getFieldLabel()) {
+            $this->setFieldLabel($prettyText);
+        }
+        if (!$this->getMacro('Label_Text')) {
+            $this->setMacro('Label_Text', $prettyText);
+        }
+    }
     public function isChanged() {
         return ($this->_fieldNewValue != $this->_fieldValue);
     }
@@ -464,12 +477,27 @@ abstract class US_FormField extends Element {
     public function setValidator($v) {
         $this->_validateObject = $v;
     }
+    // if construct used array rather than object then convert to
+    // object. Intentionally late conversion because we need the
+    // (possibly late defaulted) values for display and field name
+    public function fixValidator() {
+        $v = $this->_validateObject;
+        if (!isset($v['display']) && ($d = $this->getFieldLabel())) {
+            $v['display'] = $d;
+        }
+        $args = [$this->getDBFieldName() => $v];
+        $this->_validateObject = new Validate($args);
+    }
     public function hasValidation() {
         return (boolean)$this->_validateObject;
     }
     public function getValidator($createIfNeeded=true) {
         if ($createIfNeeded && !$this->_validateObject) {
             $this->setValidator(new Validate());
+        } else {
+            if (is_array($this->_validateObject)) {
+                $this->fixValidator(); // fix (late) if needed
+            }
         }
         return $this->_validateObject;
     }
