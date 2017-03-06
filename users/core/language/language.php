@@ -28,12 +28,12 @@ if ($curLang != 'english.php') {
     # these values will be over-ridden by the language settings below, but since
     # english is likely to be the most complete language file we will start with
     # this as a base.
-    require_once US_ROOT_DIR."us_core/language/english.php";
+    require_once US_ROOT_DIR."core/language/english.php";
     if (file_exists($locallang = US_ROOT_DIR."local/language/english.php")) {
         require_once $locallang;
     }
 }
-require_once US_ROOT_DIR."us_core/language/$curLang";
+require_once US_ROOT_DIR."core/language/$curLang";
 if (file_exists($locallang = US_ROOT_DIR."local/language/$curLang")) {
     require_once $locallang;
 }

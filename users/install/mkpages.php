@@ -17,12 +17,12 @@ if (@$_POST['save']) {
         }
     }
     #
-    # Now create the page stubs for each form in US_ROOT_DIR/us_core/forms/
+    # Now create the page stubs for each form in US_ROOT_DIR/core/forms/
     #
     if (!$errors) {
-        echo "Checking for files in '".US_ROOT_DIR."/us_core/forms/*.php'<br />\n";
+        echo "Checking for files in '".US_ROOT_DIR."/core/forms/*.php'<br />\n";
         $rootDir = US_ROOT_DIR; // easier to use in heredocs than the constant
-        $us_pages = glob(US_ROOT_DIR.'/us_core/forms/*.php');
+        $us_pages = glob(US_ROOT_DIR.'/core/forms/*.php');
         foreach ($us_pages as $p) {
             #echo "Creating $p...<br />\n";
             $p = basename($p);
@@ -31,7 +31,7 @@ if (@$_POST['save']) {
 \$formName = '$p';
 #\$enableMasterHeaders = \$enableMasterFooters = true;
 require_once '{$rootDir}z_us_root.php';
-require_once US_ROOT_DIR.'us_core/master_form.php';
+require_once US_ROOT_DIR.'core/master_form.php';
 EOF;
             if (file_put_contents(US_DOC_ROOT.$pagePath.$p, $contents) === false) {
                 #echo "ERROR creating $p<br />\n";

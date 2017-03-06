@@ -43,7 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * of a child group are considered to be members of the parent group.
  *
  * For a description of the difference between "normal groups" and "role groups"
- * please see the comments at the top of us_core/forms/admin_role.php
+ * please see the comments at the top of core/forms/admin_role.php
  *
  * This script (that you are viewing) is included by users/forms/master_form.php.
  * All securePage() calls and other includes are executed prior to this script being

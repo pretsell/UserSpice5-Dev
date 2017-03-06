@@ -23,7 +23,7 @@ checkToken();
 
 # Calculate lists of CSS files for various selection fields
 $tmp = str_replace(US_ROOT_DIR, '', array_merge(
-    glob(US_ROOT_DIR.'us_core/css/color_schemes/*.css'),
+    glob(US_ROOT_DIR.'core/css/color_schemes/*.css'),
     glob(US_ROOT_DIR.'local/css/color_schemes/*.css')
 ));
 $css1 = [];
@@ -31,7 +31,7 @@ foreach ($tmp as $x) {
     $css1[] = ['id'=>$x, 'name'=>$x];
 }
 $tmp = str_replace(US_ROOT_DIR, '', array_merge(
-    glob(US_ROOT_DIR.'us_core/css/*.css'),
+    glob(US_ROOT_DIR.'core/css/*.css'),
     glob(US_ROOT_DIR.'local/css/*.css')
 ));
 $css2 = [];
@@ -39,7 +39,7 @@ foreach ($tmp as $x) {
     $css2[] = ['id'=>$x, 'name'=>$x];
 }
 $tmp = str_replace(US_ROOT_DIR, '', array_merge(
-    glob(US_ROOT_DIR.'us_core/css/*.css'),
+    glob(US_ROOT_DIR.'core/css/*.css'),
     glob(US_ROOT_DIR.'local/css/*.css')
 ));
 $css3 = [];
@@ -49,7 +49,7 @@ foreach ($tmp as $x) {
 
 # Now look up the files in the language dir to allow that choice
 $tmp = array_merge(
-    glob(US_ROOT_DIR.'us_core/language/*.php'),
+    glob(US_ROOT_DIR.'core/language/*.php'),
     glob(US_ROOT_DIR.'local/language/*.php')
 );
 $langs = [];

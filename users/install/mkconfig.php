@@ -1,5 +1,5 @@
 <?php
-#include_once("../users/us_core/include/init.php");
+#include_once("../users/core/include/init.php");
 
 /*
  * This form facilitates creating US_ROOT_DIR/local/config.php during UserSpice installation
@@ -30,10 +30,10 @@ $cfg = new Config(
             'token_name' => 'token',
         ),
         #'site_language' => 'english',
-        #'us_script_path' => array('local/', 'us_core/'),
+        #'us_script_path' => array('local/', 'core/'),
         'forms_path' => [
                          US_ROOT_DIR.'local/forms/',
-                         US_ROOT_DIR.'us_core/forms/'],
+                         US_ROOT_DIR.'core/forms/'],
         #'us_page_path' = US_ROOT_DIR,
         // page_paths should start from DOCUMENT_ROOT, starting with /
         'page_paths' => [US_URL_ROOT],
@@ -87,7 +87,7 @@ if ($alt_form_path) {
 }
 $forms_path = "$tmp_form_path
                          US_ROOT_DIR.'local/forms/',
-                         US_ROOT_DIR.'us_core/forms/',
+                         US_ROOT_DIR.'core/forms/',
                          # uncomment the line below to enable tutorial forms
                          #US_ROOT_DIR.'tutorial/forms/', ";
 $cfgContents = <<<EOF
@@ -125,7 +125,7 @@ $cfgContents = <<<EOF
             'token_name' => '$tokenName',
         ),
         #'site_language' => 'english',
-        #'us_script_path' => array('local/', 'us_core/'),
+        #'us_script_path' => array('local/', 'core/'),
         'alt_form_path' => '$alt_form_path',
         'forms_path' => [$forms_path],
         #'us_page_path' = US_ROOT_DIR,

@@ -26,14 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * docroot/
  *   +-----users/ (this is configurable - whatever you want to call it - see US_ROOT_DIR)
- *   |       +---us_core/
+ *   |       +---core/
  *   |       |     +-------forms/
  *   |       |     |         +---form1.php
  *   |       |     |         +---form2.php (ignored because form2.php exists in local/forms)
  *   |       |     |         +---form3.php
  *   |       |     +-------master_form.php - THIS SCRIPT
  *   |       |               (includes several includes and then $formName from
- *   |       |               users/local/ or users/us_core/)
+ *   |       |               users/local/ or users/core/)
  *   |       +---local/
  *   |       |     +-------forms/
  *   |       |               +---form2.php (customized form)
@@ -63,7 +63,7 @@ if (file_exists(US_ROOT_DIR.'local/forms/master_form.php')) {
 if (file_exists(US_ROOT_DIR.'local/includes/init.php')) {
     include_once(US_ROOT_DIR.'local/includes/init.php');
 } else {
-    include_once(US_ROOT_DIR.'us_core/includes/init.php');
+    include_once(US_ROOT_DIR.'core/includes/init.php');
 }
 
 # Make sure $formName is set
@@ -97,7 +97,7 @@ if (isset($enableMasterHeaders) && $enableMasterHeaders) {
 # supplied here in master_form.php) and include it
 #
 # If it is a UserSpice form the simplified form will be found
-# under forms/ - either us_core/forms/ or local/forms/ - but
+# under forms/ - either core/forms/ or local/forms/ - but
 # 3rd party developers will typically just specify a directory
 # during installation that doesn't have the forms/ sub-directory.
 # Thus we search first for simple $formname and then for the
@@ -108,7 +108,7 @@ if (isset($enableMasterHeaders) && $enableMasterHeaders) {
 # in configGet('forms_path') for $formName
 #
 if ($formPath = pathFinder($formName, '', 'forms_path',
-        [US_ROOT_DIR.'local/forms/', US_ROOT_DIR.'us_core/forms/'])) {
+        [US_ROOT_DIR.'local/forms/', US_ROOT_DIR.'core/forms/'])) {
     $successes = $errors = []; # some convenient initializations
     require_once $formPath;
 } else {

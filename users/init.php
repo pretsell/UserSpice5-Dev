@@ -1,2 +1,2 @@
 <?php
-include_once('us_core/includes/init.php');
+include_once('core/includes/init.php');

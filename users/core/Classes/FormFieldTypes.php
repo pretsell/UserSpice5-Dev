@@ -2,11 +2,11 @@
 /*
  * See the detailed description of the inheritance structure related to
  * the class "FormField" which is provided in the header comment in
- * us_core/Classes/FormField.php.
+ * core/Classes/FormField.php.
  *
  * In short,
- *    - do not change this file (it is under us_core/ - don't ever change
- *      anything under us_core/)
+ *    - do not change this file (it is under core/ - don't ever change
+ *      anything under core/)
  *    - do not instantiate from these classes (they are abstract)
  *    - the classes you are looking for are in local/Classes/FormField.php
  *      (they are named like these but without the "US_" prefix)

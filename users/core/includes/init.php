@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
- * us_core/includes/init.php
+ * core/includes/init.php
  *
  * Provides the initialization needed for all UserSpice forms and pages.
  *
@@ -68,10 +68,10 @@ ini_set("display_errors",1);
 /*
 Get the values from local/config.php and make it available via the class
 "Config" in Classes/Config.php (as defined (class "US_Config") in
-us_core/Classes/Config.php and then implemented (class "Config") in
+core/Classes/Config.php and then implemented (class "Config") in
 local/Classes/Config.php).
 */
-include_once US_ROOT_DIR.'us_core/Classes/Config.php';
+include_once US_ROOT_DIR.'core/Classes/Config.php';
 include_once US_ROOT_DIR.'local/Classes/Config.php';
 include_once US_ROOT_DIR.'local/config.php';
 
@@ -93,15 +93,15 @@ function us_classloader($class_name) {
             break;
         }
     }
-    include_once US_ROOT_DIR.'us_core/classes/'.$class_name . '.php';
+    include_once US_ROOT_DIR.'core/classes/'.$class_name . '.php';
     include_once US_ROOT_DIR.'local/classes/'.$class_name . '.php';
 }
 
 /*
 Autoload Facebook and Google APIs/SDKs
 */
-require_once US_ROOT_DIR.'us_core/social_src/Google/autoload.php';
-require_once US_ROOT_DIR.'us_core/social_src/Facebook/autoload.php';
+require_once US_ROOT_DIR.'core/social_src/Google/autoload.php';
+require_once US_ROOT_DIR.'core/social_src/Facebook/autoload.php';
 
 /*
 session_start() is placed after the autoloading so that class definitions
@@ -128,14 +128,14 @@ foreach ($us_tables as $t) {
 }
 
 # Include other class definitions as late loaders
-require_once US_ROOT_DIR.'us_core/classes/phpmailer/PHPMailerAutoload.php';
+require_once US_ROOT_DIR.'core/classes/phpmailer/PHPMailerAutoload.php';
 
 # Bring in the rest of the helpers, checking for localized versions where appropriate
-require_once US_ROOT_DIR.'us_core/helpers/helpers.php';
+require_once US_ROOT_DIR.'core/helpers/helpers.php';
 if (file_exists($localhelp = US_ROOT_DIR.'local/helpers/helpers.php')) {
     require_once $localhelp; // site's custom functions
 }
-require_once US_ROOT_DIR.'us_core/helpers/us_helpers.php';
+require_once US_ROOT_DIR.'core/helpers/us_helpers.php';
 # Now that we have access to pathFinder() (defined in us_helpers.php) we can
 # use it for all future include/require statements to ensure we are getting
 # the localized version if it exists.

@@ -1,5 +1,5 @@
 <?php
-#include_once("../users/us_core/include/init.php");
+#include_once("../users/core/include/init.php");
 
 /*
  * This form facilitates creating US_ROOT_DIR/z_us_root.php during UserSpice installation

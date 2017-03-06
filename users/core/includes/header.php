@@ -27,7 +27,7 @@ by the UserSpice Team at http://UserSpice.com
 	<link href="<?= US_URL_ROOT.configGet('css3') ?>" rel="stylesheet">
 
 	<!-- Custom Fonts -->
-	<link href="<?= US_URL_ROOT."us_core/fonts/css/font-awesome.min.css" ?>" rel="stylesheet" type="text/css">
+	<link href="<?= US_URL_ROOT."core/fonts/css/font-awesome.min.css" ?>" rel="stylesheet" type="text/css">
 </head>
 
 <body>

@@ -1,19 +1,19 @@
 <?php
 /*
  * Class inheritance related to Form Fields:
- * The rule with UserSpice is "Do NOT modify files under us_core/ - make the
+ * The rule with UserSpice is "Do NOT modify files under core/ - make the
  * change under local/ instead." For these Form Fields the way to do that is to
  * use the classes defined in local/Classes/FormFieldTypes.php and to make
  * modifications only to that file and local/Classes/FormField.php.
  *
- * us_core/Classes/FormField.php (this) defines class "US_FormField" which is
+ * core/Classes/FormField.php (this) defines class "US_FormField" which is
  * just the parent class. This class is abstract. Do not modify this file.
  *
  * local/Classes/FormField.php in turn defines class "FormField" which inherits
  * from class "US_FormField". Feel free to make changes to
  * local/Classes/FormField.php.
  *
- * us_core/Classes/FormFieldTypes.php in turn defines several classes such as
+ * core/Classes/FormFieldTypes.php in turn defines several classes such as
  * "US_FormField_Text", "US_FormField_Button", "US_FormField_Hidden", etc. which
  * inherit from class "FormField". Do not modify this file.
  *

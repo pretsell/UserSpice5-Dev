@@ -29,7 +29,7 @@ $prep=prepareMenuTree($main_nav);
 if (file_exists(US_ROOT_DIR.'local/images/logo.png')) {
     $logo = US_URL_ROOT."/local/images/logo.png";
 } else {
-    $logo = US_URL_ROOT."/us_core/images/logo.png";
+    $logo = US_URL_ROOT."/core/images/logo.png";
 }
 ?>
 

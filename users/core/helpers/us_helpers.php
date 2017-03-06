@@ -454,7 +454,7 @@ function pathFinder($file, $root=null, $configPathToken=null, $defaultPath=null)
     }
     if (empty($paths)) {
         if (empty($defaultPath)) {
-            $paths = configGet('US_SCRIPT_PATH', ['local/', 'us_core/']);
+            $paths = configGet('us_script_path', ['local/', 'core/']);
         } else {
             $paths = $defaultPath;
         }
