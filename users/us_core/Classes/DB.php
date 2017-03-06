@@ -53,6 +53,7 @@ class US_DB {
 		$this->_error = false;
 		if ($this->_query = $this->_pdo->prepare($sql)) {
 			$x = 1;
+            #var_dump($params);
 			if (count($params)) {
 				foreach ($params as $param) {
 					$this->_query->bindValue($x++, $param);
@@ -90,7 +91,7 @@ class US_DB {
 		return $this->queryAll($table, ['id', '=', $id]);
     }
 	public function findById($table, $id) {
-		if ($this->queryById($table, $id)->error()) {
+		if (!$this->queryById($table, $id)->error()) {
             return $this;
         }
 		return false;
@@ -100,15 +101,15 @@ class US_DB {
         return $this->findAll($table, $where, $orderBy);
 	}
 
-	public function delete($table, $where) {
-		if ($this->action('DELETE', $table, $where)->error()) {
+	public function delete($table, $where, $bindvals=[]) {
+		if ($this->action('DELETE', $table, $where, null, $bindvals)->error()) {
 			return $this;
         }
 		return false;
 	}
 
 	public function deleteById($table, $id) {
-		return $this->delete($table, array('id', '=', $id));
+		return $this->delete($table, 'id = ?', [$id]);
 	}
 
 	public function action($action, $table, $where=array(), $orderBy=null, $bindvals=[]) {
