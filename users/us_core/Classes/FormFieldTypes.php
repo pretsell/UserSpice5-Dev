@@ -32,7 +32,7 @@ abstract class US_FormField_ButtonAnchor extends FormField_Button {
             ',
         $MACRO_Link = '';
     public function handle1Opt($name, $val) {
-        if (in_array(strtolower($name), ['href', 'link'])) {
+        if (in_array(strtolower($name), ['href', 'link', 'dest'])) {
             $this->MACRO_Link = $val;
             return true;
         }
@@ -265,12 +265,16 @@ abstract class US_FormField_Table extends FormField {
         $HTML_Pre = '
             <div class="{DIV_CLASS}"> <!-- Table (name={FIELD_NAME}) -->
             <table class="table {TABLE_CLASS}">
+            <thead>
             <tr class="{TH_ROW_CLASS}">{TABLE_HEAD_CELLS}</tr>
+            </thead>
+            <tbody>
             ',
         $HTML_Input = '
             <tr class="{TD_ROW_CLASS}">{TABLE_DATA_CELLS}</tr>
             ',
         $HTML_Post = '
+            </tbody>
             </table>
             {PAGE_INDEX}
             </div> <!-- {DIV_CLASS} Table (name={FIELD_NAME}) -->
