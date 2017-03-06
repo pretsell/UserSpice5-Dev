@@ -42,6 +42,10 @@ $lang = array_merge($lang, array(
   'ENABLED'                              => 'Enabled',
   'DISABLED'                             => 'Disabled',
   'CURRENTLY_UNUSED'                     => 'Currently Unused. May be removed at some point.',
+  'RECORD_UPDATE_SUCCESS'                => 'Record Updated.',
+  'RECORD_UPDATE_FAILED'                 => 'Failed to update record.',
+  'RECORD_INSERT_SUCCESS'                => 'Record added.',
+  'RECORD_INSERT_FAILED'                 => 'Failed to add record.',
   //Login/Logout/Join
   'CHOOSE_USERNAME'                      => 'Choose a Username',
   'CHOOSE_USERNAME_REQUIREMENTS'         => 'No Spaces or Special Characters',
@@ -66,6 +70,10 @@ $lang = array_merge($lang, array(
   'WELCOME'                              => 'Welcome to %m1%!',
   'THANKS'                               => 'Thanks for registering!',
   'THANKS_VERIFY'                        => 'Thanks for registering! Please check your email to verify your account.',
+
+  //User
+  'ADMIN_USER_TITLE'                     => 'Manage User',
+  'CREATE_USER'                          => 'Create a New User',
 
   //Account
   'ACCOUNT_SPECIFY_USERNAME'             => 'Please enter your username',
@@ -272,6 +280,7 @@ $lang = array_merge($lang, array(
   'GROUPTYPE_DELETE'                     => 'Delete this Group Type',
 
   // Settings
+  'ADMIN_SETTINGS_TITLE'                 => 'Settings',
   'SETTINGS_SECURITY_TITLE'              => 'Security',
   'SETTINGS_FORCE_SSL'                   => 'Force SSL (experimental)',
   'SETTINGS_RECAPTCHA'                   => 'Recaptcha',
@@ -364,15 +373,26 @@ $lang = array_merge($lang, array(
   'PAGE_UPDATE_SUCCESSFUL'               => 'Successfully updated Page',
   'PAGE_SAVE'                            => 'Save Changes to Page',
   'PAGE_SAVE_AND_RETURN'                 => 'Save Changes and Return to Page List',
+  // users
+  'ADMIN_USERS_TITLE'                    => 'Manage Users',
+  'NO_USERS_DEFINED'                     => 'No Users Defined',
+  'DELETE_SELECTED_USERS'                => 'Delete Selected Users',
   // other page titles
   'FORGOT_PASSWORD_TITLE'                => 'Forgot Password',
   'PASSWORD_RESET_TITLE'                 => 'Password Reset',
   'ADMIN_TITLE'                          => 'UserSpice Administration Hub',
+  'JOIN_DATE'                            => 'Join Data',
+  'LAST_SIGN_IN'                         => 'Last Sign-In',
+  'LOGINS'                               => 'Logins',
 
   // Validation (.../Classes/Validate.php)
   'VALID_REQUIRED'                       => 'Required',
   'VALID_ERR_REQUIRED'                   => '%m1% is required',
   'VALID_OPTIONAL'                       => 'Optional',
+  'VALID_MIN_VAL'                        => 'Minimum value of %m1%',
+  'VALID_ERR_MIN_VAL'                    => '%m1% must be a minimum of %m2%.',
+  'VALID_MAX_VAL'                        => 'Maximum value of %m1%',
+  'VALID_ERR_MAX_VAL'                    => '%m1% must be a maximum of %m2%.',
   'VALID_MIN_CHARS'                      => 'Minimum %m1% characters',
   'VALID_ERR_MIN_CHARS'                  => '%m1% must be a minimum of %m2% characters.',
   'VALID_MAX_CHARS'                      => 'Maximum %m1% characters',
