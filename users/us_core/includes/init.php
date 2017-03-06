@@ -82,9 +82,10 @@ using PHP autoloader conflicts with Google and Facebook autoloader
 spl_autoload_register('us_classloader');
 function us_classloader($class_name) {
     $classMap = [
-        'FormField_' => 'FormFieldTypes', #FormField_Text, #FormField_Select, etc.
+        'FormField_' => 'FormFieldTypes', #FormField_Text, FormField_Select, etc.
         'FormTab_'   => 'FormTab', #FormTab_Pane, FormTab_Contents
         'Form_'   => 'FormTab', #Form_Row, Form_Col
+        'StateResponse_' => 'StateResponse', #StateResponse_Login, StateResponse_DenyNoPerm, etc.
     ];
     foreach ($classMap as $k=>$c) {
         if (strncmp($k, $class_name, strlen($k)) === 0) {
@@ -112,9 +113,11 @@ session_start();
 require_once US_ROOT_DIR.'local/config.php';
 
 /*
-$us_tables = the tables that makeup userspice
-*/
-$us_tables=['field_defs', 'groups', 'groups_menus', 'groups_pages', 'groups_roles_users',
+ * $us_tables = the tables that makeup userspice
+ * (if you update this, be sure to update $us_tables in install/initdb.php and
+ * the corresponding $init_commands there.)
+ */
+$us_tables=['audit', 'field_defs', 'groups', 'groups_menus', 'groups_pages', 'groups_roles_users',
     'groups_users', 'groups_users_raw', 'grouptypes', 'menus', 'pages', 'profiles',
     'settings', 'users', 'users_online', 'users_session', ];
 
