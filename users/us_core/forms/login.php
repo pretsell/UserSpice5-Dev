@@ -78,18 +78,8 @@ if (Input::exists()) {
 		$user = new User();
 		$login = $user->loginEmail(Input::get('username'), trim(Input::get('password')), $remember);
 		if ($login) {
-            # If the user tried to go to a given page (other than login.php) and redirect_referrer_login
-            # is turned on, then now that we are logged in go to that page.
-			if (@$_SESSION['securePageRequest'] && basename($_SESSION['securePageRequest']) != 'login.php' && configGet('redirect_referrer_login')) {
-				//bold('HERE');
-				$securePageRequest=$_SESSION['securePageRequest'];
-				unset($_SESSION['securePageRequest']);
-				Redirect::to($securePageRequest);
-			} else {
-                # Modify the post-login redirect destination by modifying redirect_login in the
-                # `settings` database table
-				Redirect::to(US_URL_ROOT.configGet('redirect_login'));
-			}
+            $state = new StateResponse_Login();
+            $state->respond();
 		} else {
 			$errors[]= lang('LOGIN_FAILED');
 		}

@@ -93,6 +93,7 @@ $myForm = new Form([
 ], [
     'title' => lang('ADMIN_GROUPTYPE_TITLE'),
     'table' => 'grouptypes',
+    'Keep_AdminDashBoard' => true,
 ]);
 
 # Fill in the ToC dynamically to ensure we have the appropriate labels

@@ -125,6 +125,7 @@ $myForm = new Form ([
     ])
 ], [
     'title' => lang('ADMIN_PAGES_TITLE'),
+    'Keep_AdminDashBoard' => true,
 ]);
 
 $myForm->checkDeleteIfEmpty();

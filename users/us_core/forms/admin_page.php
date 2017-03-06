@@ -82,6 +82,7 @@ $myForm = new Form ([
 ], [
     'title' => lang('ADMIN_PAGE_TITLE'),
     'dbtable' => 'pages',
+    'Keep_AdminDashBoard' => true,
 ]);
 
 $pageDetails = fetchPageDetails($pageId); //Fetch information specific to page

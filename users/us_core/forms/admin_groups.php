@@ -63,7 +63,7 @@ $myForm = new Form ([
             'debug' => 5,
             'Form_Name' => 'deleteGroupForm',
         ]),
-        'save' => new FormField_ButtonSubmit ([
+        'save' => new FormField_ButtonDelete ([
             'display' => lang('DELETE_SELECTED_'.$mode.'S'),
         ]),
         'create' => new FormField_ButtonAnchor ([
@@ -75,6 +75,7 @@ $myForm = new Form ([
     'title' => lang('ADMIN_'.$mode.'S_TITLE'), // ADMIN_GROUPS_TITLE or ADMIN_ROLES_TITLE
     'exclude_elements' => ['openForm', 'closeForm'],
     'dbtable' => 'groups',
+    'Keep_AdminDashBoard' => true,
 ]);
 
 //Forms posted

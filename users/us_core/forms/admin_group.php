@@ -359,6 +359,7 @@ $myForm = new Form([
                     // ADMIN_GROUP_TITLE -or- ADMIN_ROLE_TITLE
                     lang('ADMIN_'.$mode.'_TITLE', $groupDetails->name)),
     'form_action' => $currentPage.'?id='.$group_id,
+    'Keep_AdminDashBoard' => true,
     #'debug' => 5,
 ]);
 $myForm->getField('toc')->setRepData(

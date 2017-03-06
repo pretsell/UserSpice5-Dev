@@ -85,6 +85,7 @@ $myForm = new Form([
         ]),
 ], [
     'title' => lang('ADMIN_GROUPTYPES_TITLE'),
+    'Keep_AdminDashBoard' => true,
 ]);
 
 #
