@@ -40,9 +40,11 @@ class US_Validate{
 			$query = $this->_db->query("SELECT * FROM $T[field_defs] WHERE name = ?", [$rulename]);
 			$results = $query->first();
 			foreach (['display_lang', 'display', 'alias', 'required', 'max', 'min',
+                                'min_val', 'max_val',
 								'unique'=>'unique_in_table', 'matches'=>'match_field',
 								'update_id', 'is_numeric', 'valid_email', 'regex',
 								'regex_display'] as $k => $rn) {
+                #dbg("k=$k, rn=$rn");
 				if (is_numeric($k)) $k = $rn;
 #var_dump($results);
 #echo "rn=$rn<br />\n";
@@ -54,7 +56,7 @@ class US_Validate{
                     $k = 'display';
                 }
 				if (isset($rule[$k])) {
-					if ($rule[$k] != 'unset') { // special value to avoid getting DB validation rule
+					if ($rule[$k] !== 'unset') { // special value to avoid getting DB validation rule
 						$newrule[$k] = $rule[$k];
                     }
 				} elseif (isset($results->$rn)) {
@@ -82,6 +84,12 @@ class US_Validate{
 				foreach ((array)$ruleList[$f] as $k => $r) {
 					#dbg( "DEBUG: k=$k<br />\n");
 					switch ($k) {
+						case 'min_val':
+							$rtn[] = lang('VALID_MIN_VAL', $r).' ';
+							break;
+						case 'max_val':
+							$rtn[] = lang('VALID_MAX_VAL', $r).' ';
+                            break;
 						case 'min':
 							$rtn[] = lang('VALID_MIN_CHARS', $r).' ';
 							break;
@@ -109,8 +117,6 @@ class US_Validate{
 						case 'matches':
 						case 'match_field':
                         echo " r=$r<br />\n";
-                        var_dump($ruleList[$r]);
-                        var_dump($this->_ruleList);
 							$rtn[] = lang('VALID_MUST_MATCH', $ruleList[$r]['display']).' ';
 							break;
 					}
@@ -150,15 +156,31 @@ class US_Validate{
 				} elseif (!empty($value)) {
                     #dbg("Validate::check(): rule=$rule, rule_value=$rule_value item=$item<br />\n");
 					switch ($rule) {
+                        case 'min_val':
+                            if ($value < $rule_value) {
+								$this->addError([lang('VALID_ERR_MIN_VAL',[$display,$rule_value]),$item]);
+                            }
+                            break;
+
+                        case 'max_val':
+                            if ($value > $rule_value) {
+								$this->addError([lang('VALID_ERR_MAX_VAL',[$display,$rule_value]),$item]);
+                            }
+                            break;
+
 						case 'min':
+						case 'min_len':
+						case 'min_chars':
 							if (strlen($value) < $rule_value) {
-								$this->addError([lang('VALID_ERR_MIN_CHAR',[$display,$rule_value]),$item]);
+								$this->addError([lang('VALID_ERR_MIN_CHARS',[$display,$rule_value]),$item]);
 							}
 							break;
 
 						case 'max':
+						case 'max_len':
+						case 'max_chars':
 							if (strlen($value) > $rule_value) {
-								$this->addError([lang('VALID_ERR_MAX_CHAR',[$display,$rule_value]),$item]);
+								$this->addError([lang('VALID_ERR_MAX_CHARS',[$display,$rule_value]),$item]);
 							}
 							break;
 
