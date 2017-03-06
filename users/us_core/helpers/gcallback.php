@@ -83,22 +83,23 @@ if (isset($_SESSION['gProfileData'])){
 		*/
 		$fields=array('fname'=>$gProfileData['givenName'],'lname'=>$gProfileData['familyName'],'last_login'=>date("Y-m-d H:i:s"),'google_uid'=>$gProfileData['id']);
 		$db->update('users',$existingUser->id,$fields);
-		
+
 		/*
 		Increment login count by 1
 		*/
 		$db->query("UPDATE users SET logins = logins + 1 WHERE id = ?",[$existingUser->id]);
-		
+
 		/*
 		Log user in
 		*/
 		$_SESSION["user"] = $existingUser->id;
-		
+
 		/*
 		Redirect after login
 		*/
-		Redirect::to(US_URL_ROOT.configGet('redirect_login'));
-		
+        $login_response = new StateResponse_Login;
+        $login_response->respond();
+
 	}else{
 		/*
 		Email address does not exist, therefore create new user, and log user in
@@ -131,21 +132,22 @@ if (isset($_SESSION['gProfileData'])){
 		*/
 		$findExisting=$db->query("SELECT * FROM users WHERE email = ?",array($gProfileData['email']));
 		$existingUser=$findExisting->first();
-		
+
 		/*
 		Increment login count by 1
 		*/
 		$db->query("UPDATE users SET logins = logins + 1 WHERE id = ?",[$existingUser->id]);
-		
+
 		/*
 		Log user in
 		*/
 		$_SESSION["user"] = $existingUser->id;
-		
+
 		/*
 		Redirect after login
 		*/
-		Redirect::to(US_URL_ROOT.configGet('redirect_login'));		
+        $login_response = new StateResponse_Login;
+        $login_response->respond();
 	}
 }elseif(Input::get('error')=='access_denied'){
 	/*
