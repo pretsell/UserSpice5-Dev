@@ -30,7 +30,10 @@ $cfg = new Config(
             'token_name' => 'token',
         ),
         #'site_language' => 'english',
-        #'US_SCRIPT_PATH' => array('local/', 'us_core/'),
+        #'us_script_path' => array('local/', 'us_core/'),
+        'forms_path' => [
+                         US_ROOT_DIR.'local/forms/',
+                         US_ROOT_DIR.'us_core/forms/'],
         #'us_page_path' = US_ROOT_DIR,
         // page_paths should start from DOCUMENT_ROOT, starting with /
         'page_paths' => [US_URL_ROOT],
@@ -51,6 +54,7 @@ if (@$_POST['save']) {
     $cookieExpiry = $_POST['cookie_expiry'];
     $sessionName = $_POST['session_name'];
     $tokenName = $_POST['token_name'];
+    $alt_form_path = $_POST['alt_form_path'];
 } elseif (isset($cfg)) {
     # config.php already exists - load existing values to allow modification
     $mysqlHost = $cfg->simpleGet('mysql/host');
@@ -62,6 +66,7 @@ if (@$_POST['save']) {
     $cookieExpiry = $cfg->simpleGet('remember/cookie_expiry');
     $sessionName = $cfg->simpleGet('session/session_name');
     $tokenName = $cfg->simpleGet('session/token_name');
+    $alt_form_path = $cfg->simpleGet('alt_form_path');
 } else {
     # appropriate defaults
     $mysqlHost = 'localhost';
@@ -70,8 +75,21 @@ if (@$_POST['save']) {
     $cookieExpiry = 604800;  //One week
     $sessionName = 'user';
     $tokenName = 'token';
+    $alt_form_path = '';
 }
 $cfgPath = US_ROOT_DIR . "local/config.php";
+# $alt_form_path is where 3rd party developers want to put their
+# simplified forms (assuming they want to use master_form.php)
+if ($alt_form_path) {
+    $tmp_form_path = "'" . $alt_form_path . "',";
+} else {
+    $tmp_form_path = '';
+}
+$forms_path = "$tmp_form_path
+                         US_ROOT_DIR.'local/forms/',
+                         US_ROOT_DIR.'us_core/forms/',
+                         # uncomment the line below to enable tutorial forms
+                         #US_ROOT_DIR.'tutorial/forms/', ";
 $cfgContents = <<<EOF
 <?php
 
@@ -107,7 +125,9 @@ $cfgContents = <<<EOF
             'token_name' => '$tokenName',
         ),
         #'site_language' => 'english',
-        #'US_SCRIPT_PATH' => array('local/', 'us_core/'),
+        #'us_script_path' => array('local/', 'us_core/'),
+        'alt_form_path' => '$alt_form_path',
+        'forms_path' => [$forms_path],
         #'us_page_path' = US_ROOT_DIR,
         // page_paths should start from US_DOC_ROOT, starting with /
         'page_paths' => [US_URL_ROOT],
@@ -207,6 +227,11 @@ if (@$_POST['save']) {
                 <td class="labels">Session Token Name:</td>
                 <td class="input_cell"> <input type="text" name="token_name" value="<?= $tokenName ?>" class="text_input"/></td>
                 <td class="errors"><?= @$errors['token_name'] ?></td>
+            </tr>
+            <tr>
+                <td class="labels">Path location for YOUR simplified forms:</td>
+                <td class="input_cell"> <input type="text" name="alt_form_path" value="<?= $alt_form_path ?>" class="text_input" /></td>
+                <td class="errors"><?= @$errors['alt_form_path'] ?></td>
             </tr>
 
             <tr>

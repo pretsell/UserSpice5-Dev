@@ -33,6 +33,8 @@ $init_commands = [
           `display_lang` varchar(50) COLLATE $collate NOT NULL,
           `min` int(11) DEFAULT NULL,
           `max` int(11) DEFAULT NULL,
+          `min_val` varchar(50) COLLATE $collate DEFAULT NULL,
+          `max_val` varchar(50) COLLATE $collate DEFAULT NULL,
           `required` tinyint(1) DEFAULT NULL,
           `unique_in_table` varchar(50) COLLATE $collate DEFAULT NULL,
           `match_field` varchar(50) COLLATE $collate DEFAULT NULL,
