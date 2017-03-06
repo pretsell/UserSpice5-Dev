@@ -1,10 +1,7 @@
 <?php
-#var_dump($_POST);
-$fooId = @$_GET['id'];
-$myForm = new Form([
-], [
-    'title' => 'This is a tutorial title ('.basename($_SERVER['PHP_SELF']).')',
+$fooId = Input::get('id');
+$myForm = new Form([], [
     'dbtable' => 'foo',
+    'dbtableid' => $fooId,
     'default_everything' => true,
 ]);
-echo $myForm->getHTML();
