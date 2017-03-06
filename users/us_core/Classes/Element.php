@@ -62,7 +62,9 @@ abstract class US_Element {
     protected $_db=null,
         $_deleteMe=false,
         $_deleteIfEmpty=false,
-        $_dbTable=null; // used for form processing, editing the DB
+        $_dbTable=null, // used for form processing, editing the DB
+        $errors=null,
+        $successes=null;
     public $debug = -1;
     public $elementList = [];
     public $repElement = null; // name of repeating element from $elementList ('fields' for Form)
@@ -124,6 +126,14 @@ abstract class US_Element {
                 break;
             case 'exclude_elements':
                 $this->deleteElements($val);
+                return true;
+                break;
+            case 'errors':
+                $this->errors = &$val;
+                return true;
+                break;
+            case 'successes':
+                $this->successes = &$val;
                 return true;
                 break;
         }
@@ -211,15 +221,18 @@ abstract class US_Element {
             $propName = 'HTML_'.$element;
             $prop2Name = $element;
             if (method_exists($this, $methodName)) {
-                #dbg("getHTMLElement(): Method");
+                #dbg("getHTMLElement(): Method $methodName");
                 $html = $this->$methodName($opts);
             } elseif (in_array($this->getRepElement(), [$propName, $prop2Name])) {
                 # repeating element
+                #dbg("getHTMLElement(): repeating element");
                 $propName = $this->getRepElement();
+                #dbg("getHTMLElement(): repeating element prop=$propName");
                 $elem = isset($this->$propName) ? $this->$propName : $propName;
+                #dbg("getHTMLElement(): repeating element elem=$elem");
                 $html = $this->getHTMLRepElement($elem, $opts);
             } elseif (isset($this->$propName) || isset($this->$prop2Name)) {
-                #dbg("getHTMLElement(): Prop");
+                #dbg("getHTMLElement(): Prop=$propName");
                 if (!isset($this->$propName)) {
                     $propName = $prop2Name; // esp 'Fields'
                 }
@@ -229,6 +242,7 @@ abstract class US_Element {
                 $html = $element;
             }
         } elseif (method_exists($element, 'getHTML')) {
+            #dbg('calling element->getHTML');
             $html = $element->getHTML($opts);
         }
         #dbg("getHTMLElement(<pre>".substr($html, 0, 30)."</pre>...): Entering (".get_class($this).")");
