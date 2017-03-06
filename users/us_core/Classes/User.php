@@ -207,7 +207,9 @@ class US_User
     public function logout()
     {
         global $T;
-        $this->_db->query("DELETE FROM $T[users_session] WHERE user_id = ? AND uagent = ?", array($this->data()->id, Session::uagent_no_version()));
+        if (is_object($this->data())) {
+            $this->_db->query("DELETE FROM $T[users_session] WHERE user_id = ? AND uagent = ?", array($this->data()->id, Session::uagent_no_version()));
+        }
 
         /*
         At present, user has logged out, so unset session variables and destroy the session.
