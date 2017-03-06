@@ -25,7 +25,16 @@ class US_Token {
 	public static function check($token){
         #return true; // uncomment to bypass during development
 		$tokenName = configGet('session/token_name');
-
+/*
+if (Session::exists($tokenName)) {
+    dbg("TOKEN Exists ($tokenName)");
+} else {
+    dbg("TOKEN does NOT exist ($tokenName)");
+}
+if ($t = Session::get($tokenName)) {
+    dbg("Comparing $token to $t");
+}
+*/
 		if (Session::exists($tokenName) && $token === Session::get($tokenName)) {
 			Session::delete($tokenName);
 			return true;
