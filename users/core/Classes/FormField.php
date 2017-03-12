@@ -113,9 +113,12 @@ abstract class US_FormField extends Element {
         $this->handleOpts(array_diff_key((array)$field_def, $opts));
     }
 
-    public function handle1Opt($name, $val) {
+    public function handle1Opt($name, &$val) {
         switch(strtolower($name)) {
             case 'display_lang':
+            case 'displaylang':
+            case 'display_token':
+            case 'displaytoken':
                 $val = lang($val);
                 # NOTE: No break - falling through to 'display' with $val set
             case 'display':
@@ -143,6 +146,7 @@ abstract class US_FormField extends Element {
                 return true;
                 break;
             case 'placeholder':
+            case 'place_holder':
                 $this->setPlaceholder($val);
                 return true;
                 break;
@@ -150,6 +154,7 @@ abstract class US_FormField extends Element {
                 $this->setMacro('Extra_Attrib', $val);
                 return true;
                 break;
+            case 'fieldid':
             case 'field_id':
                 $this->setFieldId($val);
                 return true;
@@ -270,6 +275,7 @@ abstract class US_FormField extends Element {
         $this->debug(1, '::setRepData(y): Entering');
         # convert from object ($data->id, $data->name) to associative array
         # ($data['id'], $data['name']) if needed
+        #var_dump($val);
         if (sizeof($val)>0 && is_object($val[0])) {
             $tmp = [];
             foreach ((array)$val as $k=>$o) {
