@@ -63,8 +63,8 @@ abstract class US_Element {
         $_deleteMe=false,
         $_deleteIfEmpty=false,
         $_dbTable=null, // used for form processing, editing the DB
-        $errors=null,
-        $successes=null;
+        $errors=[],
+        $successes=[];
     public $debug = -1;
     public $elementList = [];
     public $repElement = null; // name of repeating element from $elementList ('fields' for Form)
@@ -77,6 +77,15 @@ abstract class US_Element {
     public function __construct($opts=[]) {
         $this->debug(1, '::__construct(): Entering');
         $this->_db = DB::getInstance();
+        # This is a strange, non-OOP way of mixing globals and properties, but UserSpice
+        # has to work with 3rd-party developers who may or may not use the `Form` class.
+        # Therefore we have to work with a global $errors and $successes without tripping.
+        if (isset($GLOBALS['errors'])) {
+            $this->errors = &$GLOBALS['errors'];
+        }
+        if (isset($GLOBALS['successes'])) {
+            $this->successes = &$GLOBALS['successes'];
+        }
         $this->handleOpts($opts);
     }
     public function handleOpts($opts) {
@@ -85,9 +94,9 @@ abstract class US_Element {
         if ($reps = $this->getRepDataOpt($opts)) {
             $this->setRepData($reps);
         }
-        foreach ($opts as $k=>$v) {
+        foreach ($opts as $k=>&$v) {
             if (!$this->handle1Opt($k, $v) && configGet('debug_mode')) {
-                if (!in_array($k, ['id', 'name', 'alias', 'min', 'max', 'unique_in_table', 'match_field', 'is_numeric', 'valid_email', 'regex', 'regex_display', 'keep_if', 'nodata', $this->repElement, ])) {
+                if (!in_array($k, ['id', 'name', 'alias', 'min_val', 'max_val', 'min', 'max', 'unique_in_table', 'match_field', 'is_numeric', 'valid_email', 'regex', 'regex_display', 'keep_if', 'nodata', $this->repElement, ])) {
                     dbg("Unknown option $k for class=".get_class($this)." (value=".print_r($v, true).")");
                 }
             }
@@ -95,7 +104,7 @@ abstract class US_Element {
     }
     // when this method is overridden you probably want to call
     // parent::handle1Opt() to get the benefit of parent option handling
-    public function handle1Opt($name, $val) {
+    public function handle1Opt($name, &$val) {
         switch (strtolower($name)) {
             case 'elements':
                 $this->setElementList($val);
@@ -121,9 +130,11 @@ abstract class US_Element {
                 return true;
                 break;
             case 'delete_if_empty':
+            case 'deleteifempty':
                 $this->setDeleteIfEmpty($val);
                 return true;
                 break;
+            case 'excludeelements':
             case 'exclude_elements':
                 $this->deleteElements($val);
                 return true;
@@ -136,10 +147,12 @@ abstract class US_Element {
                 $this->successes = &$val;
                 return true;
                 break;
-        }
-        if (in_array(strtolower($name), ['repemptyalternate', 'nodata'])) {
-            $this->setRepEmptyAlternate($val);
-            return true;
+            case 'repemptyalternate':
+            case 'nodata':
+            case 'no_data':
+                $this->setRepEmptyAlternate($val);
+                return true;
+                break;
         }
         $setMethod = 'set'.$name;
         $caseName = $this->fixCase($name);
@@ -165,7 +178,7 @@ abstract class US_Element {
         return false;
     }
     protected function getRepDataOpt(&$opts) {
-        $repDataNames = ['repData', 'repeat', 'repeats', 'repeatvalue'];
+        $repDataNames = ['data', 'repData', 'repeat', 'repeats', 'repeatvalue'];
         if ($this->getRepElement()) {
             $repDataNames[] = $this->getRepElement(); // i.e., 'fields'
             if (substr($this->getRepElement(), 0, strlen('HTML_')) == 'HTML_') {
