@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 class US_DB {
 	private static $_instance = null;
-	private $_pdo, $_query, $_error = false, $_results, $_resultsArray, $_count = 0, $_lastId, $_queryCount=0;
+	private $_pdo, $_query, $_error = false, $_errorInfo = [], $_results, $_resultsArray, $_count = 0, $_lastId, $_queryCount=0;
 
 	private function __construct($host=null, $dbName=null, $user=null, $passwd=null, $opts=[]) {
         $host   = ($host   ? : configGet('mysql/host'));
@@ -48,15 +48,16 @@ class US_DB {
 		return self::$_instance;
 	}
 
-	public function query($sql, $params=array()) {
+	public function query($sql, $bindvals=array()) {
 		$this->_queryCount++;
 		$this->_error = false;
+        #dbg("query(): sql=$sql");
 		if ($this->_query = $this->_pdo->prepare($sql)) {
 			$x = 1;
-            #var_dump($params);
-			if (count($params)) {
-				foreach ($params as $param) {
-					$this->_query->bindValue($x++, $param);
+            #var_dump($bindvals);
+			if (count($bindvals)) {
+				foreach ($bindvals as $bindval) {
+					$this->_query->bindValue($x++, $bindval);
 				}
 			}
 
@@ -76,11 +77,11 @@ class US_DB {
 		return $this;
 	}
 
-    public function queryAll($table, $where=[], $orderBy=null, $bindvals=[]) {
-		return $this->action('SELECT *', $table, $where, $orderBy);
+    public function queryAll($table, $where=[], $bindvals=[], $orderBy=null) {
+		return $this->action('SELECT *', $table, $where, $bindvals, $orderBy);
     }
-	public function findAll($table, $where=[], $orderBy=null) {
-		if (!$this->queryAll($table, $where, $orderBy)->error()) {
+	public function findAll($table, $where=[], $bindvals=[], $orderBy=null) {
+		if (!$this->queryAll($table, $where, $bindvals, $orderBy)->error()) {
             return $this;
         }
         return false;
@@ -97,14 +98,19 @@ class US_DB {
 		return false;
 	}
 
-	public function get($table, $where, $orderBy=null) {
-        return $this->findAll($table, $where, $orderBy);
+    // synonym for findAll()
+	public function get($table, $where, $bindvals=[], $orderBy=null) {
+        return $this->findAll($table, $where, $bindvals, $orderBy);
 	}
 
 	public function delete($table, $where, $bindvals=[]) {
-		if ($this->action('DELETE', $table, $where, null, $bindvals)->error()) {
+        #dbg("DB::delete(): pre error=".($this->error()?'TRUE':"false"));
+		if (!$this->action('DELETE', $table, $where, $bindvals)->error()) {
+        #dbg("DB::delete(): RETURNING TRUE");
 			return $this;
         }
+        #var_dump($this->_errorInfo);
+        #dbg("DB::delete(): RETURNING FALSE");
 		return false;
 	}
 
@@ -112,7 +118,7 @@ class US_DB {
 		return $this->delete($table, 'id = ?', [$id]);
 	}
 
-	public function action($action, $table, $where=array(), $orderBy=null, $bindvals=[]) {
+	public function action($action, $table, $where=array(), $bindvals=[], $orderBy=null) {
         global $T;
         if (@$T[$table]) {
             $table = $T[$table];
@@ -120,7 +126,9 @@ class US_DB {
 		$sql = "{$action} FROM ".$table;
 		$value = '';
         if (!is_array($where)) {
-            $sql .= $where;
+            if ($where) {
+                $sql .= " WHERE " . $where;
+            }
             // $bindvals already set
         } elseif (count($where) == 3) {
 			$field = $where[0];
