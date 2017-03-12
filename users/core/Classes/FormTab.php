@@ -69,7 +69,7 @@ class US_Form_Panel extends Form {
     }
     public function getHTMLFooting() {
         if ($this->HTML_Foot) {
-            return '<div class="panel-heading {FOOT_CLASS}">'.$this->HTML_Foot.'</div>';
+            return '<div class="panel-footer {FOOT_CLASS}">'.$this->HTML_Foot.'</div>';
         } else {
             return '';
         }
