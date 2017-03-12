@@ -13,10 +13,10 @@ if (($fooId = Input::get('id')) || $fooId === '0') {
     ];
 }
 $myForm = new Form([
-    'foo' => new FormField_Text,
     'toc' => new FormField_TabToc(),
     new FormTab_Contents([
         'tabA' => new FormTab_Pane([
+            'foo' => new FormField_Text,
             'a' => new FormField_Text,
         ], [
             'active_tab' => 'active',
