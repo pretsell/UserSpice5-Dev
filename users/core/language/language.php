@@ -37,3 +37,6 @@ require_once US_ROOT_DIR."core/language/$curLang";
 if (file_exists($locallang = US_ROOT_DIR."local/language/$curLang")) {
     require_once $locallang;
 }
+if (file_exists($devlang = configGet('alt_dev_path')."/language/$curLang")) {
+    require_once $devlang;
+}
