@@ -254,9 +254,8 @@ function fetchPublicPages() {
 
 //Fetch information for a specific page
 function fetchPageDetails($id) {
-    global $T;
 	$db = DB::getInstance();
-	$query = $db->query("SELECT id, page, private FROM $T[pages] WHERE id = ?",array($id));
+	$query = $db->queryAll('pages', 'id = ?', array($id));
 	$row = $query->first();
 	return $row;
 }
@@ -443,6 +442,91 @@ function checkToken($name='csrf', $method='post') {
 	}
 }
 
+// calculate the redirect destination after a page is saved
+// uses settings table, perhaps overridden by page table
+// ARGS:
+//   $action - either 'edit' or 'create' or 'delete' - what type of save just occurred
+//   $pageName - current page, no ?id=n in the URL (usually from $_SERVER['PHP_SELF'])
+//   $multiRowPage - true=this is a list page; false=this is a single-row editing page
+//   $lastId - if we just created a row this ID tells us which row was added
+// RETURN VALUE:
+//   false - error (but usually you can just treat it as null)
+//   null - don't redirect anywhere - the current page is just fine
+//   anything else - a destination to which you will redirect
+// VALUES FOR pages.after_(create|edit|delete) and settings.(multi|single)_row_after_(create|edit|delete):
+//   0=no override (only used in page)
+//   1=stay on current page (if creating a new record, must redirect to current
+//     page with ?id=n in URL)
+//   2=return to breadcrumb parent after successful save
+//   3=redirect to specified (custom) destination (only used in pages, not settings)
+//     (The custom destination is then obtained from pages.after_(create|edit|delete)_redirect)
+//   4=edit a new row (redirect to same page but without ?id=n in URL)
+function redirDestAfterSave($action, $pageName, $multiRowPage=false, $lastId=null) {
+    #dbg("redirDestAfterSave(action=$action, pageName=$pageName, multiRowPage=$multiRowPage, lastId=$lastId): entering");
+    $actionRenames = ['update'=>'edit', 'insert'=>'create', 'add'=>'create'];
+    if (isset($actionRenames[$action])) {
+        $action = $actionRenames[$action]; // making life easy for forgetful developers
+    }
+    if (!in_array($action, ['edit', 'create', 'delete'])) {
+        #dbg("Bad action=$action");
+        return false; // we don't know how to handle any other $action
+    }
+    $destType = 0; // assume no page override
+    $pageRow = null;
+    #dbg("redirDestAfterSave(): Checking page settings");
+    if ($pageRow = getPagerowByName($pageName)) {
+        $fieldName = 'after_'.$action; // after_edit, after_delete, etc.
+        $destType = $pageRow->$fieldName;
+        if ($destType == 3) { // custom redirect - not valid in settings below
+            $fieldName .= '_redirect'; // after_edit_redirect, after_create_redirect, etc.
+            if ($pageRow->$fieldName) {
+                return $pageRow->$fieldName;
+            } else { // mis-configured - treat it as if no setting at all in pages
+                $destType = 0;
+                $pageRow = null;
+            }
+        }
+    }
+    #dbg("redirDestAfterSave(): destType=$destType");
+    if ($destType == 0) {
+        #dbg("redirDestAfterSave(): Checking configGet");
+        if ($multiRowPage) {
+            $fieldName = 'multi_row_after_';
+        } else {
+            $fieldName = 'single_row_after_';
+        }
+        $fieldName .= $action;
+        $destType = configGet($fieldName);
+    }
+    #dbg("redirDestAfterSave(): destType=$destType");
+    if ($action == 'edit' && $destType == 1) {
+        #dbg("Edit & 1 - returning null");
+        return null; // don't need to do anything - null means don't redirect
+    }
+    #dbg("Switching on destType=$destType");
+    switch ($destType) {
+        case 2:
+            if ($pageRow->breadcrumb_parent_page_id) {
+                $db = DB::getInstance();
+                $pageRow = $db->findById('pages', $pageRow->breadcrumb_parent_page_id)->first();
+                #dbg("Returning ".$pageRow->page);
+                return $pageRow->page;
+            } elseif ($action == 'edit') {
+                return null; // equivalent of $destType == 1 as above
+            }
+            // NOTE: No break - falling through
+        case 1:
+            // NOTE: Falling through from above
+            return $pageName.'?id='.$lastId;
+            break;
+        #case 3: // handled up above
+        case 4:
+            return $pageName; // assume it has no '?id=n' in the URL
+            break;
+    }
+    dbg("ERROR: Unknown destination #$destType. Redirection will not work as expected.");
+}
+
 // find a file in a (configurable) list of paths
 function pathFinder($file, $root=null, $configPathToken=null, $defaultPath=null) {
     if (is_null($root)) {
@@ -513,6 +597,23 @@ function getPageLocation($page) {
     return $page; // last-ditch, desperate measure...
 }
 
+function getPagerowByName($pages) {
+    global $T;
+    $db = DB::getInstance();
+    $found = false;
+    foreach ((array)$pages as $page) {
+    	$query = $db->queryAll('pages', 'page = ?', [$page]);
+        if ($query->count() > 0) {
+            $found = true;
+            break;
+        }
+    }
+	if (!$found) {
+        return false;
+    }
+	return $query->first();
+}
+
 //Check if a user has access to a page
 function securePage($uri=null) {
 	global $user, $T;
@@ -531,14 +632,14 @@ function securePage($uri=null) {
 
 	$db = DB::getInstance();
 
-    if (is_null($uri)) {
+    if (!is_null($uri)) {
         $pages = [$uri];
     } else {
         $pages = [];
     }
     $save_uri = $uri;
     if (($uri = $_SERVER['PHP_SELF']) != $save_uri) {
-        $pages[] = $uri = $_SERVER['PHP_SELF'];
+        $pages[] = $uri;
     }
     if (substr($uri, 0, strlen(US_URL_ROOT)) == US_URL_ROOT) {
     	$pages[] = substr($uri,strlen(US_URL_ROOT));
@@ -547,19 +648,11 @@ function securePage($uri=null) {
 
 	//retrieve page details, whichever is the first to be found
     // normal priority: (1) $formName, (2) PHP_SELF, (3) PHP_SELF without US_URL_ROOT
-    foreach ($pages as $page) {
-    	$query = $db->query("SELECT id, page, private FROM $T[pages] WHERE page = ?",[$page]);
-        if ($query->count() > 0) {
-            break;
-        }
-    }
-	if ($query->count() == 0) {
-    	$_SESSION['securePageRequest']= $uri;
+	if (!$results = getPagerowByName($pages)) {
         bold($page);
 		bold('<br><br>You must go into the Admin Panel and click the Manage Pages button to add this page to the database. Doing so will make this error go away.');
 		die();
 	}
-	$results = $query->first();
 
 	$pageID = $results->id;
 
@@ -661,6 +754,21 @@ function fetchRolesByGroup($group_id) {
 
 //Displays error and success messages
 function resultBlock($errors,$successes) {
+    #dbg("resultBlock(): entering");
+    // If any errors or successes were saved off in the $_SESSION prior to redirecting to
+    // this page, prepend them to the current $errors/$successes before displaying
+    #var_dump($_SESSION);
+    if (!empty($_SESSION['errors'])) {
+        #dbg("resultBlock(): had errors in session: ".print_r($_SESSION['errors'], true));
+        $errors = array_merge($_SESSION['errors'], $errors);
+        $_SESSION['errors'] = [];
+    }
+    if (!empty($_SESSION['successes'])) {
+        #dbg("resultBlock(): had successes in session: ".print_r($_SESSION['successes'], true));
+        $successes = array_merge($_SESSION['successes'], $successes);
+        $_SESSION['successes'] = [];
+    }
+
 	//Error block
 	if (count($errors) > 0) {
 		echo "<div class='alert alert-danger alert-dismissible' role='alert'> <button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>
