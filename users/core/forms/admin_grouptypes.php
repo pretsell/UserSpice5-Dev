@@ -62,8 +62,8 @@ $myForm = new Form([
             'isdbfield' => false,
             // from other side
             'table_head_cells' => '<th>'.lang('GROUPTYPE_MARK_TO_DELETE').'</th>'.
-                '<th>'.lang('GROUPTYPE_NAME_LABEL').'</th>'.
-                '<th>'.lang('GROUPTYPE_SHORT_NAME_LABEL').'</th>',
+                '<th>'.lang('GROUPTYPE_NAME').'</th>'.
+                '<th>'.lang('GROUPTYPE_SHORT_NAME').'</th>',
             'table_data_cells' => '<td>{CHECKBOX_ID}</td>'.
                 '<td><a href="'.$childForm.'?id={ID}">{NAME}</a></td>'.
                 '<td>{SHORT_NAME}</td>',
@@ -113,7 +113,7 @@ if (Input::exists('post')) {
 #
 # Prepare all data for displaying the form
 #
-$myForm->getField('grouptype_list')->setRepData($db->queryAll('grouptypes', [],  'name')->results());
+$myForm->getField('grouptype_list')->setRepData($db->queryAll('grouptypes', '', [], 'name')->results());
 
 #
 # Display the form
