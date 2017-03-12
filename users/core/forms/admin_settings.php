@@ -60,6 +60,26 @@ foreach ($tmp as $x) {
     }
 }
 
+# Now set up the possible options for the actions to take upon successful save
+$multiRowSaveOpts = [
+    ['id'=>'1', 'name' => lang('CONTINUE_IN_SAME_PAGE')],
+    ['id'=>'2', 'name' => lang('RETURN_TO_BREADCRUMB_PARENT')],
+];
+$singleRowDelOpts = [
+    # can't continue on same page - the row we were looking at is gone
+    ['id'=>'2', 'name' => lang('RETURN_TO_BREADCRUMB_PARENT')],
+];
+$singleRowCreateOpts = [
+    ['id'=>'1', 'name' => lang('CONTINUE_IN_SAME_PAGE')],
+    ['id'=>'2', 'name' => lang('RETURN_TO_BREADCRUMB_PARENT')],
+    ['id'=>'4', 'name' => lang('CREATE_ANOTHER_ROW')],
+];
+$singleRowEditOpts = [
+    ['id'=>'1', 'name' => lang('CONTINUE_IN_SAME_PAGE')],
+    ['id'=>'2', 'name' => lang('RETURN_TO_BREADCRUMB_PARENT')],
+    ['id'=>'4', 'name' => lang('CREATE_ANOTHER_ROW')], // weird... leave it in?
+];
+
 $myForm = new Form ([
     'toc' => new FormField_TabToc(['TocType'=>'tab']),
     'tabs' => new FormTab_Contents([
@@ -263,6 +283,42 @@ $myForm = new Form ([
                     'dbfield' => 'redirect_deny_noperm',
                     'display' => lang('SETTINGS_REDIRECT_DENY_NOPERM'),
                     'hint_text' => lang('HINT_REDIRECT_DENY_NOPERM'),
+                ]),
+            'multi_row_after_create' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_MULTI_ROW_AFTER_CREATE'),
+                    'repeat' => $multiRowSaveOpts,
+                    'hint_text' => lang('HINT_MULTI_ROW_AFTER_CREATE'),
+                ]),
+            'multi_row_after_edit' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_MULTI_ROW_AFTER_EDIT'),
+                    'repeat' => $multiRowSaveOpts,
+                    'hint_text' => lang('HINT_MULTI_ROW_AFTER_EDIT'),
+                ]),
+            'multi_row_after_delete' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_MULTI_ROW_AFTER_DELETE'),
+                    'repeat' => $multiRowSaveOpts,
+                    'hint_text' => lang('HINT_MULTI_ROW_AFTER_DELETE'),
+                ]),
+            'single_row_after_create' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_SINGLE_ROW_AFTER_CREATE'),
+                    'repeat' => $singleRowCreateOpts,
+                    'hint_text' => lang('HINT_SINGLE_ROW_AFTER_CREATE'),
+                ]),
+            'single_row_after_edit' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_SINGLE_ROW_AFTER_EDIT'),
+                    'repeat' => $singleRowEditOpts,
+                    'hint_text' => lang('HINT_SINGLE_ROW_AFTER_EDIT'),
+                ]),
+            'single_row_after_delete' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_SINGLE_ROW_AFTER_DELETE'),
+                    'repeat' => $singleRowDelOpts,
+                    'hint_text' => lang('HINT_SINGLE_ROW_AFTER_DELETE'),
                 ]),
             'redirect_referrer_login' =>
                 new FormField_Select([
