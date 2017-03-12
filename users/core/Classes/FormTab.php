@@ -62,14 +62,14 @@ class US_Form_Panel extends Form {
         $MACRO_Foot_Class = '';
     public function getHTMLHeading() {
         if ($this->HTML_Head) {
-            return '<div class="panel-heading {HEAD_CLASS}"'.$this->HTML_Head.'</div>';
+            return '<div class="panel-heading {HEAD_CLASS}">'.$this->HTML_Head.'</div>';
         } else {
             return '';
         }
     }
     public function getHTMLFooting() {
         if ($this->HTML_Foot) {
-            return '<div class="panel-heading {FOOT_CLASS}"'.$this->HTML_Foot.'</div>';
+            return '<div class="panel-heading {FOOT_CLASS}">'.$this->HTML_Foot.'</div>';
         } else {
             return '';
         }
