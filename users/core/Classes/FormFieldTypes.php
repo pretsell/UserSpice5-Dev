@@ -31,7 +31,7 @@ abstract class US_FormField_ButtonAnchor extends FormField_Button {
             <a href="{LINK}" class="{INPUT_CLASS}" type="{TYPE}"><span class="{BUTTON_ICON}"></span> {LABEL_TEXT}</a>
             ',
         $MACRO_Link = '';
-    public function handle1Opt($name, $val) {
+    public function handle1Opt($name, &$val) {
         if (in_array(strtolower($name), ['href', 'link', 'dest'])) {
             $this->MACRO_Link = $val;
             return true;
@@ -47,16 +47,29 @@ abstract class US_FormField_ButtonDelete extends FormField_Button {
 
 abstract class US_FormField_Checkbox extends FormField {
     protected $_fieldType = "checkbox";
+    protected $checked = 'checked';
+    public $MACRO_Checked = '';
 	public $HTML_Pre =
             '<div class="{DIV_CLASS}"> <!-- checkbox -->
             ',
         $HTML_Input =
-    		'<input type="{TYPE}" name="{FIELD_NAME}" id="{FIELD_ID}" >
+    		'<input type="hidden" name="{FIELD_NAME}" value="0" />
+             <input type="{TYPE}" name="{FIELD_NAME}" id="{FIELD_ID}" value="1" {CHECKED} >
             ',
         $HTML_Post =
 		    '<label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}</label>
-        	 </div> <!-- {DIV_CLASS} (checkbox name={FIELD_NAME}, id={FIELD_ID} -->
+        	 </div> <!-- {DIV_CLASS} (checkbox name={FIELD_NAME}, id={FIELD_ID}) -->
              ';
+    public function getMacros($s, $opts) {
+        $macros = parent::getMacros($s, $opts);
+        $fv = $this->getFieldValue();
+        if ($fv) {
+            $macros['{Checked}'] = $this->checked;
+        } else  {
+            $macros['{Checked}'] = '';
+        }
+        return $macros;
+    }
 }
 
 abstract class US_FormField_Hidden extends FormField {
@@ -191,13 +204,15 @@ abstract class US_FormField_Select extends FormField {
     protected
         $placeholderRow = [],
         $selected = 'selected="selected"';
-    public function handle1Opt($name, $val) {
+    public function handle1Opt($name, &$val) {
         switch (strtolower($name)) {
             case 'placeholder_row':
+            case 'placeholderrow':
                 $this->setPlaceholderRow($val);
                 return true;
                 break;
             case 'idfield':
+            case 'id_field':
                 $this->setIdField($val);
                 return true;
                 break;
@@ -283,9 +298,10 @@ abstract class US_FormField_Table extends FormField {
         $HTML_Checkbox_Value = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
         $repElement = 'HTML_Input';
 
-    public function handle1Opt($name, $val) {
+    public function handle1Opt($name, &$val) {
         switch (strtolower($name)) {
             case 'table_data_cells':
+            case 'tabledatacells':
             case 'td_row':
                 #dbg('setting table_data_cells');
                 $this->HTML_Input = $this->processMacros(
@@ -299,6 +315,7 @@ abstract class US_FormField_Table extends FormField {
                 return true;
                 break;
             case 'table_head_cells':
+            case 'tableheadcells':
             case 'th_row':
                 #dbg('setting table_head_cells');
                 $this->HTML_Pre = $this->processMacros(
