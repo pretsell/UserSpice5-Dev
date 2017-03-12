@@ -1,7 +1,23 @@
 <?php
 /*
+UserSpice
+An Open Source PHP User Management System
+by the UserSpice Team at http://UserSpice.com
 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 class US_Form extends Element {
     const UPDATE_ERROR = 0;
     const UPDATE_SUCCESS = 1;
@@ -10,18 +26,32 @@ class US_Form extends Element {
         $_fields=[],
         $_validateObject=null,
         $_validatePassed=false,
-        $defaultFields = [],
+        $_defaultFields = [],
         $_keepAdminDashBoard=false, // true for admin pages
         $_hasFieldValues=false, // flag that setFieldValues() was called
         $_dbTableId=null, // which row we load and update
         $_dbAutoLoad=false, // whether we autoload from $_dbTable and $_dbTableId
+        $_autoShow=false, // whether we echo $this->getHTML() at the end of __construct()
+        $_autoToC='toc', // whether we fix Table of Contents for tabs
+        $_autoRedirect=true, // whether we automatically redirect according to page/settings
+        $_redirectAfterSave=null, // set while saving, based on tables "pages" and "settings"
         $_dbAutoLoadPosted=null, // source (usually $_POST) from which we autoload new values
         $_dbAutoSave=false, // whether we autosave from $_dbTable and $_dbTableId
+        $_idsToDelete=null, // which IDs to delete if autosave is active and data is posted
+        $_excludeFields=['id'], // with default=all which fields do not show
+        $_isMultiRow=false, // default to being a form editing a single row (used esp with post-save actions & redirects)
         # These lang(x) tokens are used in autosave
+        $_msgTokenDeleteSuccess='RECORD_DELETE_SUCCESS',
+        $_msgTokenDeleteFailed='RECORD_DELETE_FAILED',
+        $_msgTokenNothingToDelete='RECORD_NOTHING_TO_DELETE',
         $_msgTokenUpdateSuccess='RECORD_UPDATE_SUCCESS',
         $_msgTokenUpdateFailed='RECORD_UPDATE_FAILED',
         $_msgTokenInsertSuccess='RECORD_INSERT_SUCCESS',
-        $_msgTokenInsertFailed='RECORD_INSERT_FAILED';
+        $_msgTokenInsertFailed='RECORD_INSERT_FAILED',
+        $_deleteButton=['delete'],
+        $_deleteKey='delete',
+        $_saveButton=['save'],
+        $_actionButton=null; // which button was pressed to process the form
     # These are the elements (each corresponding to $HTML_*) which
     # will be output in getHTML().
     public $elementList = [
@@ -87,7 +117,7 @@ class US_Form extends Element {
         $MACRO_Tab_Id = '';
 
 	public function __construct($fields=[], $opts=[]){
-        if (@$opts['default_everything']) {
+        if (in_array(@$opts['default'], ['all', 'fields', 'processing'])) {
             if (isset($opts['dbtable'])) {
                 $table = $opts['dbtable'];
             } elseif (isset($opts['table'])) {
@@ -97,17 +127,26 @@ class US_Form extends Element {
                 exit;
             }
             $this->setDBTable($table);
-            $this->calcDefaultFields();
+        }
+        if (in_array(@$opts['default'], ['all', 'processing', 'autoprocess', 'formprocess'])) {
+            # tableId will be defaulted in dbAutoLoad()
             $this->setDbAutoLoad(true);
             $this->setDbAutoLoadPosted($_POST);
             $this->setDbAutoSave(true);
-            $fields = array_merge($this->defaultFields, $fields);
-            unset($opts['default_everything']);
+            $this->setAutoShow(true);
+            $this->setAutoRedirect(true);
         }
+        if (in_array(@$opts['default'], ['all', 'fields'])) {
+            $this->calcDefaultFields();
+            $fields = array_merge($this->_defaultFields, $fields);
+        }
+        unset($opts['default']);
         $opts = array_merge([$this->repElement=>$fields], $opts);
         parent::__construct($opts);
         foreach ($opts[$this->repElement] as $f => &$v) {
-            $v->setDefaults($f);
+            if (is_object($v) && method_exists($v, 'setDefaults')) {
+                $v->setDefaults($f);
+            }
         }
         // $formName is usually set prior to master_form.php
         if (!$this->_formName && @$GLOBALS['formName']) {
@@ -122,7 +161,6 @@ class US_Form extends Element {
             $this->deleteElements('AdminDashboard');
         }
         if ($this->getDbAutoLoadPosted()) {
-            dbg("Loading posted values");
             $this->setNewValues($this->getDbAutoLoadPosted());
         }
         if ($this->getDBTable()) {
@@ -137,8 +175,14 @@ class US_Form extends Element {
                 }
             }
         }
+        if ($this->getAutoToC() && $toc = $this->getField($this->getAutoToC())) {
+            $toc->setRepData($this->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]));
+        }
+        if ($this->getAutoShow()) {
+            echo $this->getHTML();
+        }
 	}
-    public function handle1Opt($name, $val) {
+    public function handle1Opt($name, &$val) {
         switch (strtolower($name)) {
             case 'titletoken':
             case 'title_lang':
@@ -166,14 +210,37 @@ class US_Form extends Element {
                 $this->setDbTableId($val);
                 return true;
                 break;
+            case 'data':
+            case 'loaddata':
+                $this->setFieldValues($val);
+                return true;
+                break;
             case 'autoload':
             case 'dbautoload':
                 $this->setDbAutoLoad($val);
                 return true;
                 break;
+            case 'autoshow':
+                $this->setAutoShow($val);
+                return true;
+                break;
+            case 'autoredirect':
+                $this->setAutoRedirect($val);
+                return true;
+                break;
+            case 'excludefields':
+            case 'exclude_fields':
+                $this->setExcludeFields($val);
+                return true;
+                break;
             case 'autosave':
             case 'dbautosave':
                 $this->setDbAutoSave($val);
+                return true;
+                break;
+            case 'auto_toc':
+            case 'autotoc':
+                $this->setAutoToC($val);
                 return true;
                 break;
             case 'autoloadposted':
@@ -189,12 +256,49 @@ class US_Form extends Element {
                 $this->_msgTokenUpdateFailed = $val;
                 return true;
                 break;
+            case 'delete_success_message':
+                $this->_msgTokenDeleteSuccess = $val;
+                return true;
+                break;
+            case 'delete_failed_message':
+                $this->_msgTokenDeleteUpdateFailed = $val;
+                return true;
+                break;
+            case 'nothing_to_delete_message':
+                $this->_msgTokenNothingToDelete = $val;
+                return true;
+                break;
             case 'insert_success_message':
                 $this->_msgTokenInsertSuccess = $val;
                 return true;
                 break;
             case 'insert_failed_message':
                 $this->_msgTokenInsertFailed = $val;
+                return true;
+                break;
+            case 'deletebutton':
+            case 'delete_button':
+                $this->_deleteButton = $val;
+                return true;
+                break;
+            case 'deletekey':
+            case 'delete_key':
+                $this->_deleteKey = $val;
+                return true;
+                break;
+            case 'savebutton':
+            case 'save_button':
+                $this->_saveButton = $val;
+                return true;
+                break;
+            case 'singlerow':
+            case 'single_row':
+                $val = !$val;
+                // falling through - no break
+            case 'multirow':
+            case 'multi_row':
+                // falling through from above - no break
+                $this->setIsMultiRow($val);
                 return true;
                 break;
         }
@@ -204,14 +308,13 @@ class US_Form extends Element {
         return false;
     }
     public function calcDefaultFields() {
-        dbg("Gotta figure a way so \$opts isn't dependent on its order");
         if (!isset($T[$this->getDbTable()])) {
             $T[$this->getDbTable()] = $this->getDbTable();
         }
         $db = DB::getInstance(); // $this->_db not available yet
         $fields = $db->query("SHOW COLUMNS FROM {$T[$this->getDbTable()]}")->results();
         foreach ($fields as $f) {
-            if ($f->Field == 'id') {
+            if (in_array($f->Field, $this->_excludeFields)) {
                 continue;
             }
             if (($i = strpos($f->Type, '(')) === false) {
@@ -230,7 +333,7 @@ class US_Form extends Element {
             }
         }
         $defs['save'] = new FormField_ButtonSubmit;
-        $this->defaultFields = $defs;
+        $this->_defaultFields = $defs;
     }
     public function checkFields2Delete($recursive=false) {
         $this->debug(2,"::checkFields2Delete(".($recursive?"TRUE":"FALSE")."): Entering");
@@ -265,42 +368,95 @@ class US_Form extends Element {
         if (!$this->getDBTableId() && @$_GET['id']) {
             $this->setDBTableId($_GET['id']);
         }
-        $dbData = $this->_db->findById($this->getDBTable(), $this->getDBTableId());
-        if ($dbData) {
-            #dbg("Form::dbAutoLoad(): found dbData record");
-            return $this->setFieldValues($dbData->first());
-        } else {
-            #dbg("AutoLoad failure - no row matching id={$this->_dbTableId} for table={$this->_dbTable}");
-            return false;
+        if ($this->getDBTableId()) {
+            $dbData = $this->_db->findById($this->getDBTable(), $this->getDBTableId());
+            if ($dbData && $dbData->count() > 0) {
+                #dbg("Form::dbAutoLoad(): found dbData record");
+                return $this->setFieldValues($dbData->first());
+            } else {
+                #dbg("AutoLoad failure - no row matching id={$this->_dbTableId} for table={$this->_dbTable}");
+                $this->errors[] = "ERROR: No row matching id={$this->_dbTableId}. This form is in an error state.";
+                return false;
+            }
         }
     }
     public function dbAutoSave() {
-        #dbg("Form::dbAutoSave(): Entering");
-        $this->setNewValues($_POST);
-        if ($this->getDBTableId()) { // update existing row
-            if ($this->_updateIfValid()) {
-                $this->successes[] = lang($this->_msgTokenUpdateSuccess);
-                return true;
-            } else {
-                $this->errors[] = lang($this->_msgTokenUpdateFailed);
-                return false;
-            }
-        } else { // insert new row
-            if ($this->_insertIfValid()) {
-                $this->successes[] = lang($this->_msgTokenInsertSuccess);
-                return true;
-            } else {
-                $this->errors[] = lang($this->_msgTokenInsertFailed);
-                return false;
+        dbg("Form::dbAutoSave(): Entering");
+        if ($this->saveButtonPressed()) { // was save button clicked?
+            #$this->setNewValues($_POST); // this already happened if autosaveposted set; shouldn't happen if it wasn't
+            if ($this->getDBTableId()) { // update existing row
+                dbg("Form::dbAutoSave(): Updating");
+                if ($this->_updateIfValid()) {
+                    $this->successes[] = lang($this->_msgTokenUpdateSuccess);
+                    $this->postSuccessfulSave('update');
+                } else {
+                    $this->errors[] = lang($this->_msgTokenUpdateFailed);
+                    return false;
+                }
+            } else { // insert new row
+                dbg("Form::dbAutoSave(): Inserting");
+                if ($this->_insertIfValid()) {
+                    $this->successes[] = lang($this->_msgTokenInsertSuccess);
+                    $this->postSuccessfulSave('insert', $this->_db->lastId());
+                } else {
+                    $this->errors[] = lang($this->_msgTokenInsertFailed);
+                    return false;
+                }
             }
         }
+        # both delete and save button can be pressed because the dev may have
+        # assigned them to the same key (I want to delete these and update those)
+        if ($this->deleteButtonPressed()) { // was delete button clicked?
+            $deleted = 0;
+            foreach ((array)Input::get($this->getDeleteKey()) as $delId) {
+                if ($this->_db->deleteById($this->getDbTable(), $delId)) {
+                    $deleted += $this->_db->count();
+                }
+            }
+            if ($this->_db->error()) {
+                $this->errors[] = lang($this->_msgTokenDeleteFailed);
+            } else {
+                $this->successes[] = lang($this->_msgTokenDeleteSuccess, $deleted);
+                $this->postSuccessfulSave('delete', null, false);
+            }
+        }
+        dbg("gar=".$this->getAutoRedirect().", gras=".$this->getRedirectAfterSave());
+        if ($this->getAutoRedirect() && $this->getRedirectAfterSave()) {
+            dbg("Redirecting to ".$this->getRedirectAfterSave());
+            Redirect::to($this->getRedirectAfterSave());
+        }
+    }
+    public function postSuccessfulSave($action, $lastId=null, $override=true) {
+        static $alreadySet = false; // needed to delete doesn't override edit settings if both called
+        dbg("pSS(): alreadySet=$alreadySet, override=$override");
+        if ($override || !$alreadySet) {
+            dbg( "Calling sRAS() with rDAS (lastId=$lastId)");
+            $alreadySet = true;
+            $this->setRedirectAfterSave(redirDestAfterSave($action, $_SERVER['PHP_SELF'], $this->getIsMultiRow(), $lastId));
+            dbg( "postSuccessfulSave(): RedirAfterSave=".$this->getRedirectAfterSave());
+        }
+    }
+    public function deleteButtonPressed() {
+        foreach ((array)$this->getDeleteButton() as $btn) {
+            if (!empty(Input::get($btn))) {
+                $this->_actionButton = $btn;
+                return true;
+            }
+        }
+        return false;
+    }
+    public function saveButtonPressed() {
+        foreach ((array)$this->getSaveButton() as $btn) {
+            if (!empty(Input::get($btn))) {
+                $this->_actionButton = $btn;
+                return true;
+            }
+        }
+        return false;
     }
     public function setTitleByPage() {
-        global $T;
-        $page = $this->_db->query("SELECT * FROM $T[pages] pages WHERE page = ?", [$this->_formName]);
-        if ($page->count() > 0) {
-            $pageRow = $page->first();
-            $this->setMacro('Form_Title', lang($pageRow->title_lang));
+        if ($pageRow = getPagerowByName([$_SERVER['PHP_SELF'], $this->_formName])) {
+            $this->setMacro('Form_Title', lang($pageRow->title_token));
         }
     }
 
@@ -333,7 +489,7 @@ class US_Form extends Element {
         if (stripos($s, "{RESULT_BLOCK}") !== false) {
             $errors = isset($opts['errors']) ? $opts['errors'] : $this->errors;
             $successes = isset($opts['successes']) ? $opts['successes'] : $this->successes;
-            $macros['{RESULT_BLOCK}'] = ResultBlock((array)$errors, (array)$successes);
+            $macros['{RESULT_BLOCK}'] = resultBlock((array)$errors, (array)$successes);
         }
         if (stripos($s, "{GENERATE_CSRF_TOKEN}") !== false) {
             $macros['{GENERATE_CSRF_TOKEN}'] = Token::generate();
@@ -344,6 +500,54 @@ class US_Form extends Element {
         return $macros;
     }
 
+    public function getActionButton() {
+        return $this->_actionButton;
+    }
+    public function getSaveButton() {
+        return $this->_saveButton;
+    }
+    public function getDeleteButton() {
+        return $this->_deleteButton;
+    }
+    public function getDeleteKey() {
+        return $this->_deleteKey;
+    }
+    public function getAutoShow() {
+        return $this->_autoShow;
+    }
+    public function getAutoToC() {
+        return $this->_autoToC;
+    }
+    public function setAutoToC($val) {
+        $this->_autoToC = $val;
+    }
+    public function setAutoShow($val) {
+        $this->_autoShow = $val;
+    }
+    public function getAutoRedirect() {
+        return $this->_autoRedirect;
+    }
+    public function setAutoRedirect($val) {
+        $this->_autoRedirect = $val;
+    }
+    public function getRedirectAfterSave() {
+        return $this->_redirectAfterSave;
+    }
+    public function setRedirectAfterSave($val) {
+        $this->_redirectAfterSave = $val;
+    }
+    public function getExcludeFields() {
+        return $this->_excludeFields;
+    }
+    public function setExcludeFields($val) {
+        $this->_excludeFields = $val;
+    }
+    public function getIdsToDelete() {
+        return $this->_idsToDelete;
+    }
+    public function setIdsToDelete($val) {
+        $this->_idsToDelete = $val;
+    }
     public function getDbAutoSave() {
         return (Input::exists() && $this->_dbAutoSave);
     }
@@ -534,6 +738,12 @@ class US_Form extends Element {
         return $isEmpty;
     }
 
+	public function getIsMultiRow() {
+		return $this->_isMultiRow;
+	}
+    public function setIsMultiRow($val) {
+		$this->_isMultiRow=$val;
+	}
 	public function getFormName() {
 		return $this->_formName;
 	}
@@ -547,13 +757,16 @@ class US_Form extends Element {
             return false;
         }
         $this->errors = &$errors;
-        return _insertIfValid($fieldFilter);
+        return $this->_insertIfValid($fieldFilter);
     }
     public function _insertIfValid($fieldFilter=[]) {
         $fields = $this->fieldListNewValues($fieldFilter, true);
         #var_dump($fields);
         #var_dump($_POST);
         if ($this->checkFieldValidation($fields, $this->errors)) {
+            if (isset($fields['id'])) {
+                unset($fields['id']); // use auto increment
+            }
             if ($this->_db->insert($this->getDbTable(), $fields)) {
                 return $this->_db->lastId();
             } else {
@@ -580,7 +793,10 @@ class US_Form extends Element {
     protected function _updateIfValid($fieldFilter=[]) {
         $fields = $this->fieldListNewValues($fieldFilter, true);
         if ($this->checkFieldValidation($fields, $this->errors)) {
+            #dbg("_updateIfValid(): table=".$this->getDbTable().", id=".$this->getDbTableId());
+            #var_dump($fields);
             if ($this->_db->update($this->getDbTable(), $this->getDbTableId(), $fields)) {
+                #dbg("_updateIfValid(): SUCCESS");
                 return self::UPDATE_SUCCESS; // means update occurred
             } else {
                 $this->errors[] = lang('SQL_ERROR');
