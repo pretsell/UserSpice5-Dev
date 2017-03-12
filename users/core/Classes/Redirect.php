@@ -1,6 +1,6 @@
 <?php
 /*
-UserSpice 4
+UserSpice
 An Open Source PHP User Management System
 by the UserSpice Team at http://UserSpice.com
 
@@ -19,6 +19,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 class US_Redirect {
 	public static function to($location = null,$args='') {
+        foreach (['errors', 'successes'] as $i) {
+            #dbg("Redirect::to(): Checking $i");
+            if (!empty($GLOBALS[$i])) {
+                if (!empty($_SESSION[$i])) {
+                    $_SESSION[$i] = array_merge($_SESSION[$i], $GLOBALS[$i]);
+                } else {
+                    $_SESSION[$i] = $GLOBALS[$i];
+                }
+                $GLOBALS[$i] = []; // clear it out just in case
+            }
+        }
         #die('WOULD HAVE REDIRECTED TO: '.$location);
 		if ($location) {
 			if (is_numeric($location)) {
