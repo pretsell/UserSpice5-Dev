@@ -98,7 +98,7 @@ function fetchUserDetails($username=NULL,$token=NULL, $id=NULL) {
 		$data = $id;
 	}
 	$db = DB::getInstance();
-	$query = $db->query("SELECT * FROM $T[users] WHERE $column = $data LIMIT 1");
+	$query = $db->query("SELECT * FROM $T[users] WHERE $column = ? LIMIT 1", [$data]);
 	$results = $query->first();
 	return ($results);
 }
@@ -767,6 +767,9 @@ function resultBlock($errors,$successes) {
         #dbg("resultBlock(): had successes in session: ".print_r($_SESSION['successes'], true));
         $successes = array_merge($_SESSION['successes'], $successes);
         $_SESSION['successes'] = [];
+    }
+    if (configGet('site_offline')) {
+        $errors = array_merge([lang('SITE_OFFLINE_ADMIN_ONLY')], $errors);
     }
 
 	//Error block
