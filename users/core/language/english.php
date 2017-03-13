@@ -49,6 +49,9 @@ $lang = array_merge($lang, array(
   'RECORD_UPDATE_FAILED'                 => 'Failed to update record.',
   'RECORD_INSERT_SUCCESS'                => 'Record added.',
   'RECORD_INSERT_FAILED'                 => 'Failed to add record.',
+  'SITE_OFFLINE_ADMIN_ONLY'              => 'This site is temporarily offline. Access is available only for administrators.',
+  'PLEASE_COME_BACK_LATER'               => 'Please come back later.',
+
   //Login/Logout/Join
   'CHOOSE_USERNAME'                      => 'Choose a Username',
   'CHOOSE_USERNAME_REQUIREMENTS'         => 'No Spaces or Special Characters',
@@ -321,6 +324,8 @@ $lang = array_merge($lang, array(
   'HINT_REDIRECT_DENY_NOLOGIN'           => 'Go to this page when a non-logged-in user attempts to access a private page',
   'SETTINGS_REDIRECT_DENY_NOPERM'        => 'Redirect on page deny when no permissions',
   'HINT_REDIRECT_DENY_NOPERM'            => 'Go to this page when a logged-in-user attempts to access a non-authorized page',
+  'SETTINGS_REDIRECT_SITE_OFFLINE'       => 'Redirect when site is offline',
+  'HINT_REDIRECT_SITE_OFFLINE'           => 'Go to this page for non-administrators when the site is offline for maintenance',
   'SETTINGS_MULTI_ROW_AFTER_CREATE'      => 'Action to take after successful saving of a NEW ROW on a page with a list of rows',
   'HINT_MULTI_ROW_AFTER_CREATE'          => 'Multi-row pages (lists) - what do we do after we successfully create a new row on this page?',
   'SETTINGS_MULTI_ROW_AFTER_EDIT'        => 'Action to take after successful saving of a MODIFIED ROW on a page with a list of rows',
