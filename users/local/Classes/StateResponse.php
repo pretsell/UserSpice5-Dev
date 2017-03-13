@@ -17,3 +17,6 @@ class StateResponse_DenyNoLogin extends US_StateResponse_DenyNoLogin {
 
 class StateResponse_DenyNoPerm extends US_StateResponse_DenyNoPerm {
 }
+
+class StateResponse_SiteOffline extends US_StateResponse_SiteOffline {
+}

@@ -88,3 +88,8 @@ class US_StateResponse_DenyNoPerm extends StateResponse {
     protected $state = 'deny_noperm';
     #protected $dflt_redirect = 'index.php';
 }
+
+class US_StateResponse_SiteOffline extends StateResponse {
+    protected $state = 'site_offline';
+    #protected $dflt_redirect = 'index.php';
+}
