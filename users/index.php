@@ -1,34 +1,5 @@
 <?php
-/*
-UserSpice 4
-An Open Source PHP User Management System
-by the UserSpice Team at http://UserSpice.com
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-?>
-<?php
-require_once 'z_us_root.php';
-if (file_exists($locali = US_ROOT_DIR.'local/includes/init.php')) {
-    require_once $locali;
-} else {
-    require_once US_ROOT_DIR.'us_core/includes/init.php';
-}
-if(isset($user) && $user->isLoggedIn()){
-  Redirect::to(US_URL_ROOT.'users/profile.php');
-}else{
-  Redirect::to(US_URL_ROOT.'users/login.php');
-}
-die();
-?>
+$formName = 'index.php';
+#$enableMasterHeaders = $enableMasterFooters = true;
+require_once 'C:/wamp/www/UserSpice5-Dev/users/z_us_root.php';
+require_once US_ROOT_DIR.'core/master_form.php';
