@@ -32,7 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * version 4 and before) then please note that most configuration has been
  * moved into the database (see DB table `settings`) and can be modified through
  * the "settings" menu on the admin dashboard. Configuration that has not
- * moved to the database is now done through editing local/config.php.
+ * moved to the database is now done through editing local/config.php and any
+ * files in local/ are fair game to be changed.
  */
 
 # If we are using old-style single-script-form (not using master_form) then
@@ -52,9 +53,9 @@ if (!defined('US_ROOT_DIR')) {
 }
 
 /*
-If the site over-rides init.php with a copy in local/includes then include
-that file and don't continue here.
-*/
+ * If the site over-rides init.php with a copy in local/includes then include
+ * that file and don't continue here.
+ */
 # IF YOU COPY THIS SCRIPT TO local/includes/init.php MAKE SURE THAT YOU
 # GET RID OF THESE LINES (BELOW) - otherwise it is circular
 if (file_exists(US_ROOT_DIR.'local/includes/init.php')) {
@@ -66,19 +67,19 @@ error_reporting(E_ALL);
 ini_set("display_errors",1);
 
 /*
-Get the values from local/config.php and make it available via the class
-"Config" in Classes/Config.php (as defined (class "US_Config") in
-core/Classes/Config.php and then implemented (class "Config") in
-local/Classes/Config.php).
-*/
+ * Get the values from local/config.php and make it available via the class
+ * "Config" in Classes/Config.php (as defined (class "US_Config") in
+ * core/Classes/Config.php and then implemented (class "Config") in
+ * local/Classes/Config.php).
+ */
 include_once US_ROOT_DIR.'core/Classes/Config.php';
 include_once US_ROOT_DIR.'local/Classes/Config.php';
 include_once US_ROOT_DIR.'local/config.php';
 
 /*
-require_once classes from users/classes/*.php
-using PHP autoloader conflicts with Google and Facebook autoloader
-*/
+ * require_once classes from users/classes/*.php
+ * using PHP autoloader conflicts with Google and Facebook autoloader
+ */
 spl_autoload_register('us_classloader');
 function us_classloader($class_name) {
     $classMap = [
@@ -98,22 +99,22 @@ function us_classloader($class_name) {
 }
 
 /*
-Autoload Facebook and Google APIs/SDKs
-*/
+ * Autoload Facebook and Google APIs/SDKs
+ */
 require_once US_ROOT_DIR.'core/social_src/Google/autoload.php';
 require_once US_ROOT_DIR.'core/social_src/Facebook/autoload.php';
 
 /*
-session_start() is placed after the autoloading so that class definitions
-are loaded before any session processing
-*/
+ * session_start() is placed after the autoloading so that class definitions
+ * are loaded before any session processing
+ */
 session_start();
 #var_dump($_SESSION);
 
 require_once US_ROOT_DIR.'local/config.php';
 
 /*
- * $us_tables = the tables that makeup userspice
+ * $us_tables = the tables that make up UserSpice
  * (if you update this, be sure to update $us_tables in install/initdb.php and
  * the corresponding $init_commands there.)
  */
@@ -198,24 +199,31 @@ if ($user->isLoggedIn()) {
 new_user_online($user_id);
 
 /*
-If user logged in and not verified, then redirect
-*/
+ * If user logged in and not verified, then redirect
+ * Hmmm... What if it is a public page?
+ */
 if ($user->isLoggedIn()) {
-    #dbg("Init: user IS logged in - checking if emial verified<br />\n");
+    #dbg("Init: user IS logged in - checking if email verified<br />\n");
 	if($user->data()->email_verified == 0 && $currentPage != 'verify.php' && $currentPage != 'logout.php' && $currentPage != 'verify_thankyou.php'){
 		$user->logout();
 		Redirect::to(US_URL_ROOT.'users/verify_resend.php');
 	}
 }
 
-# Maintenance Mode?
-if (configGet('site_offline')==1) {
-	die("The site is currently offline.");
+/*
+ * Maintenance Mode?
+ */
+if (configGet('site_offline')==1 && (!$user->isLoggedIn() || !$user->isAdmin())) {
+    $pageData = getPagerowByName([$_SERVER['PHP_SELF'], @$formName]);
+    if (!$pageData || !$pageData->site_offline_access) {
+        $offline_response = new StateResponse_SiteOffline;
+        $offline_response->respond();
+    }
 }
 
 /*
-SSL Enforcement
-*/
+ * SSL Enforcement
+ */
 if (configGet('force_ssl') == 1) {
 	if (!isset($_SERVER['HTTPS']) || !$_SERVER['HTTPS']) {
 		// if request is not secure, redirect to secure url
@@ -226,8 +234,8 @@ if (configGet('force_ssl') == 1) {
 }
 
 /*
-Session Time Out Management
-*/
+ * Session Time Out Management
+ */
 //if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > configGet('session_timeout')) && $user->isLoggedIn()) {
 if (isset($_SESSION['LAST_ACTIVITY']) && ((time()-$_SESSION['LAST_ACTIVITY']) > configGet('session_timeout'))) {
 	session_unset(); // unset $_SESSION variable for the run-time
