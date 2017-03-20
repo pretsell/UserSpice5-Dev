@@ -10,6 +10,8 @@ class FormField_Checkbox extends US_FormField_Checkbox {
 }
 class FormField_Hidden extends US_FormField_Hidden {
 }
+class FormField_MultiHidden extends US_FormField_MultiHidden {
+}
 class FormField_Password extends US_FormField_Password {
 }
 class FormField_Radio extends US_FormField_Radio {
