@@ -51,6 +51,7 @@ $lang = array_merge($lang, array(
   'RECORD_INSERT_FAILED'                 => 'Failed to add record.',
   'SITE_OFFLINE_ADMIN_ONLY'              => 'This site is temporarily offline. Access is available only for administrators.',
   'PLEASE_COME_BACK_LATER'               => 'Please come back later.',
+  'YOUR_ACCOUNT_IS_BLOCKED'              => 'Your account with username "%m1%" has been blocked by an administrator. All account actions and permissions associated with your account are completely non-functioning. If you believe this is an error, please contact the administrator of this site (%m2%).',
 
   //Login/Logout/Join
   'CHOOSE_USERNAME'                      => 'Choose a Username',
@@ -423,6 +424,15 @@ $lang = array_merge($lang, array(
   'ADMIN_USERS_TITLE'                    => 'Manage Users',
   'NO_USERS_DEFINED'                     => 'No Users Defined',
   'DELETE_SELECTED_USERS'                => 'Delete Selected Users',
+  'GROUP_MEMBERSHIP'                     => 'Group Membership',
+  'REMOVE_USER_FROM_GROUPS'              => 'Remove User From These Groups(s):',
+  'ADD_USER_TO_GROUPS'                   => 'Add User To These Group(s):',
+  'NOT_MEMBER_ANY_GROUPS'                => '(User is not a member of any groups)',
+  'NO_GROUPS_TO_JOIN'                    => '(There are no groups for this user to join)',
+  'BLOCK_USER'                           => 'Block User?',
+  'HINT_BLOCK_USER'                      => 'Blocking a user disallows their login and any access',
+  'BLOCKED'                              => 'Blocked',
+  'NOT_BLOCKED'                          => 'NOT Blocked',
 
   // other page titles
   'FORGOT_PASSWORD_TITLE'                => 'Forgot Password',
