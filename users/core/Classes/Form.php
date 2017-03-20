@@ -996,8 +996,8 @@ class US_Form extends Element {
     }
     protected function _updateIfValid($fieldFilter=[]) {
         $fields = $this->fieldListNewValues($fieldFilter, true, $this->getDbTable());
-        dbg("_updateIfValid(): table=".$this->getDbTable().", id=".$this->getDbTableId());
-        var_dump($fields);
+        #dbg("_updateIfValid(): table=".$this->getDbTable().", id=".$this->getDbTableId());
+        #var_dump($fields);
         if (!$fields) {
             return self::UPDATE_NO_CHANGE; // means no error, but no update occurred
         }
