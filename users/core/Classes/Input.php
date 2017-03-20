@@ -34,6 +34,7 @@ class US_Input {
 	}
 
 	public static function get($item, $method='request') {
+        #dbg("Input::get(): Entering");
 		switch (strtolower($method)) {
 			case 'get':
 				$src = &$_GET;
@@ -46,6 +47,8 @@ class US_Input {
 				break;
 		}
 		if (isset($src[$item])) {
+            return self::_getItem($src[$item]);
+            /*
 			# If the item is an array, process each item independently, and return array of sanitized items.
 			if (is_array($src[$item])){
 				$items=array();
@@ -56,9 +59,25 @@ class US_Input {
 			} else {
 				return self::sanitize($src[$item]);
 			}
+            */
 		}
 		return '';
 	}
+    // recursive function to process recursive arrays in $_POST/$_GET/$_REQUEST
+    private static function _getItem($items) {
+        #dbg("_getItem(): Entering");
+		if (is_array($items)){
+            #dbg("array");
+			$newItems=[];
+			foreach ($items as $k => $item){
+                #dbg("k=$k, item=<pre>".print_r($item,true)."</pre>");
+				$newItems[$k]=self::_getItem($item);
+			}
+			return $newItems;
+		} else {
+			return self::sanitize($items);
+		}
+    }
 
 	public static function delete($items, $method='request') {
 		switch (strtolower($method)) {
@@ -80,6 +99,14 @@ class US_Input {
 	}
 
 	public static function sanitize($string) {
-		return trim(htmlentities($string, ENT_QUOTES, 'UTF-8'));
+        if (is_array($string)) {
+            $newArray = [];
+            foreach ($string as $s) {
+                $newArray[] = self::sanitize($s);
+            }
+            return $newArray;
+        } else {
+    		return trim(htmlentities($string, ENT_QUOTES, 'UTF-8'));
+        }
 	}
 }
