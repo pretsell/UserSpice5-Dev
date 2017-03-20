@@ -118,33 +118,84 @@ class US_DB {
 		return $this->delete($table, 'id = ?', [$id]);
 	}
 
-	public function action($action, $table, $where=array(), $bindvals=[], $orderBy=null) {
+	public function action($action, $table, $where=[], $bindvals=[], $orderBy=null) {
         global $T;
         if (@$T[$table]) {
             $table = $T[$table];
         }
 		$sql = "{$action} FROM ".$table;
 		$value = '';
-        if (!is_array($where)) {
-            if ($where) {
-                $sql .= " WHERE " . $where;
-            }
-            // $bindvals already set
-        } elseif (count($where) == 3) {
-			$field = $where[0];
-			$operator = $where[1];
-			$value = $where[2];
-
-			if (in_array($operator, ['=', '>', '<', '>=', '<='])) {
-				$sql .= " WHERE {$field} {$operator} ?";
-			}
-            $bindvals = [$value];
-		}
+        if ($whereClause = $this->calcWhereClause($where, $bindvals)) {
+            $sql .= $whereClause;
+            #dbg("ACTION: ".$sql." ==> ".print_r($bindvals,true));
+        }
         if ($orderBy) {
             $sql .= " ORDER BY " . implode(",", (array)$orderBy);
         }
+        #dbg($sql);
+        #dbg('['.implode($bindvals, ',').']');
         return $this->query($sql, $bindvals);
 	}
+    public function calcWhereClause($where, &$bindvals) {
+        $wherecond = ''; // default if nothing is specified
+        if (!is_array($where)) { // $where is a simple string
+            if ($where) {
+                $wherecond = " WHERE " . $where;
+            }
+            // $bindvals already set
+        } else { // it's an array
+            reset($where);
+            $key = key($where);
+            $ops = ['=', '>', '<', '>=', '<=', '!=', '<>'];
+            if (count($where) == 3 && is_numeric($key) && in_array($where[1], $ops)) { // e.g. ['field', '=', 'value']
+    			$field = $where[0];
+    			$operator = $where[1];
+    			$value = $where[2];
+
+				$wherecond = " WHERE {$field} {$operator} ?";
+                $bindvals = [$value];
+            } else { // either ['field' => 'value'] -or- ['field' => ['!=', 'value']]
+                $bindvals = [];
+                $wherecond = ' WHERE ';
+                $boolop = '';
+                foreach ($where as $k => $v) {
+                    if (is_numeric($k)) {
+                        $boolop = $v;
+                        continue;
+                    }
+                    if (is_array($v)) {
+                        if (count($v) > 1) {
+                            $op = $v[0];
+                            $val = $v[1];
+                        } elseif (count($v) == 1) {
+                            $op = '=';
+                            $val = $v[0];
+                        }
+                    } else { // $v is a simple value; assume op is =
+                        $op = '=';
+                        $val = $v;
+                    }
+                    if (is_null($val)) {
+                        if ($op == '=' || strtolower($op) == 'is') {
+                            $cond = $k.' IS NULL';
+                        } else {
+                            $cond = $k.' IS NOT NULL';
+                        }
+                        // no $bindvals
+                    } else {
+                        if (!in_array($op, $ops)) {
+                            dbg("ERROR: '$op' is not a valid operator [where=".print_r($wherecond,true)."]");
+                        }
+                        $bindvals[] = $val;
+                        $cond = $k.' '.$op.' ?';
+                    }
+                    $wherecond .= $boolop . ' (' . $cond . ') ';
+                    $boolop = 'AND';
+                }
+    		}
+        }
+        return $wherecond;
+    }
 
 	public function insert($table, $fields = array()) {
         global $T;
@@ -161,7 +212,14 @@ class US_DB {
 		return false;
 	}
 
+    // alias for DB::update()
+	public function updateById($table, $id, $fields) {
+        return $this->update($table, $id, $fields);
+    }
 	public function update($table, $id, $fields) {
+        return $this->updateAll($table, $fields, ['id'=>$id]);
+	}
+    public function updateAll($table, $fields, $where, $bindvals=[]) {
         global $T;
         if (@$T[$table]) {
             $table = $T[$table];
@@ -172,10 +230,13 @@ class US_DB {
             $comma = ', ';
 		}
 
-		$sql = "UPDATE ".$table." SET {$set} WHERE id = ?";
-        $fields[] = $id; // add final bind value
-		return !$this->query($sql, $fields)->error();
-	}
+        $whereClause = $this->calcWhereClause($where, $bindvals);
+        $bindvals = array_merge($fields, $bindvals);
+		$sql = "UPDATE ".$table." SET {$set} {$whereClause}";
+        #dbg("UPDATE: ".$sql." ==> ".print_r($bindvals,true));
+        #$fields[] = $id; // add final bind value
+		return !$this->query($sql, $bindvals)->error();
+    }
 
 	public function results($assoc = false) {
 		if ($assoc) {
