@@ -79,6 +79,36 @@ abstract class US_FormField_Hidden extends FormField {
             <input type="{TYPE}" name="{FIELD_NAME}" value="{VALUE}">
             ';
 }
+abstract class US_FormField_MultiHidden extends FormField {
+    protected $_fieldType = "hidden";
+    public $elementList = ['Input'], // no Pre or Post
+        $HTML_Input = '<input type="{TYPE}" name="{COLUMN_NAME_PREFIX}{COLUMN_NAME}[{ID}]" value="{COLUMN_VALUE}">
+            ';
+        #$_dataFields = [],
+        #$_dataFieldLabels = [];
+    public $repMacroAliases = ['{ID}', '{COLUMN_NAME}'],
+        $repElement = 'HTML_Input',
+        $MACRO_Column_Name_Prefix = '';
+
+    public function handle1Opt($name, &$val) {
+        switch (strtolower(str_replace('_', '', $name))) {
+            case 'sqlcols':
+                $saveInput = $this->HTML_Input;
+                $this->HTML_Input = '';
+                foreach ($val as $v) {
+                    if ($v == 'id') continue;
+                    $this->HTML_Input .= str_replace(['{COLUMN_NAME}','{COLUMN_VALUE}'], [$v, '{'.$v.'}'], $saveInput);
+                }
+                #dbg("HIDDEN INPUT: ".$this->HTML_Input);
+                return true;
+            case 'prefix':
+                $this->setMacro('Column_Name_Prefix', $val);
+                return true;
+        }
+        return parent::handle1Opt($name, $val);
+    }
+}
+
 
 abstract class US_FormField_Password extends FormField {
     protected $_fieldType = "password";
@@ -205,17 +235,13 @@ abstract class US_FormField_Select extends FormField {
         $placeholderRow = [],
         $selected = 'selected="selected"';
     public function handle1Opt($name, &$val) {
-        switch (strtolower($name)) {
-            case 'placeholder_row':
+        switch (strtolower(str_replace('_', '', $name))) {
             case 'placeholderrow':
                 $this->setPlaceholderRow($val);
                 return true;
-                break;
             case 'idfield':
-            case 'id_field':
                 $this->setIdField($val);
                 return true;
-                break;
         }
         return parent::handle1Opt($name, $val);
     }
@@ -269,6 +295,7 @@ abstract class US_FormField_Table extends FormField {
     protected $_fieldType = "table",
         $_dataFields = [],
         $_dataFieldLabels = [];
+    public $repMacroAliases = ['{ID}', '{NAME}'];
     public
         $MACRO_Table_Class = "table-hover",
         $MACRO_TH_Row_Class = "",
@@ -299,11 +326,13 @@ abstract class US_FormField_Table extends FormField {
         $repElement = 'HTML_Input';
 
     public function handle1Opt($name, &$val) {
-        switch (strtolower($name)) {
-            case 'table_data_cells':
+        switch (strtolower(str_replace('_', '', $name))) {
             case 'tabledatacells':
-            case 'td_row':
+            case 'tdrow':
                 #dbg('setting table_data_cells');
+                if (is_array($val)) {
+                    $val = '<td>'.implode('</td><td>', $val).'</td>';
+                }
                 $this->HTML_Input = $this->processMacros(
                     [
                         '{TABLE_DATA_CELLS}'=>$val,
@@ -313,11 +342,12 @@ abstract class US_FormField_Table extends FormField {
                     $this->HTML_Input);
                 #dbg('AFTER: HTML_Input='.htmlentities($this->HTML_Input));
                 return true;
-                break;
-            case 'table_head_cells':
             case 'tableheadcells':
-            case 'th_row':
+            case 'throw': // th_row
                 #dbg('setting table_head_cells');
+                if (is_array($val)) {
+                    $val = '<th>'.implode('</th><th>', $val).'</th>';
+                }
                 $this->HTML_Pre = $this->processMacros(
                     ['{TABLE_HEAD_CELLS}'=>$val], $this->HTML_Pre);
                 #dbg("Setting Data Fields<br />\n");
@@ -325,7 +355,6 @@ abstract class US_FormField_Table extends FormField {
                 #dbg("_dataFieldLabels=".print_r($this->_dataFieldLabels,true));
                 #dbg('AFTER: HTML_Pre='.htmlentities($this->HTML_Pre));
                 return true;
-                break;
             case 'searchable':
                 if ($val) {
                     $this->MACRO_Table_Class .= ' table-list-search';
@@ -333,7 +362,11 @@ abstract class US_FormField_Table extends FormField {
                     dbg("Turning searchable OFF is not implemented");
                 }
                 return true;
-                break;
+            case 'label':
+            case 'display':
+            case 'checkboxlabel':
+                $this->setMacro('Checkbox_Label', $val);
+                return true;
         }
         return parent::handle1Opt($name, $val);
     }
