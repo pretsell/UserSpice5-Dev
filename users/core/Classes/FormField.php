@@ -37,6 +37,7 @@ abstract class US_FormField extends Element {
         # for repeating elements, this class can control the SELECT
         # rather than setting it manually by setRepData(). This allows
         # things like pagination,
+        $_sql='',  // entire SQL SELECT statement (not available if paginating - use cols/from/where)
         $_sqlCols='',  // SELECT <this part here>
         $_sqlFrom='',  //   FROM <this part here>
         $_sqlWhere='', //  WHERE <this part here>
@@ -57,7 +58,7 @@ abstract class US_FormField extends Element {
         $HTML_Input = '
               <input class="{INPUT_CLASS}" type="{TYPE}" id="{FIELD_ID}" '
             .'name="{FIELD_NAME}" placeholder="{PLACEHOLDER}" value="{VALUE}" '
-            .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB} {DISABLED}>',
+            .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB} {DISABLED} {READONLY}>',
         $HTML_Post = '
             </div> <!-- {DIV_CLASS} (type={TYPE} id={FIELD_ID}, name={FIELD_NAME}) -->',
         $HTML_Script = '',
@@ -79,6 +80,7 @@ abstract class US_FormField extends Element {
         $MACRO_Extra_Attrib = '',
         $MACRO_Value = '',
         $MACRO_Disabled = '',
+        $MACRO_Readonly = '',
         $MACRO_Page_Index = '';
 
     public function __construct($opts=[]) {
@@ -97,7 +99,10 @@ abstract class US_FormField extends Element {
             unset($opts['field']); // don't need anymore
             $field_def = []; // no field-def to work with
         }
+        #dbg("Checking fn=$fn");
+        #var_dump($opts);
         if ($fn) {
+            #dbg("Setting FieldName to $fn");
             $this->setFieldName($fn);
         }
         if (is_null($this->getPlaceholder())) {
@@ -114,93 +119,66 @@ abstract class US_FormField extends Element {
     }
 
     public function handle1Opt($name, &$val) {
-        switch(strtolower($name)) {
-            case 'display_lang':
+        $this->debug(2, "::(FormField::)handle1Opt($name, ".print_r($val,true).")");
+        switch (strtolower(str_replace('_', '', $name))) {
             case 'displaylang':
-            case 'display_token':
             case 'displaytoken':
                 $val = lang($val);
-                # NOTE: No break - falling through to 'display' with $val set
+                # NOTE: No break/return - falling through to 'display' with $val set
             case 'display':
-                # NOTE: We could be falling through from above with no break
+                # NOTE: We could be falling through from above with no break/return
                 $this->setFieldLabel($val);
                 $this->setMacro('Label_Text', $val);
                 return true;
-                break;
             case 'value':
                 $this->setFieldValue($val);
                 return true;
-                break;
-            case 'new_valid':
-            case 'new_validate':
+            case 'newvalid':
+            case 'newvalidate':
             case 'valid':
             case 'validate':
-            case 'validate_object':
+            case 'validateobject':
                 $this->setValidator($val);
                 return true;
-                break;
-            case 'is_dbfield':
-            case 'is_db_field':
             case 'isdbfield':
                 $this->setIsDBField($val);
                 return true;
-                break;
             case 'placeholder':
-            case 'place_holder':
                 $this->setPlaceholder($val);
                 return true;
-                break;
             case 'extra':
                 $this->setMacro('Extra_Attrib', $val);
                 return true;
-                break;
             case 'fieldid':
-            case 'field_id':
                 $this->setFieldId($val);
                 return true;
-                break;
-            case 'sql_cols':
+            case 'sql':
+                $this->setSQL($val);
+                return true;
             case 'sqlcols':
                 $this->setSQLCols($val);
                 return true;
-                break;
-            case 'sql_from':
             case 'sqlfrom':
                 $this->setSQLFrom($val);
                 return true;
-                break;
-            case 'sql_where':
             case 'sqlwhere':
                 $this->setSQLWhere($val);
                 return true;
-                break;
-            case 'sql_group':
             case 'sqlgroup':
                 $this->setSQLGroup($val);
                 return true;
-                break;
-            case 'sql_order':
             case 'sqlorder':
                 $this->setSQLOrder($val);
                 return true;
-                break;
-            case 'sql_bindvals':
             case 'sqlbindvals':
                 $this->setSQLBindVals($val);
                 return true;
-                break;
-            case 'page_items':
             case 'pageitems':
                 $this->setPageItems($val);
                 return true;
-                break;
-            case 'page_var_name':
-            case 'pagevar_name':
-            case 'page_varname':
             case 'pagevarname':
                 $this->setPageVarName($val);
                 return true;
-                break;
         }
         return parent::handle1Opt($name, $val);
     }
@@ -225,21 +203,37 @@ abstract class US_FormField extends Element {
             return false;
         }
         $this->debug(2, '::calcRepData(): Continuing');
+        $fullSql = $this->getSQL();
         $cols = $this->getSQLCols();
         $from = $this->getSQLFrom();
+        // these are required elements - use DUAL in the (unlikely) case
+        // where you don't have a FROM table; use 1=1 in the case where
+        // you don't have a WHERE clause
+        if (!$fullSql && (!$cols || !$from)) {
+            if ($cols || $from) {
+                dbg("ERROR: Must specify at least cols and from");
+            }
+            return false;
+        }
         $where = $this->getSQLWhere();
+        if ($where) {
+            $where = "WHERE $where";
+        }
         $groupBy = $this->getSQLGroup();
         $order = $this->getSQLOrder();
         $bindVals = $this->getSQLBindVals();
         $pageItems = $this->getPageItems();
-        // these are required elements - use DUAL in the (unlikely) case
-        // where you don't have a FROM table; use 1=1 in the case where
-        // you don't have a WHERE clause
-        if (!$cols || !$from || !$where) {
-            return false;
-        }
+        $this->debug(5,"fullSql=$fullSql");
+        $this->debug(5,"cols=$cols");
+        $this->debug(5,"from=$from");
+        $this->debug(5,"groupBy=$groupBy");
+        $this->debug(5,"where=$where");
         $this->debug(2, '::calcRepData(): Still Continuing');
         if ($pageItems) {
+            if ($fullSql) {
+                dbg("FATAL ERROR: Cannot do pagination specifying straight SQL");
+                return false;
+            }
             if ($this->getCurPage() < 1) {
                 #dbg('varname='.$this->getPageVarName());
                 if (!$cur = Input::get($this->getPageVarName())) {
@@ -249,7 +243,7 @@ abstract class US_FormField extends Element {
             }
             // paginating
             // calculate total number of pages
-            $sql = "SELECT COUNT(*) AS c FROM $from $groupBy WHERE $where";
+            $sql = "SELECT COUNT(*) AS c FROM $from $groupBy $where";
             $result = $this->_db->query($sql, $bindVals)->first();
             $totalPages = ceil($result->c / $pageItems);
             $this->setTotalPages($totalPages);
@@ -260,12 +254,16 @@ abstract class US_FormField extends Element {
             $offset = max(0, ($curPage - 1)) * $pageItems;
             $this->setPageIndex();
         }
-        $sql = "SELECT $cols FROM $from $groupBy WHERE $where";
-        if ($order) {
-            $sql .= " ORDER BY $order";
-        }
-        if ($pageItems) { // paginating
-            $sql .= " LIMIT $offset,$pageItems";
+        if ($fullSql) {
+            $sql = $fullSql;
+        } else {
+            $sql = "SELECT $cols FROM $from $groupBy $where";
+            if ($order) {
+                $sql .= " ORDER BY $order";
+            }
+            if ($pageItems) { // paginating
+                $sql .= " LIMIT $offset,$pageItems";
+            }
         }
         $this->debug(3, "::calcRepData(): sql=$sql");
         $this->setRepData($this->_db->query($sql, $bindVals)->results());
@@ -323,7 +321,16 @@ abstract class US_FormField extends Element {
     public function isChanged() {
         return ($this->_fieldNewValue != $this->_fieldValue);
     }
+	public function getSQL(){
+		return $this->_sql;
+	}
+	public function setSQL($val){
+		$this->_sql = $val;
+	}
 	public function getSQLCols(){
+        if (is_array($this->_sqlCols)) {
+            return implode(',', $this->_sqlCols);
+        }
 		return $this->_sqlCols;
 	}
 	public function setSQLCols($val){
@@ -513,6 +520,13 @@ abstract class US_FormField extends Element {
             $this->MACRO_Disabled = 'disabled';
         } else {
             $this->MACRO_Disabled = '';
+        }
+    }
+    public function setReadonly($val) {
+        if ($val) {
+            $this->MACRO_Readonly = 'readonly';
+        } else {
+            $this->MACRO_Readonly = '';
         }
     }
 
