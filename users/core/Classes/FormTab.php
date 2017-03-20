@@ -59,7 +59,8 @@ class US_Form_Panel extends Form {
     public $MACRO_Panel_Class = 'panel-default',
         $MACRO_Body_Class = '',
         $MACRO_Head_Class = '',
-        $MACRO_Foot_Class = '';
+        $MACRO_Foot_Class = '',
+        $MACRO_Form_Title = ''; // if null it reads title from pages table
     public function getHTMLHeading() {
         if ($this->HTML_Head) {
             return '<div class="panel-heading {HEAD_CLASS}">'.$this->HTML_Head.'</div>';
