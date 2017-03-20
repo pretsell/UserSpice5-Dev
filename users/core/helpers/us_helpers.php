@@ -461,7 +461,7 @@ function checkToken($name='csrf', $method='post') {
 //   3=redirect to specified (custom) destination (only used in pages, not settings)
 //     (The custom destination is then obtained from pages.after_(create|edit|delete)_redirect)
 //   4=edit a new row (redirect to same page but without ?id=n in URL)
-function redirDestAfterSave($action, $pageName, $multiRowPage=false, $lastId=null) {
+function redirDestAfterSave($action, $pageNames, $multiRowPage=false, $lastId=null) {
     #dbg("redirDestAfterSave(action=$action, pageName=$pageName, multiRowPage=$multiRowPage, lastId=$lastId): entering");
     $actionRenames = ['update'=>'edit', 'insert'=>'create', 'add'=>'create'];
     if (isset($actionRenames[$action])) {
@@ -474,7 +474,9 @@ function redirDestAfterSave($action, $pageName, $multiRowPage=false, $lastId=nul
     $destType = 0; // assume no page override
     $pageRow = null;
     #dbg("redirDestAfterSave(): Checking page settings");
-    if ($pageRow = getPagerowByName($pageName)) {
+    $pageNames = (array)$pageNames;
+    $pageName = $pageNames[0]; // default redirect for $destType==1 will be 1st element in array
+    if ($pageRow = getPagerowByName($pageNames)) {
         $fieldName = 'after_'.$action; // after_edit, after_delete, etc.
         $destType = $pageRow->$fieldName;
         if ($destType == 3) { // custom redirect - not valid in settings below
@@ -498,31 +500,26 @@ function redirDestAfterSave($action, $pageName, $multiRowPage=false, $lastId=nul
         $fieldName .= $action;
         $destType = configGet($fieldName);
     }
-    #dbg("redirDestAfterSave(): destType=$destType");
-    if ($action == 'edit' && $destType == 1) {
-        #dbg("Edit & 1 - returning null");
-        return null; // don't need to do anything - null means don't redirect
-    }
-    #dbg("Switching on destType=$destType");
+    #dbg("redirDestAfterSave(): Switching on destType=$destType");
     switch ($destType) {
-        case 2:
-            if ($pageRow->breadcrumb_parent_page_id) {
+        case 1: // stay where you are (if creating then edit just-added record)
+            if ($action == 'create') {
+                return $pageName.'?id='.$lastId; // redirect to edit current record
+            } else {
+                return null; // just stay where you are - no redirect
+            }
+        case 2: // try to go to breadcrumb parent
+            if ($pageRow && $pageRow->breadcrumb_parent_page_id) {
                 $db = DB::getInstance();
                 $pageRow = $db->findById('pages', $pageRow->breadcrumb_parent_page_id)->first();
                 #dbg("Returning ".$pageRow->page);
                 return $pageRow->page;
-            } elseif ($action == 'edit') {
+            } elseif ($action == 'edit') { // can't find page or no breadcrumb parent specified
                 return null; // equivalent of $destType == 1 as above
             }
-            // NOTE: No break - falling through
-        case 1:
-            // NOTE: Falling through from above
-            return $pageName.'?id='.$lastId;
-            break;
-        #case 3: // handled up above
-        case 4:
+        #case 3: // handled up above -- only valid if on a specific page
+        case 4: // insert a new record
             return $pageName; // assume it has no '?id=n' in the URL
-            break;
     }
     dbg("ERROR: Unknown destination #$destType. Redirection will not work as expected.");
 }
@@ -649,7 +646,7 @@ function securePage($uri=null) {
 	//retrieve page details, whichever is the first to be found
     // normal priority: (1) $formName, (2) PHP_SELF, (3) PHP_SELF without US_URL_ROOT
 	if (!$results = getPagerowByName($pages)) {
-        bold($page);
+        bold($uri);
 		bold('<br><br>You must go into the Admin Panel and click the Manage Pages button to add this page to the database. Doing so will make this error go away.');
 		die();
 	}
