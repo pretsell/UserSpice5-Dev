@@ -107,8 +107,14 @@ if (isset($enableMasterHeaders) && $enableMasterHeaders) {
 # pathFinder() here will look in the paths defined in config.php
 # in configGet('forms_path') for $formName
 #
-if ($formPath = pathFinder($formName, '', 'forms_path',
-        [US_ROOT_DIR.'local/forms/', US_ROOT_DIR.'core/forms/'])) {
+$found = false;
+foreach ([$formName, basename($_SERVER['PHP_SELF'])] as $fn) {
+    if ($formPath = pathFinder($fn, '', 'forms_path',
+            [US_ROOT_DIR.'local/forms/', US_ROOT_DIR.'core/forms/'])) {
+        $found = true;
+    }
+}
+if ($found) {
     $successes = $errors = []; # some convenient initializations
     require_once $formPath;
 } else {
