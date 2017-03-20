@@ -40,6 +40,12 @@ class US_Form extends Element {
         $_idsToDelete=null, // which IDs to delete if autosave is active and data is posted
         $_excludeFields=['id'], // with default=all which fields do not show
         $_isMultiRow=false, // default to being a form editing a single row (used esp with post-save actions & redirects)
+        $_multiRowDeleteWhere=[], // typically ['id'=>'{inputvar}'] where key 'id' is a column in the table and '{inputvar}' needs to be
+                                   // an input value (index for $_POST returning an array). Note that {inputvar} is case-sensitive.
+        $_multiRowUpdateFields=[],
+        $_multiRowInsertFields=[], // $fields for `$db->insert(tbl, $fields)` in format ['field-in-insert-dest-table'=>'{input-field}', ...]
+        $_multiRowUpdateKey=null, // name of input field (usually a checkbox) which specifies which IDs should be updated
+        $_multiRowInsertKey=null, // name of input field (usually a checkbox) which specifies which IDs should be inserted
         # These lang(x) tokens are used in autosave
         $_msgTokenDeleteSuccess='RECORD_DELETE_SUCCESS',
         $_msgTokenDeleteFailed='RECORD_DELETE_FAILED',
@@ -48,9 +54,11 @@ class US_Form extends Element {
         $_msgTokenUpdateFailed='RECORD_UPDATE_FAILED',
         $_msgTokenInsertSuccess='RECORD_INSERT_SUCCESS',
         $_msgTokenInsertFailed='RECORD_INSERT_FAILED',
-        $_deleteButton=['delete'],
+        $_deleteSingleRowButton=['delete', 'delete_button'],
+        $_deleteMultiRowsButton=[],
         $_deleteKey='delete',
-        $_saveButton=['save'],
+        $_saveSingleRowButton=['save', 'save_button'],
+        $_saveMultiRowsButton=[],
         $_actionButton=null; // which button was pressed to process the form
     # These are the elements (each corresponding to $HTML_*) which
     # will be output in getHTML().
@@ -112,7 +120,7 @@ class US_Form extends Element {
         $MACRO_Form_Method = 'post',
         $MACRO_Form_Action = '',
         $MACRO_Browser_Title = '',
-        $MACRO_Form_Title = '',
+        $MACRO_Form_Title = null,
         $MACRO_Tab_Pane_Active = '',
         $MACRO_Tab_Id = '';
 
@@ -152,7 +160,7 @@ class US_Form extends Element {
         if (!$this->_formName && @$GLOBALS['formName']) {
             $this->_formName = $GLOBALS['formName'];
         }
-        if (!$this->getMacro('Form_Title')) {
+        if (is_null($this->getMacro('Form_Title'))) {
             $this->setTitleByPage();
         }
         // delete conditional fields or sub-forms (keep_if or delete_if logic in $opts)
@@ -169,6 +177,11 @@ class US_Form extends Element {
             }
             if ($this->getDbAutoSave()) {
                 $this->dbAutoSave();
+                #dbg("gar=".$this->getAutoRedirect().", gras=".$this->getRedirectAfterSave());
+                if ($this->getAutoRedirect() && $this->getRedirectAfterSave()) {
+                    #dbg("Redirecting to ".$this->getRedirectAfterSave());
+                    Redirect::to($this->getRedirectAfterSave());
+                }
                 # Now load the values that were just saved
                 if ($this->getDbAutoLoad()) {
                     $this->dbAutoLoad();
@@ -183,124 +196,137 @@ class US_Form extends Element {
         }
 	}
     public function handle1Opt($name, &$val) {
-        switch (strtolower($name)) {
+        $this->debug(4, "::(Form::)handle1Opt($name, ".print_r($val,true)."): Entering");
+        switch (strtolower(str_replace('_', '', $name))) {
             case 'titletoken':
-            case 'title_lang':
+            case 'titlelang':
                 $val = lang($val);
-                # no break - falling through with new $val
+                # no break/return - falling through with new $val
             case 'title':
                 # NOTE: may fall through from above
                 $this->setMacro('Form_Title', $val);
                 return true;
-                break;
-            case 'active_tab':
+            case 'activetab':
                 $this->setTabIsActive($val);
                 return true;
-                break;
-            case 'tab_id':
+            case 'tabid':
                 $this->setTabId($val);
                 return true;
-                break;
-            case 'keep_admindashboard':
+            case 'keepadmindashboard':
                 $this->setKeepAdminDashBoard($val);
                 return true;
-                break;
             case 'tableid':
             case 'dbtableid':
                 $this->setDbTableId($val);
                 return true;
-                break;
             case 'data':
             case 'loaddata':
                 $this->setFieldValues($val);
                 return true;
-                break;
             case 'autoload':
             case 'dbautoload':
                 $this->setDbAutoLoad($val);
                 return true;
-                break;
             case 'autoshow':
                 $this->setAutoShow($val);
                 return true;
-                break;
             case 'autoredirect':
                 $this->setAutoRedirect($val);
                 return true;
-                break;
             case 'excludefields':
-            case 'exclude_fields':
                 $this->setExcludeFields($val);
                 return true;
-                break;
             case 'autosave':
             case 'dbautosave':
                 $this->setDbAutoSave($val);
                 return true;
-                break;
-            case 'auto_toc':
             case 'autotoc':
                 $this->setAutoToC($val);
                 return true;
-                break;
             case 'autoloadposted':
             case 'autoloadnew':
                 $this->setDbAutoLoadPosted($val);
                 return true;
-                break;
-            case 'update_success_message':
+            case 'updatesuccessmessage':
                 $this->_msgTokenUpdateSuccess = $val;
                 return true;
-                break;
-            case 'update_failed_message':
+            case 'updatefailedmessage':
                 $this->_msgTokenUpdateFailed = $val;
                 return true;
-                break;
-            case 'delete_success_message':
+            case 'deletesuccessmessage':
                 $this->_msgTokenDeleteSuccess = $val;
                 return true;
-                break;
-            case 'delete_failed_message':
+            case 'deletefailedmessage':
                 $this->_msgTokenDeleteUpdateFailed = $val;
                 return true;
-                break;
-            case 'nothing_to_delete_message':
+            case 'nothingtodeletemessage':
                 $this->_msgTokenNothingToDelete = $val;
                 return true;
-                break;
-            case 'insert_success_message':
+            case 'insertsuccessmessage':
                 $this->_msgTokenInsertSuccess = $val;
                 return true;
-                break;
-            case 'insert_failed_message':
+            case 'insertfailedmessage':
                 $this->_msgTokenInsertFailed = $val;
                 return true;
-                break;
             case 'deletebutton':
-            case 'delete_button':
-                $this->_deleteButton = $val;
+            case 'deletesinglerowbutton':
+                $this->_deleteSingleRowButton = $val;
                 return true;
-                break;
+            case 'deletemultibutton':
+            case 'deletemultirowsbutton':
+            case 'deletemultirowbutton':
+                $this->_deleteMultiRowsButton = $val;
+                return true;
             case 'deletekey':
-            case 'delete_key':
                 $this->_deleteKey = $val;
                 return true;
-                break;
-            case 'savebutton':
-            case 'save_button':
-                $this->_saveButton = $val;
+            case 'deletemultirowwhere':
+            case 'deletemultiwhere':
+                $this->_multiRowDeleteWhere = $val;
                 return true;
-                break;
+            case 'savebutton':
+            case 'savesinglerowbutton':
+                $this->_saveSingleRowButton = $val;
+                return true;
+            case 'savemultibutton':
+            case 'savemultirowsbutton':
+            case 'savemultirowbutton':
+                $this->_saveMultiRowsButton = $val;
+                return true;
+            case 'createmultirowsfields':
+            case 'createmultirowfields':
+            case 'createmultifields':
+            case 'insertmultirowsfields':
+            case 'insertmultirowfields':
+            case 'insertmultifields':
+                $this->_multiRowInsertFields = $val;
+                return true;
+            case 'editmultirowsfields':
+            case 'editmultirowfields':
+            case 'editmultifields':
+            case 'updatemultirowsfields':
+            case 'updatemultirowfields':
+            case 'updatemultifields':
+                $this->_multiRowUpdateFields = $val;
+                return true;
+            case 'insertmultirowkey':
+            case 'insertmultirowskey':
+            case 'insertmultirowcheckbox':
+            case 'insertmultirowscheckbox':
+                $this->_multiRowInsertKey = $val;
+                return true;
+            case 'updatemultirowkey':
+            case 'updatemultirowskey':
+                $this->_multiRowUpdateKey = $val;
+                return true;
+            // the next 2 options determine which config values are used for post-successful-save redirects
             case 'singlerow':
-            case 'single_row':
                 $val = !$val;
-                // falling through - no break
+                // falling through - no break/return
             case 'multirow':
-            case 'multi_row':
-                // falling through from above - no break
+                // falling through from above - no break/return
                 $this->setIsMultiRow($val);
                 return true;
-                break;
         }
         if (parent::handle1Opt($name, $val)) {
             return true;
@@ -381,81 +407,224 @@ class US_Form extends Element {
         }
     }
     public function dbAutoSave() {
-        dbg("Form::dbAutoSave(): Entering");
-        if ($this->saveButtonPressed()) { // was save button clicked?
-            #$this->setNewValues($_POST); // this already happened if autosaveposted set; shouldn't happen if it wasn't
-            if ($this->getDBTableId()) { // update existing row
-                dbg("Form::dbAutoSave(): Updating");
-                if ($this->_updateIfValid()) {
-                    $this->successes[] = lang($this->_msgTokenUpdateSuccess);
-                    $this->postSuccessfulSave('update');
-                } else {
-                    $this->errors[] = lang($this->_msgTokenUpdateFailed);
-                    return false;
-                }
-            } else { // insert new row
-                dbg("Form::dbAutoSave(): Inserting");
-                if ($this->_insertIfValid()) {
-                    $this->successes[] = lang($this->_msgTokenInsertSuccess);
-                    $this->postSuccessfulSave('insert', $this->_db->lastId());
-                } else {
-                    $this->errors[] = lang($this->_msgTokenInsertFailed);
-                    return false;
-                }
+        $this->debug(1, "Form::dbAutoSave(): Entering");
+        if ($this->buttonPressed($this->getSaveSingleRowButton())) { // was save button clicked?
+            if (!$this->saveSingleRow()) {
+                return false;
             }
         }
-        # both delete and save button can be pressed because the dev may have
-        # assigned them to the same key (I want to delete these and update those)
-        if ($this->deleteButtonPressed()) { // was delete button clicked?
-            $deleted = 0;
-            foreach ((array)Input::get($this->getDeleteKey()) as $delId) {
-                if ($this->_db->deleteById($this->getDbTable(), $delId)) {
-                    $deleted += $this->_db->count();
-                }
-            }
-            if ($this->_db->error()) {
-                $this->errors[] = lang($this->_msgTokenDeleteFailed);
-            } else {
-                $this->successes[] = lang($this->_msgTokenDeleteSuccess, $deleted);
-                $this->postSuccessfulSave('delete', null, false);
+        if ($this->buttonPressed($this->getSaveMultiRowsButton())) { // was save button clicked?
+            if (!$this->saveMultiRows()) {
+                return false;
             }
         }
-        dbg("gar=".$this->getAutoRedirect().", gras=".$this->getRedirectAfterSave());
-        if ($this->getAutoRedirect() && $this->getRedirectAfterSave()) {
-            dbg("Redirecting to ".$this->getRedirectAfterSave());
-            Redirect::to($this->getRedirectAfterSave());
+        if ($this->buttonPressed($this->getDeleteSingleRowButton())) { // was save button clicked?
+            if (!$this->deleteSingleRow()) {
+                return false;
+            }
+        }
+        if ($this->buttonPressed($this->getDeleteMultiRowsButton())) { // was save button clicked?
+            if (!$this->deleteMultiRows()) {
+                return false;
+            }
         }
     }
+    public function saveSingleRow() {
+        #$this->setNewValues($_POST); // this already happened if autosaveposted set; shouldn't happen if it wasn't
+        if ($this->getDBTableId()) { // update existing row
+            $this->debug(2,"Form::saveSingleRow(): Updating ".$this->getDBTableId());
+            if (($rtn = $this->_updateIfValid()) == self::UPDATE_SUCCESS) {
+                $this->successes[] = lang($this->_msgTokenUpdateSuccess);
+                $this->postSuccessfulSave('update');
+                return true;
+            } elseif ($rtn == self::UPDATE_ERROR) {
+                $this->errors[] = lang($this->_msgTokenUpdateFailed);
+                return false; // probably invalid - get out and display validate errors
+            } else { // assume self::UPDATE_NO_CHANGE
+                return true;
+            }
+        } else { // insert new row
+            #dbg("Form::saveSingleRow(): Inserting");
+            if (($rtn = $this->_insertIfValid()) == self::UPDATE_SUCCESS) {
+                $this->successes[] = lang($this->_msgTokenInsertSuccess);
+                $this->postSuccessfulSave('insert', $this->_db->lastId());
+                return true;
+            } elseif ($rtn == self::UPDATE_ERROR) {
+                $this->errors[] = lang($this->_msgTokenInsertFailed);
+                return false;
+            } else { // assume self::UPDATE_NO_CHANGE
+                return true;
+            }
+        }
+    }
+    public function saveMultiRows() {
+        $this->debug(2, "saveMultiRows(): Entering");
+        if ($fieldsTemplate = $this->getMultiRowUpdateFields()) {
+            $action = 'update';
+            if (!$mainInputKey = $this->getMultiRowUpdateKey()) {
+                dbg("FATAL ERROR: MultiRowUpdateKey was not specified");
+                return true; // nothing to do
+            }
+            #$whereCond = $this->getMultiRowWhereCond(); // there is no $db->updateAll() method yet, so no point getting fancy
+        } elseif ($fieldsTemplate = $this->getMultiRowInsertFields()) {
+            if (!$mainInputKey = $this->getMultiRowInsertKey()) {
+                dbg("FATAL ERROR: MultiRowInsertKey was not specified");
+                return true; // nothing to do
+            }
+            #dbg("Inserting. fieldsTemplate=");
+            #var_dump($fieldsTemplate);
+            $action = 'insert';
+            #$whereCond = []; // there is no $db->updateAll() method yet, so no point getting fancy
+        } else {
+            return true; // nothing to do
+        }
+        if (count($fieldsTemplate) < 1) {
+            return true; // nothing to do
+        }
+        /*
+         * calculate the $fields array from $fieldTemplate and $_POST values
+         * The assumption is a field template like
+         *   [ 'fielda' => '{field1}', 'fieldb' =>'{field2}', 'fieldc' => 'constant' ]
+         * where fielda/fieldb are fields in the table to be updated/inserted and field1/field2 are input
+         * fields found in $_POST. These input fields will be arrays indexed by the id of the row in the table
+         * to be updated (the id is an arbitrary index which is ignored if we are inserting - just has to be
+         * unique)
+         */
+        $replaceFields = $this->calcMultiRowReplaceFields($fieldsTemplate);
+        #dbg("mainInputKey=$mainInputKey - contents follow");
+        #$x=Input::get($mainInputKey);
+        #var_dump($x);
+        if (Input::get($mainInputKey)) {
+            foreach ((array)Input::get($mainInputKey) AS $id) {
+                $fields = $this->calc1RowInMultiRowFields($id, $replaceFields, $fieldsTemplate);
+                #dbg("fields:");
+                #var_dump($fields);
+                #$whereCond = str_replace(array_keys($replace), $replace, $whereCond); // see above re $whereCond
+                if ($action == 'update') {
+                    #dbg("saveMultiRows(): Updating");
+                    $this->_db->update($this->getDbTable(), $id, $fields);
+                } else { // assume 'insert'
+                    #dbg("saveMultiRows(): Inserting");
+                    $this->_db->insert($this->getDbTable(), $fields);
+                    if ($this->_db->error()) {
+                        dbg("DATABASE ERROR: ".$this->_db->errorString());
+                    }
+                }
+            }
+        }
+    }
+    public function deleteSingleRow() {
+        $deleted = 0;
+        foreach ((array)Input::get($this->getDeleteKey()) as $delId) {
+            if ($this->_db->deleteById($this->getDbTable(), $delId)) {
+                $deleted += $this->_db->count();
+            }
+        }
+        if ($this->_db->error()) {
+            $this->errors[] = lang($this->_msgTokenDeleteFailed);
+            return false;
+        } else {
+            $this->successes[] = lang($this->_msgTokenDeleteSuccess, $deleted);
+            $this->postSuccessfulSave('delete', null, false);
+            return true;
+        }
+    }
+    public function deleteMultiRows() {
+        $this->debug(3,"::deleteMultiRows(): Entering");
+        if ($fieldsTemplate = $this->getMultiRowDeleteWhere()) {
+            $action = 'delete';
+            #$whereCond = $this->getMultiRowWhereCond(); // there is no $db->updateAll() method yet, so no point getting fancy
+        } else {
+            $this->debug(3,"::deleteMultiRows(): Returning. No template found.");
+            return true; // nothing to do
+        }
+        if (count($fieldsTemplate) < 1) {
+            $this->debug(3,"::deleteMultiRows(): Returning. Empty template found.");
+            return true; // nothing to do
+        }
+        /*
+         * see comments above in $this->saveMultiRows()
+         * $fieldsTemplate represents a where condition in this context
+         */
+        if (!$mainInputKey = $this->calcMainInputKey($fieldsTemplate)) {
+            dbg("deleteMultiRows(): mainInputKey being blank is really an error condition");
+            return true; // nothing to do
+        }
+        #dbg($mainInputKey);
+        $replaceFields = $this->calcMultiRowReplaceFields($fieldsTemplate);
+        #var_dump($_POST);
+        #var_dump(Input::get($mainInputKey));
+        foreach ((array)Input::get($mainInputKey) AS $id => $throwaway) {
+            $fields = $this->calc1RowInMultiRowFields($id, $replaceFields, $fieldsTemplate);
+            #$whereCond = str_replace(array_keys($replace), $replace, $whereCond); // see above re $whereCond
+            if ($action == 'delete') { // presumably always true?
+                #dbg("deleteMultiRows(): Deleting fields=".print_r($fields,true));
+                $this->_db->delete($this->getDbTable(), $fields);
+            }
+        }
+    }
+    public function calcMainInputKey($fieldsTemplate) {
+        /*
+         * the main input key is defined as the first {...} value found in the $fieldsTemplate. We will later traverse
+         * that, grabbing what is in the "<id>" of $_POST['field[<id>]] as the main index (and the replacement
+         * for any {ID} in the $fieldsTemplate)
+         */
+        $mainInputKey = false;
+        foreach ($fieldsTemplate as $v) {
+            if (substr($v, 0, 1) == '{' && substr($v, -1, 1) == '}') { // {field}
+                $mainInputKey = substr($v, 1, -1);
+                break;
+            }
+        }
+        return $mainInputKey;
+    }
+    public function calcMultiRowReplaceFields($fieldsTemplate) {
+        $replaceFields = [];
+        foreach ($fieldsTemplate as $v) {
+            if (substr($v, 0, 1) == '{' && substr($v, -1, 1) == '}') { // {field}
+                $replaceFields[$v] = Input::get(substr($v, 1, -1));
+            }
+        }
+        return $replaceFields;
+    }
+    public function calc1RowInMultiRowFields($id, $replaceFields, $fieldsTemplate) {
+        $replace = ['{ID}' => $id];
+        #dbg("calc1RowInMultiRowFields() id=$id, replaceFields:");
+        #var_dump($replaceFields);
+        #dbg("fieldsTemplate:");
+        #var_dump($fieldsTemplate);
+        foreach ($replaceFields as $k=>$v) {
+            $replace[$k] = $v[$id];
+        }
+        #dbg("replace:");
+        #var_dump($replace);
+        return str_replace(array_keys($replace), $replace, $fieldsTemplate);
+    }
+
     public function postSuccessfulSave($action, $lastId=null, $override=true) {
         static $alreadySet = false; // needed to delete doesn't override edit settings if both called
-        dbg("pSS(): alreadySet=$alreadySet, override=$override");
+        #dbg("postSuccessfulSave(): alreadySet=$alreadySet, override=$override");
         if ($override || !$alreadySet) {
-            dbg( "Calling sRAS() with rDAS (lastId=$lastId)");
+            #dbg( "Calling sRAS() with rDAS (lastId=$lastId)");
             $alreadySet = true;
-            $this->setRedirectAfterSave(redirDestAfterSave($action, $_SERVER['PHP_SELF'], $this->getIsMultiRow(), $lastId));
-            dbg( "postSuccessfulSave(): RedirAfterSave=".$this->getRedirectAfterSave());
+            $this->setRedirectAfterSave(redirDestAfterSave($action, [$_SERVER['PHP_SELF'], $this->getFormName(), basename($_SERVER['PHP_SELF'])], $this->getIsMultiRow(), $lastId));
+            #dbg( "postSuccessfulSave(): RedirAfterSave=".$this->getRedirectAfterSave());
         }
     }
-    public function deleteButtonPressed() {
-        foreach ((array)$this->getDeleteButton() as $btn) {
+    public function buttonPressed($buttonKeys) {
+        $this->debug(4, "::buttonPressed(".print_r($buttonKeys,true)."): Entering");
+        foreach ((array)$buttonKeys as $btn) {
             if (!empty(Input::get($btn))) {
                 $this->_actionButton = $btn;
+                $this->debug(4, "::buttonPressed(): Returning true with button=$btn");
                 return true;
             }
         }
-        return false;
-    }
-    public function saveButtonPressed() {
-        foreach ((array)$this->getSaveButton() as $btn) {
-            if (!empty(Input::get($btn))) {
-                $this->_actionButton = $btn;
-                return true;
-            }
-        }
+        $this->debug(4, "::buttonPressed(): Returning false");
         return false;
     }
     public function setTitleByPage() {
-        if ($pageRow = getPagerowByName([$_SERVER['PHP_SELF'], $this->_formName])) {
+        if (($pageRow = getPagerowByName([$_SERVER['PHP_SELF'], $this->_formName])) && $pageRow->title_token) {
             $this->setMacro('Form_Title', lang($pageRow->title_token));
         }
     }
@@ -500,14 +669,35 @@ class US_Form extends Element {
         return $macros;
     }
 
+    public function getMultiRowDeleteWhere() {
+        return $this->_multiRowDeleteWhere;
+    }
+    public function getMultiRowUpdateFields() {
+        return $this->_multiRowUpdateFields;
+    }
+    public function getMultiRowInsertFields() {
+        return $this->_multiRowInsertFields;
+    }
+    public function getMultiRowUpdateKey() {
+        return $this->_multiRowUpdateKey;
+    }
+    public function getMultiRowInsertKey() {
+        return $this->_multiRowInsertKey;
+    }
     public function getActionButton() {
         return $this->_actionButton;
     }
-    public function getSaveButton() {
-        return $this->_saveButton;
+    public function getSaveSingleRowButton() {
+        return $this->_saveSingleRowButton;
     }
-    public function getDeleteButton() {
-        return $this->_deleteButton;
+    public function getSaveMultiRowsButton() {
+        return $this->_saveMultiRowsButton;
+    }
+    public function getDeleteSingleRowButton() {
+        return $this->_deleteSingleRowButton;
+    }
+    public function getDeleteMultiRowsButton() {
+        return $this->_deleteMultiRowsButton;
     }
     public function getDeleteKey() {
         return $this->_deleteKey;
@@ -604,6 +794,7 @@ class US_Form extends Element {
         #dbg("opts=".print_r($opts,true));
         # default to $onlyFields==true unless override
         $onlyFields = !(@$opts['not_only_fields'] || in_array('not_only_fields', $opts));
+        $dbTable = (!empty($opts['dbtable']) ? $opts['dbtable'] : false);
         $recursive = (@$opts['recursive'] || in_array('recursive', $opts));
         $fieldList = $this->fixFieldList($fieldFilter, $onlyFields);
         $rtn = [];
@@ -639,15 +830,19 @@ class US_Form extends Element {
     public function deleteField($fieldName) {
         unset($this->repData[$fieldName]);
     }
-    public function listFields($onlyFields=true) {
+    public function listFields($onlyFields=true, $onlyDbTable=false) {
         #dbg("listFields($onlyFields): entering");
         $rtn = [];
         foreach ($this->repData as $k=>$v) {
+            if ($onlyDbTable && method_exists($v, 'getDbTable') && $v->getDbTable() && $v->getDbTable() != $onlyDbTable) {
+                dbg("listFields(): Continuing onlyDbTable=$onlyDbTable != v->getDbTable()=".$v->getDbTable());
+                continue; // wrong table - not interested
+            }
             if (!$onlyFields || is_a($v, 'US_FormField')) {
                 $rtn[] = $k;
             }
             if (method_exists($v, 'listFields')) {
-                $rtn = array_merge($rtn, $v->listFields($onlyFields));
+                $rtn = array_merge($rtn, $v->listFields($onlyFields, $onlyDbTable));
             }
         }
         #dbg("listFields(): Returning <pre>".print_r($rtn,true)."</pre><br />");
@@ -686,9 +881,10 @@ class US_Form extends Element {
             }
         }
     }
-    public function fieldListNewValues($fieldFilter=array(), $onlyDB=true) {
-        $fieldList = $this->fixFieldList($fieldFilter);
+    public function fieldListNewValues($fieldFilter=array(), $onlyDB=true, $onlyDbTable=false) {
+        $fieldList = $this->fixFieldList($fieldFilter, $onlyDB, $onlyDbTable);
         $rtn = [];
+        #dbg("fieldListNewValues(): fieldlist=");
         #var_dump($fieldList);
         foreach ($fieldList as $f) {
             if (!$onlyDB || $this->getField($f)->getIsDBField()) {
@@ -697,14 +893,16 @@ class US_Form extends Element {
                 }
             }
         }
+        #dbg("fieldListNewValues(): returning rtn=");
+        #var_dump($rtn);
         return $rtn;
     }
     # If someone wants a sub-set of fields, make sure they are all in the form
-    protected function fixFieldList($fieldFilter, $onlyFields=true) {
+    protected function fixFieldList($fieldFilter, $onlyFields=true, $onlyDbTable=false) {
         if ($fieldFilter) {
-            return array_intersect($this->listFields($onlyFields), $fieldFilter);
+            return array_intersect($this->listFields($onlyFields, $onlyDbTable), $fieldFilter);
         } else {
-            return $this->listFields($onlyFields);
+            return $this->listFields($onlyFields, $onlyDbTable);
         }
     }
     public function isChanged($fieldFilter=array()) {
@@ -761,17 +959,23 @@ class US_Form extends Element {
     }
     public function _insertIfValid($fieldFilter=[]) {
         $fields = $this->fieldListNewValues($fieldFilter, true);
+        if (!$fields) {
+            return self::UPDATE_NO_CHANGE; // means no error, but no update occurred
+        }
         #var_dump($fields);
         #var_dump($_POST);
         if ($this->checkFieldValidation($fields, $this->errors)) {
             if (isset($fields['id'])) {
                 unset($fields['id']); // use auto increment
             }
+            if (!$fields) {
+                return self::UPDATE_NO_CHANGE;
+            }
             if ($this->_db->insert($this->getDbTable(), $fields)) {
-                return $this->_db->lastId();
+                return self::UPDATE_SUCCESS;
             } else {
-                $this->errors[] = lang('SQL_ERROR');
-                return false;
+                $this->errors[] = lang('SQL_ERROR').' ('.$this->_db->errorString().')';
+                return self::UPDATE_ERROR;
             }
         } else {
             return false;
@@ -791,15 +995,19 @@ class US_Form extends Element {
         return self::UPDATE_NO_CHANGE; // means no error, but no update occurred
     }
     protected function _updateIfValid($fieldFilter=[]) {
-        $fields = $this->fieldListNewValues($fieldFilter, true);
+        $fields = $this->fieldListNewValues($fieldFilter, true, $this->getDbTable());
+        dbg("_updateIfValid(): table=".$this->getDbTable().", id=".$this->getDbTableId());
+        var_dump($fields);
+        if (!$fields) {
+            return self::UPDATE_NO_CHANGE; // means no error, but no update occurred
+        }
         if ($this->checkFieldValidation($fields, $this->errors)) {
-            #dbg("_updateIfValid(): table=".$this->getDbTable().", id=".$this->getDbTableId());
-            #var_dump($fields);
+            # Strip out any $fields rows that have their own getDbTable()
             if ($this->_db->update($this->getDbTable(), $this->getDbTableId(), $fields)) {
                 #dbg("_updateIfValid(): SUCCESS");
                 return self::UPDATE_SUCCESS; // means update occurred
             } else {
-                $this->errors[] = lang('SQL_ERROR');
+                $this->errors[] = lang('SQL_ERROR').' ('.$this->_db->errorString().')';
                 return self::UPDATE_ERROR; // error return value
             }
         } else {
