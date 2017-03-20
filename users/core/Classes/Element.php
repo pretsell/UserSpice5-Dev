@@ -105,54 +105,40 @@ abstract class US_Element {
     // when this method is overridden you probably want to call
     // parent::handle1Opt() to get the benefit of parent option handling
     public function handle1Opt($name, &$val) {
-        switch (strtolower($name)) {
+        switch (strtolower(str_replace('_', '', $name))) {
             case 'elements':
                 $this->setElementList($val);
                 return true;
-                break;
             case 'table':
             case 'dbtable':
                 $this->setDBTable($val);
                 return true;
-                break;
             case 'debug':
                 $this->debug = $val;
                 return true;
-                break;
-            case 'keep_if':
             case 'keepif':
                 $val = !$val;
-                # NOTE: No break - falling through to 'deleteif'
-            case 'delete_if':
+                # NOTE: No break/return - falling through to 'deleteif'
             case 'deleteif':
-                # NOTE: We could be falling through from above with no break
+                # NOTE: We could be falling through from above with no break/return
                 $this->setDeleteMe($val);
                 return true;
-                break;
-            case 'delete_if_empty':
             case 'deleteifempty':
                 $this->setDeleteIfEmpty($val);
                 return true;
-                break;
             case 'excludeelements':
-            case 'exclude_elements':
                 $this->deleteElements($val);
                 return true;
-                break;
             case 'errors':
                 $this->errors = &$val;
                 return true;
-                break;
             case 'successes':
                 $this->successes = &$val;
                 return true;
-                break;
             case 'repemptyalternate':
             case 'nodata':
-            case 'no_data':
                 $this->setRepEmptyAlternate($val);
                 return true;
-                break;
         }
         $setMethod = 'set'.$name;
         $caseName = $this->fixCase($name);
@@ -273,7 +259,7 @@ abstract class US_Element {
         $html = '';
         $this->debug(2, "::getHTMLRepElement(): Before Loop");
         foreach ($this->getRepData() as $k=>$row) {
-            $this->debug(2, "::getHTMLRepElement(): k=$k, row=".print_r($row,true));
+            $this->debug(5, "::getHTMLRepElement(): k=$k, row=".print_r($row,true));
             #dbg('REP ELEMENT class='.get_class($this).'==>'.$k);
             #if ($k == 'grouptype_id') var_dump($row);
             if (is_object($row) && (method_exists($row, 'getHTML') || method_exists($row, 'getRowMacros'))) {
@@ -303,10 +289,10 @@ abstract class US_Element {
                 // additional macros may be added to $rowMacros here
                 $this->specialRowMacros($rowMacros, $row);
             }
-            if ($this->debug>1) var_dump($rowMacros);
-            $this->debug(4, "::getHTMLRepElement(): element=$element");
+            if ($this->debug>=5) { dbg("printout of rowMacros:"); var_dump($rowMacros); }
+            $this->debug(5, "::getHTMLRepElement(): element=$element");
             $html .= str_ireplace(array_keys($rowMacros), array_values($rowMacros), $element);
-            $this->debug(4, "::getHTMLRepElement(): html=$html");
+            $this->debug(5, "::getHTMLRepElement(): html=$html");
         }
         return $html;
     }
