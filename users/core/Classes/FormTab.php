@@ -39,7 +39,7 @@ class US_Form_Row extends Form {
 class US_Form_Panel extends Form {
     public $elementList = [
         // since we are changing the order, maybe just re-use title?
-        'openPanel', 'Heading', 'Title', 'openBody', 'Fields', 'closeBody', 'Footing', 'closePanel',
+        'openPanel', 'Heading', 'openBody', 'Title', 'Fields', 'closeBody', 'Footing', 'closePanel',
     ];
     protected $HTML_Head = '',
         $HTML_Foot = '';
@@ -47,7 +47,7 @@ class US_Form_Panel extends Form {
         <h4>{FORM_TITLE}</h4>
         ';
     protected $HTML_openPanel = '
-        <div class="panel {PANEL_CLASS}">';
+        <div class="panel {PANEL_COLOR} {PANEL_CLASS}">';
     protected $HTML_openBody = '
         <div class="panel-body {BODY_CLASS}">';
     protected $HTML_closeBody = '
@@ -56,11 +56,12 @@ class US_Form_Panel extends Form {
     protected $HTML_closePanel = '
         </div> <!-- panel -->
         ';
-    public $MACRO_Panel_Class = 'panel-default',
+    public $MACRO_Panel_Class = '',
+        $MACRO_Panel_Color = 'panel-default', // panel-primary, -success, -info, -warning, or -danger
         $MACRO_Body_Class = '',
         $MACRO_Head_Class = '',
         $MACRO_Foot_Class = '',
-        $MACRO_Form_Title = ''; // if null it reads title from pages table
+        $MACRO_Form_Title = ''; // if null it reads title from pages table which is not usually right for a panel
     public function getHTMLHeading() {
         if ($this->HTML_Head) {
             return '<div class="panel-heading {HEAD_CLASS}">'.$this->HTML_Head.'</div>';
