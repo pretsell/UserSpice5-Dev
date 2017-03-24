@@ -8,6 +8,14 @@ class FormField_ButtonDelete extends US_FormField_ButtonDelete {
 }
 class FormField_Checkbox extends US_FormField_Checkbox {
 }
+class FormField_Checklist extends US_FormField_Checklist {
+}
+# "MultiCheckbox" is an alias for "Checklist"
+class FormField_MultiCheckbox extends FormField_Checklist {
+    # DO NOT MAKE CHANGES HERE - make changes to FormField_Checklist above
+    # unless you are deliberately separating the functionality of what was
+    # originally designed to be a simple alias
+}
 class FormField_Hidden extends US_FormField_Hidden {
 }
 class FormField_MultiHidden extends US_FormField_MultiHidden {
