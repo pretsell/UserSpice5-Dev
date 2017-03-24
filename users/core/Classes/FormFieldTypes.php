@@ -72,6 +72,49 @@ abstract class US_FormField_Checkbox extends FormField {
     }
 }
 
+abstract class US_FormField_Checklist extends FormField {
+    protected $_fieldType = "checkbox";
+    protected $_isDBField = false;
+    public $elementList = ['Input', 'Post'], // no Pre or Post
+        $HTML_Input = '<label><input type="{TYPE}" name="{COLUMN_NAME_PREFIX}{NAME}[]" value="{ID}">{COLUMN_VALUE}</label>{SEPARATOR}
+            ',
+        $HTML_Post = '{FOOTER}';
+    public $repMacroAliases = ['{ID}', '{COLUMN_VALUE}'],
+        $repElement = 'HTML_Input',
+        $MACRO_Column_Name_Prefix = '',
+        $MACRO_Footer='<br />',
+        $MACRO_Separator='<br />';
+
+    public function handle1Opt($name, &$val) {
+        switch (strtolower(str_replace('_', '', $name))) {
+            /*
+            case 'sqlcols':
+                $saveInput = $this->HTML_Input;
+                $this->HTML_Input = '';
+                foreach ($val as $v) {
+                    if ($v == 'id') continue;
+                    $this->HTML_Input .= str_replace(['{COLUMN_NAME}','{COLUMN_VALUE}'], [$v, '{'.$v.'}'], $saveInput);
+                }
+                #dbg("HIDDEN INPUT: ".$this->HTML_Input);
+                return true;
+            */
+            case 'prefix':
+                $this->setMacro('Column_Name_Prefix', $val);
+                return true;
+            case 'separator':
+            case 'sep':
+                $this->setMacro('Separator', $val);
+                return true;
+            case 'foot':
+            case 'footer':
+                $this->setMacro('Footer', $val);
+                return true;
+        }
+        return parent::handle1Opt($name, $val);
+    }
+}
+# class US_FormField_MultiCheckbox - this becomes an alias over in local/, not here in core/
+
 abstract class US_FormField_Hidden extends FormField {
     protected $_fieldType = "hidden";
     public $elementList = ['Input'], // no Pre or Post
@@ -79,6 +122,7 @@ abstract class US_FormField_Hidden extends FormField {
             <input type="{TYPE}" name="{FIELD_NAME}" value="{VALUE}">
             ';
 }
+
 abstract class US_FormField_MultiHidden extends FormField {
     protected $_fieldType = "hidden";
     public $elementList = ['Input'], // no Pre or Post
