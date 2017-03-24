@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 class US_DB {
 	private static $_instance = null;
-	private $_pdo, $_query, $_error = false, $_errorInfo = [], $_results, $_resultsArray, $_count = 0, $_lastId, $_queryCount=0;
+	private $_pdo, $_sql, $_query, $_error = false, $_errorInfo = [], $_results, $_resultsArray, $_count = 0, $_lastId, $_queryCount=0;
 
 	private function __construct($host=null, $dbName=null, $user=null, $passwd=null, $opts=[]) {
         $host   = ($host   ? : configGet('mysql/host'));
@@ -51,6 +51,7 @@ class US_DB {
 	public function query($sql, $bindvals=array()) {
 		$this->_queryCount++;
 		$this->_error = false;
+        $this->_sql = $sql;
         #dbg("query(): sql=$sql");
 		if ($this->_query = $this->_pdo->prepare($sql)) {
 			$x = 1;
@@ -98,7 +99,7 @@ class US_DB {
 		return false;
 	}
 
-    // synonym for findAll()
+    // synonym/alias for findAll()
 	public function get($table, $where, $bindvals=[], $orderBy=null) {
         return $this->findAll($table, $where, $bindvals, $orderBy);
 	}
@@ -138,6 +139,9 @@ class US_DB {
 	}
     public function calcWhereClause($where, &$bindvals) {
         $wherecond = ''; // default if nothing is specified
+        if (!$where) {
+            return '';
+        }
         if (!is_array($where)) { // $where is a simple string
             if ($where) {
                 $wherecond = " WHERE " . $where;
@@ -265,14 +269,20 @@ class US_DB {
 		return $this->_count;
 	}
 
-	public function errorString() {
+	public function errorString($sql=false) {
+        $rtn = '';
         if ($this->_errorInfo) {
-    		$rtn = $this->_errorInfo[0].': '.$this->_errorInfo[2].' ('.$this->_errorInfo[1].')';
-        } else {
-            $rtn = '';
+            if ($sql) {
+                $rtn .= $this->_sql;
+            }
+    		$rtn .= $this->_errorInfo[0].': '.$this->_errorInfo[2].' ('.$this->_errorInfo[1].')';
         }
         return $rtn;
 	}
+    # alias
+    public function errorDisplay($sql=false) {
+        return $this->errorString($sql);
+    }
 
 	public function error() {
 		return $this->_error;
