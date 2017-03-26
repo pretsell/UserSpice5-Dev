@@ -74,7 +74,7 @@ abstract class US_Element {
     public $HTML_RepEmptyAlternate = '';
     # public $HTML_x = '<input type="{TYPE}" name="{NAME}"' ... />';
     # public $MACRO_type = 'hidden';
-    public function __construct($opts=[]) {
+    public function __construct($opts=[], $handleOpts=true) {
         $this->debug(1, '::__construct(): Entering');
         $this->_db = DB::getInstance();
         # This is a strange, non-OOP way of mixing globals and properties, but UserSpice
@@ -86,7 +86,9 @@ abstract class US_Element {
         if (isset($GLOBALS['successes'])) {
             $this->successes = &$GLOBALS['successes'];
         }
-        $this->handleOpts($opts);
+        if ($handleOpts) {
+            $this->handleOpts($opts);
+        }
     }
     public function handleOpts($opts) {
         $this->debug(1, '::handleOpts(): Entering');
