@@ -24,7 +24,7 @@ abstract class FormField_Button extends FormField {
             ',
         $MACRO_Button_Icon = '',
         $MACRO_Input_Class = 'btn btn-primary';
-}
+} /* Button */
 abstract class US_FormField_ButtonAnchor extends FormField_Button {
     protected $_fieldType = "button";
     public $HTML_Input = '
@@ -38,12 +38,12 @@ abstract class US_FormField_ButtonAnchor extends FormField_Button {
         }
         return parent::handle1Opt($name, $val);
     }
-}
+} /* ButtonAnchor */
 abstract class US_FormField_ButtonSubmit extends FormField_Button {
-}
+} /* ButtonSubmit */
 abstract class US_FormField_ButtonDelete extends FormField_Button {
     public $MACRO_Input_Class = 'btn btn-primary btn-danger';
-}
+} /* ButtonDelete */
 
 abstract class US_FormField_Checkbox extends FormField {
     protected $_fieldType = "checkbox";
@@ -70,34 +70,40 @@ abstract class US_FormField_Checkbox extends FormField {
         }
         return $macros;
     }
-}
+} /* Checkbox */
 
 abstract class US_FormField_Checklist extends FormField {
     protected $_fieldType = "checkbox";
     protected $_isDBField = false;
+    /* Array can be ($_indexBy=='id') indexed by id and value contains 1 or 0 or it can be
+     * ($_indexBy=='seq') an arbitrary sequential-from-0 index and contain the id in the value.
+     */
+    protected $_indexBy = 'seq'; // arbitrary (sequential from 0) index - value will be id; 'id' is alternative setting
     public $elementList = ['Input', 'Post'], // no Pre or Post
-        $HTML_Input = '<label><input type="{TYPE}" name="{COLUMN_NAME_PREFIX}{NAME}[]" value="{ID}">{COLUMN_VALUE}</label>{SEPARATOR}
-            ',
-        $HTML_Post = '{FOOTER}';
+        $HTML_Pre = '', # you can set this to '<br /> or something if desired'
+        $HTML_Input = '', # this will be set to either checkboxIndexById or $...Seq depending on $_indexBy
+        $HTML_Post = '{FOOTER}',
+        $checkboxIndexById = '<label class="{LABEL_CLASS}"><input type="{TYPE}" name="{COLUMN_NAME_PREFIX}{NAME}[{ID}]" value="1">{INTER_SPACE}{COLUMN_VALUE}</label>{SEPARATOR}',
+        $checkboxIndexBySeq = '<label class="{LABEL_CLASS}"><input type="{TYPE}" name="{COLUMN_NAME_PREFIX}{NAME}[]" value="{ID}">{INTER_SPACE}{COLUMN_VALUE}</label>{SEPARATOR}';
     public $repMacroAliases = ['{ID}', '{COLUMN_VALUE}'],
         $repElement = 'HTML_Input',
         $MACRO_Column_Name_Prefix = '',
         $MACRO_Footer='<br />',
-        $MACRO_Separator='<br />';
+        $MACRO_Inter_Space=' ', // between the checkbox and the label
+        $MACRO_Separator='<br />'; // you might want to set this to str_repeat('&nbsp;', 5) or something for more horizontally oriented checklist
 
+    public function handleOpts($opts=[]) {
+        $rtn = parent::handleOpts($opts);
+        if ($this->_indexBy == 'id') {
+            $this->HTML_Input = $this->checkboxIndexById;
+        } else { // presumably 'seq'
+            $this->HTML_Input = $this->checkboxIndexBySeq;
+        }
+        #dbg('<pre>'.htmlentities($this->HTML_Input).'</pre>');
+        return $rtn;
+    }
     public function handle1Opt($name, &$val) {
         switch (strtolower(str_replace('_', '', $name))) {
-            /*
-            case 'sqlcols':
-                $saveInput = $this->HTML_Input;
-                $this->HTML_Input = '';
-                foreach ($val as $v) {
-                    if ($v == 'id') continue;
-                    $this->HTML_Input .= str_replace(['{COLUMN_NAME}','{COLUMN_VALUE}'], [$v, '{'.$v.'}'], $saveInput);
-                }
-                #dbg("HIDDEN INPUT: ".$this->HTML_Input);
-                return true;
-            */
             case 'prefix':
                 $this->setMacro('Column_Name_Prefix', $val);
                 return true;
@@ -109,10 +115,13 @@ abstract class US_FormField_Checklist extends FormField {
             case 'footer':
                 $this->setMacro('Footer', $val);
                 return true;
+            case 'indexby':
+                $this->_indexBy = $val;
+                return true;
         }
         return parent::handle1Opt($name, $val);
     }
-}
+} /* Checklist */
 # class US_FormField_MultiCheckbox - this becomes an alias over in local/, not here in core/
 
 abstract class US_FormField_Hidden extends FormField {
@@ -121,7 +130,7 @@ abstract class US_FormField_Hidden extends FormField {
         $HTML_Input = '
             <input type="{TYPE}" name="{FIELD_NAME}" value="{VALUE}">
             ';
-}
+} /* Hidden */
 
 abstract class US_FormField_MultiHidden extends FormField {
     protected $_fieldType = "hidden";
@@ -151,12 +160,36 @@ abstract class US_FormField_MultiHidden extends FormField {
         }
         return parent::handle1Opt($name, $val);
     }
-}
-
+} /* MultiHidden */
 
 abstract class US_FormField_Password extends FormField {
     protected $_fieldType = "password";
-}
+    public $HTML_Script = [
+        '<script type="text/javascript" src="'.US_URL_ROOT.'resources/js/zxcvbn.js"></script>',
+        '<script type="text/javascript" src="'.US_URL_ROOT.'resources/js/zxcvbn-bootstrap-strength-meter.js"></script>',
+    ];
+    public function handle1Opt($name, &$val) {
+        switch (strtolower(str_replace('_', '', $name))) {
+            case 'passwordmeter':
+            case 'strengthmeter':
+            case 'pwmeter':
+                if ($val) {
+                    $this->HTML_Script[] =
+                        '<script type="text/javascript">
+                        	$(document).ready(function () {
+                        		$("#{FIELD_ID}-StrengthProgressBar").zxcvbnProgressBar({ passwordInput: "#{FIELD_ID}" });
+                        	});
+                        </script>';
+                    $this->HTML_Post .=
+                        '<div class="progress">
+                        	<div id="{FIELD_ID}-StrengthProgressBar" class="progress-bar"></div>
+                         </div>';
+                }
+                return true;
+        }
+        return parent::handle1Opt($name, $val);
+    }
+} /* Password */
 
 abstract class US_FormField_Radio extends FormField {
     protected $_fieldType = "radio";
@@ -168,7 +201,7 @@ abstract class US_FormField_Radio extends FormField {
             ',
         $HTML_Input = '
             <div class="radio">
-				<label for="{FIELD_ID}-{ID}">
+				<label for="{FIELD_ID}-{ID}" class="{LABEL_CLASS}">
 					<input type="{TYPE}" name="{FIELD_NAME}" id="{FIELD_ID}-{ID}" class="{INPUT_CLASS}" value="{ID}">
 					{OPTION_LABEL}
 				</label>
@@ -178,7 +211,7 @@ abstract class US_FormField_Radio extends FormField {
             </div> <!-- {DIV_CLASS} Radio (id={FIELD_ID}, name={FIELD_NAME}) -->
             ',
         $repElement = 'HTML_Input';
-}
+} /* Radio */
 
 abstract class US_FormField_Recaptcha extends FormField {
     protected $_fieldType = "recaptcha"; // not used
@@ -187,7 +220,7 @@ abstract class US_FormField_Recaptcha extends FormField {
         $MACRO_Recaptcha_Public = '';
     public $HTML_Pre = '
             <div class="{DIV_CLASS}"> <!-- recaptcha -->
-    		<label>{LABEL_TEXT}</label>
+    		<label class="{LABEL_CLASS}">{LABEL_TEXT}</label>
              ',
         $HTML_Input = '
             <div class="{RECAPTCHA_CLASS}" name="{RECAPTCHA_PUBLIC}"></div>
@@ -229,7 +262,7 @@ abstract class US_FormField_Recaptcha extends FormField {
         $this->MACRO_Recaptcha_Public = configGet('recaptcha_public');
         return parent::getMacros($s, $opts);
     }
-}
+} /* Recaptcha */
 
 abstract class US_FormField_SearchQ extends FormField {
     public
@@ -252,7 +285,7 @@ abstract class US_FormField_SearchQ extends FormField {
         $MACRO_Field_Name = 'q',
         $MACRO_Placeholder = 'Search Text...';
     protected $_isDBField = false;
-}
+} /* SearchQ */
 
 abstract class US_FormField_Select extends FormField {
     protected $_fieldType = "select";
@@ -265,7 +298,7 @@ abstract class US_FormField_Select extends FormField {
             <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
             <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
             <br />
-            <select class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}">
+            <select class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}" {DISABLED}>
             ',
         $HTML_Input = '
             <option value="{OPTION_VALUE}" {SELECTED}>{OPTION_LABEL}</option>
@@ -334,7 +367,8 @@ abstract class US_FormField_Select extends FormField {
     public function setIdField($val) {
         $this->idField = $val;
     }
-}
+} /* Select */
+
 abstract class US_FormField_Table extends FormField {
     protected $_fieldType = "table",
         $_dataFields = [],
@@ -366,7 +400,7 @@ abstract class US_FormField_Table extends FormField {
             </div> <!-- {DIV_CLASS} Table (name={FIELD_NAME}) -->
             ',
         $HTML_Checkbox_Id = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{ID}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
-        $HTML_Checkbox_Value = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
+        $HTML_Checkbox_Value = '<input type="checkbox" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
         $repElement = 'HTML_Input';
 
     public function handle1Opt($name, &$val) {
@@ -414,7 +448,7 @@ abstract class US_FormField_Table extends FormField {
         }
         return parent::handle1Opt($name, $val);
     }
-}
+} /* Table */
 
 # Tab Table-of-Contents
 abstract class US_FormField_TabToC extends FormField {
@@ -452,25 +486,97 @@ abstract class US_FormField_TabToC extends FormField {
             $tmp[] = [
                 'title'=>$o->getMacro('Form_Title'),
                 'tab_id'=>$k,
-                'tab_active'=>$active,
+                'tab_active'=>$o->getMacro('Tab_Pane_Active'),
+                #'tab_active'=>$active,
                 'toc_type'=>$toc_type,
             ];
             $active = '';
         }
         $this->repData = $tmp;
     }
-}
+} /* TabToC */
 
 abstract class US_FormField_Text extends FormField {
     protected $_fieldType = "text";
-}
+} /* Text */
 
 abstract class US_FormField_Textarea extends FormField {
     protected $_fieldType = "textarea";
     public
         $HTML_Input = '
-              <textarea class="{INPUT_CLASS}" id="{FIELD_ID}" '
+              <textarea class="{INPUT_CLASS} {EDITABLE}" id="{FIELD_ID}" '
             .'name="{FIELD_NAME}" rows="{ROWS}" placeholder="{PLACEHOLDER}" '
-            .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB}>{VALUE}</textarea>',
-        $MACRO_Rows = '6';
-}
+            .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB} {READONLY} {DISABLED}>{VALUE}</textarea>',
+        $MACRO_Rows = '6',
+        $MACRO_Editable = 'editable',
+        $MACRO_Us_Url_Root = US_URL_ROOT,
+        $MACRO_Tinymce_Url = null,
+        $MACRO_Tinymce_Apikey = null,
+        $MACRO_Tinymce_Plugins = null,
+        $MACRO_Tinymce_Height = null,
+        $MACRO_Tinymce_Menubar = null,
+        $MACRO_Tinymce_Toolbar = null,
+        $MACRO_Tinymce_Skin = null,
+        $MACRO_Tinymce_Theme = null,
+        $MACRO_Tinymce_Readonly = 'false',
+        /* Note that TINYMCE_MENUBAR and TINYMCE_TOOLBAR have the quotes added separately */
+        $HTML_Script = ['<script src="{TINYMCE_URL}"></script>',
+            '<script>
+                tinymce.init({
+                    selector: \'#{FIELD_ID}\',
+                    plugins: \'{TINYMCE_PLUGINS}\',
+                    height: {TINYMCE_HEIGHT},
+                    menubar: {TINYMCE_MENUBAR},
+                    toolbar: {TINYMCE_TOOLBAR},
+                    skin: \'{TINYMCE_SKIN}\',
+                    theme: \'{TINYMCE_THEME}\',
+                    statusbar: false,
+                    elementpath: false,
+                    readonly: {TINYMCE_READONLY},
+                 });
+            </script>'];
+    public function handleOpts($opts) {
+        $rtn = parent::handleOpts($opts);
+        $tinymceOpts = [
+            'Tinymce_Url'=>'tinymce_url',
+            'Tinymce_Apikey'=>'tinymce_apikey',
+            'Tinymce_Plugins'=>'tinymce_plugins',
+            'Tinymce_Menubar'=>'tinymce_menubar',
+            'Tinymce_Toolbar'=>'tinymce_toolbar',
+            'Tinymce_Height'=>'tinymce_height',
+            'Tinymce_Skin'=>'tinymce_skin',
+            'Tinymce_Theme'=>'tinymce_theme',
+        ];
+        foreach ($tinymceOpts as $macro => $config) {
+            if (!$this->getMacro($macro) && ($x = configGet($config))) {
+                $this->setMacro($macro, $x);
+            }
+        }
+        if ($this->getMacro('Tinymce_Apikey') && ($tinyUrl = $this->getMacro('Tinymce_Url'))) {
+            if (stripos($tinyUrl, '{TINYMCE_APIKEY}') === false) {
+                $this->setMacro('Tinymce_Apikey', $tinyUrl.'?apiKey={TINYMCE_APIKEY}');
+            }
+        }
+        /* These options can be true or false or a string - thus have to explicitly add quotes */
+        foreach (['Tinymce_Menubar', 'Tinymce_Toolbar'] as $macro) {
+            if (!in_array($x = $this->getMacro($macro), ['true', 'false']) && $x{0} != "'") {
+                $this->setMacro($macro, "'".$x."'");
+                #dbg($this->getMacro($macro));
+            }
+        }
+        /* Technically this should be substituted automatically. Due to the order of the substitutions
+         * (since this macro is contained within another) sometimes it doesn't work. Rather than making
+         * a (complicated) system for ordering the macros, we just do a quick substitute here...
+         */
+        if (($tinyUrl = $this->getMacro('Tinymce_Url')) && stripos($tinyUrl, '{TINYMCE_APIKEY}') === false) {
+            $this->setMacro('Tinymce_Url', str_ireplace('{US_URL_ROOT}', $this->MACRO_Us_Url_Root, $tinyUrl));
+        }
+        if ($this->getMacro('Readonly') || $this->getMacro('Disabled')) {
+            $this->setMacro('Tinymce_Readonly', 'true');
+            $this->setMacro('Tinymce_Toolbar', 'false');
+            $this->setMacro('Tinymce_Menubar', 'false');
+        }
+
+        return $rtn;
+    }
+} /* Textarea */
