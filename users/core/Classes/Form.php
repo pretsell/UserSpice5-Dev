@@ -32,7 +32,7 @@ class US_Form extends Element {
         $_dbTableId=null, // which row we load and update
         $_dbAutoLoad=false, // whether we autoload from $_dbTable and $_dbTableId
         $_autoShow=false, // whether we echo $this->getHTML() at the end of __construct()
-        $_autoToC='toc', // whether we fix Table of Contents for tabs
+        $_autoToC='toc', // whether we fix Table of Contents for tabs and what is name of toc field
         $_autoRedirect=true, // whether we automatically redirect according to page/settings
         $_redirectAfterSave=null, // set while saving, based on tables "pages" and "settings"
         $_dbAutoLoadPosted=null, // source (usually $_POST) from which we autoload new values
@@ -111,18 +111,13 @@ class US_Form extends Element {
         ';
     # others will be added - these are just the static, known ones
     public $MACRO_Container_Class = '',
-        $MACRO_Tab_Class = '',
-        $MACRO_Tab_Content_Class = '',
-        $MACRO_Tab_Pane_Class = 'xs-col-12',
         $MACRO_Row_Class = '',
         $MACRO_Col_Class = 'xs-col-12',
         $MACRO_Form_Name = 'usForm',
         $MACRO_Form_Method = 'post',
         $MACRO_Form_Action = '',
         $MACRO_Browser_Title = '',
-        $MACRO_Form_Title = null,
-        $MACRO_Tab_Pane_Active = '',
-        $MACRO_Tab_Id = '';
+        $MACRO_Form_Title = null;
 
 	public function __construct($fields=[], $opts=[]){
         if (in_array(@$opts['default'], ['all', 'fields', 'processing'])) {
@@ -150,12 +145,15 @@ class US_Form extends Element {
         }
         unset($opts['default']);
         $opts = array_merge([$this->repElement=>$fields], $opts);
-        parent::__construct($opts);
+        $newFieldList = [];
         foreach ($opts[$this->repElement] as $f => &$v) {
             if (is_object($v) && method_exists($v, 'setDefaults')) {
-                $v->setDefaults($f);
+                $v->setDefaults($f); // $f may be renamed
             }
+            $newFieldList[$f] = $v; // this might rename $f if an alias occurred in setDefaults()
         }
+        $opts[$this->repElement] = $newFieldList;
+        parent::__construct($opts);
         // $formName is usually set prior to master_form.php
         if (!$this->_formName && @$GLOBALS['formName']) {
             $this->_formName = $GLOBALS['formName'];
@@ -188,9 +186,7 @@ class US_Form extends Element {
                 }
             }
         }
-        if ($this->getAutoToC() && $toc = $this->getField($this->getAutoToC())) {
-            $toc->setRepData($this->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]));
-        }
+        $this->defaultTabs();
         if ($this->getAutoShow()) {
             echo $this->getHTML();
         }
@@ -205,12 +201,6 @@ class US_Form extends Element {
             case 'title':
                 # NOTE: may fall through from above
                 $this->setMacro('Form_Title', $val);
-                return true;
-            case 'activetab':
-                $this->setTabIsActive($val);
-                return true;
-            case 'tabid':
-                $this->setTabId($val);
                 return true;
             case 'keepadmindashboard':
                 $this->setKeepAdminDashBoard($val);
@@ -333,12 +323,38 @@ class US_Form extends Element {
         }
         return false;
     }
+    # If dev didn't specify which tabs to put in ToC or if he didn't specify an active
+    # tab then take care of appropriate defaults
+    public function defaultTabs() {
+        if ($this->getAutoToC() && $toc = $this->getField($this->getAutoToC())) {
+            $curTabs = $this->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]);
+            #var_dump($toc->getRepData());
+            # Check that one of the tabs is active
+            $found_active = false;
+            foreach ($curTabs as $fld) {
+                if ($fld->getMacro('Tab_Pane_Active')) {
+                    $found_active = true;
+                }
+            }
+            if (!$found_active) {
+                #var_dump($curTabs);
+                reset($curTabs);
+                $firstKey = key($curTabs);
+                $curTabs[$firstKey]->setTabIsActive('active');
+                #$firstTab = $this->getField($tabId);
+            }
+            $curTabs = $this->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]);
+            $toc->setRepData($curTabs);
+            #var_dump($toc->getRepData());
+        }
+    }
     public function calcDefaultFields() {
         if (!isset($T[$this->getDbTable()])) {
             $T[$this->getDbTable()] = $this->getDbTable();
         }
         $db = DB::getInstance(); // $this->_db not available yet
         $fields = $db->query("SHOW COLUMNS FROM {$T[$this->getDbTable()]}")->results();
+        #dbg($db->errorString(true));
         foreach ($fields as $f) {
             if (in_array($f->Field, $this->_excludeFields)) {
                 continue;
@@ -353,6 +369,8 @@ class US_Form extends Element {
             #dbg("name={$f->Field}, type=$type ({$f->Type})");
             if ($f->Type == 'tinyint(1)') { // boolean
                 $defs[$fn] = new FormField_Checkbox;
+            } elseif ($f->Type == 'text') {
+                $defs[$fn] = new FormField_Textarea;
             } else {
                 # later on we can get fancy with dates and stuff
                 $defs[$fn] = new FormField_Text;
@@ -643,11 +661,14 @@ class US_Form extends Element {
     }
     public function getHTMLFooter($opts=[], $noFill=false) {
         $html = getInclude(pathFinder('includes/html_footer.php'));
+        $scripts = [];
         foreach ($this->getAllFields() as $f=>$field) {
             if (method_exists($field, 'getHTMLScripts')) {
-                $html = $field->getHTMLScripts().$html;
+                $scripts = array_merge($scripts, (array)$field->getHTMLScripts());
             }
         }
+        $scripts = array_unique($scripts);
+        $html = implode($scripts).$html;
         return $html;
     }
 
@@ -770,12 +791,6 @@ class US_Form extends Element {
     public function setDbTableId($val) {
         $this->_dbTableId = $val;
     }
-    public function setTabIsActive($val) {
-        $this->MACRO_Tab_Pane_Active = $val;
-    }
-    public function setTabId($val) {
-        $this->MACRO_Tab_Id = $val;
-    }
 	public function setAction($action) {
 		$this->MACRO_Form_Action=$action;
 	}
@@ -804,7 +819,7 @@ class US_Form extends Element {
                 $rtn[$f] = $field;
             } else {
                 if ($recursive && method_exists($field, 'getFields')) {
-                    // allow for forms nested in forms (FormTab_Contents and FormTab_Pane, etc.)
+                    // allow for forms nested in forms
                     $rtn = array_merge($rtn, $field->getFields($fieldFilter, $opts));
                 } elseif (!isset($opts['class'])) {
                     $rtn[$f] = $field;
@@ -835,10 +850,11 @@ class US_Form extends Element {
         $rtn = [];
         foreach ($this->repData as $k=>$v) {
             if ($onlyDbTable && method_exists($v, 'getDbTable') && $v->getDbTable() && $v->getDbTable() != $onlyDbTable) {
-                dbg("listFields(): Continuing onlyDbTable=$onlyDbTable != v->getDbTable()=".$v->getDbTable());
+                #dbg("listFields(): Continuing onlyDbTable=$onlyDbTable != v->getDbTable()=".$v->getDbTable());
                 continue; // wrong table - not interested
             }
             if (!$onlyFields || is_a($v, 'US_FormField')) {
+                #dbg("listFields(): adding $k");
                 $rtn[] = $k;
             }
             if (method_exists($v, 'listFields')) {
@@ -851,6 +867,7 @@ class US_Form extends Element {
     public function setFieldValues($vals, $fieldFilter=array()) {
         $this->debug(1, '::setFieldValues(): Entering');
         $fieldList = $this->fixFieldList($fieldFilter);
+        #var_dump($fieldList);
         foreach ($fieldList as $f) {
             $this->debug(2, "::setFieldValues() - looping with f=$f");
             if (is_array($vals)) {
