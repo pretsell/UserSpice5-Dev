@@ -20,6 +20,39 @@ class US_FormTab_Pane extends Form {
     protected $HTML_closeTab = '
         </div> <!-- tab-pane (id={TAB_ID}) -->
         ';
+    public
+        $MACRO_Tab_Class = '',
+        $MACRO_Tab_Content_Class = '',
+        $MACRO_Tab_Pane_Class = 'xs-col-12',
+        $MACRO_Tab_Pane_Active = '',
+        $MACRO_Tab_Id = '';
+    public function handle1Opt($name, &$val) {
+        switch (strtolower(str_replace('_', '', $name))) {
+            case 'activetab':
+                $this->setTabIsActive($val);
+                return true;
+            case 'tabid':
+                $this->setTabId($val);
+                return true;
+        }
+        return parent::handle1Opt($name, $val);
+    }
+    public function setDefaults($fn) {
+        #dbg("FormTab_Pane::setDefaults($fn): Entering");
+        parent::setDefaults($fn);
+        if (!$this->getMacro('Tab_Id')) {
+            $this->setTabId($fn);
+        }
+    }
+    public function setTabIsActive($val) {
+        if ($val) {
+            $val = 'active';
+        }
+        $this->MACRO_Tab_Pane_Active = $val;
+    }
+    public function setTabId($val) {
+        $this->MACRO_Tab_Id = $val;
+    }
 }
 class US_Form_Form extends Form {
     public $elementList = [
