@@ -47,6 +47,7 @@ abstract class US_FormField extends Element {
         $_pageItems=0, // paginates if non-zero and isRepeating() (i.e., this is the flag to turn on paginating)
         $_curPage=0,   // current page
         $_pageVarName='page',
+        $_initOpts=[],
         $_totalPages=0;// total number of pages
     public $repEmptyAlternateReplacesAll = true;
     public
@@ -84,20 +85,23 @@ abstract class US_FormField extends Element {
         $MACRO_Page_Index = '';
 
     public function __construct($opts=[]) {
+        // We cannot do our initialization here because we need the name of the field
+        // which is passed in from the parent Form
+        $this->_initOpts = $opts;
+    }
+    public function initFormField($IdxFn='') {
+        $opts = $this->_initOpts;
         global $T;
         if ($fn = @$opts['dbfield']) {
-            $db = DB::getInstance();
-            $field_def = $db->query("SELECT * FROM $T[field_defs] WHERE name = ?", [$fn])->first(true);
-            $dbFieldnm = $fn;
-            if ($field_def) {
-                $fn = $field_def['alias'];
-            }
-            $this->setDBFieldName($dbFieldnm);
+            $field_def = $this->useFieldDef($fn); // $fn may be altered by alias
             unset($opts['dbfield']); // don't need anymore
-        } else {
-            $fn = @$opts['field']; // grab it if it's there
+        } elseif ($fn = @$opts['field']) {
             unset($opts['field']); // don't need anymore
             $field_def = []; // no field-def to work with
+        } else {
+            $fn = $IdxFn; // the index to the array element will also be the field name
+            $field_def = $this->useFieldDef($fn); // $fn may be altered by alias
+            #$this->setDefaults($fn);
         }
         #dbg("Checking fn=$fn");
         #var_dump($opts);
@@ -115,7 +119,10 @@ abstract class US_FormField extends Element {
             unset($field_def['display']);
             unset($field_def['display_lang']);
         }
+        # This handles only opts that are in $field_def but not in $opts
+        # (since $opts was already handled above in the parent::__construct($opts) call)
         $this->handleOpts(array_diff_key((array)$field_def, $opts));
+        return $fn;
     }
 
     public function handle1Opt($name, &$val) {
@@ -181,6 +188,19 @@ abstract class US_FormField extends Element {
                 return true;
         }
         return parent::handle1Opt($name, $val);
+    }
+
+    public function useFieldDef(&$fn) {
+        $db = DB::getInstance();
+        $field_def = $db->queryAll("field_defs", [ 'name' => $fn ])->first(true);
+        $dbFieldnm = $fn;
+        if ($field_def) {
+            $fn = $field_def['alias'];
+            #dbg("useFieldDef(): $fn, $dbFieldnm");
+        }
+        $this->setDBFieldName($dbFieldnm);
+        $this->setFieldName($fn);
+        return $field_def;
     }
 
     public function getMacros($s, $opts) {
@@ -301,15 +321,23 @@ abstract class US_FormField extends Element {
         }
     }
 
-    // For easy coding forms the key to the __construct hash on the field
-    // list (1st arg) can provide both the field name and the display labels
-    public function setDefaults($k) {
+    // the key to the __construct hash handed to the field list (1st arg)
+    // can initialize both the field name and the display labels
+    public function setDefaults(&$k, $reprocessFieldDef=false) {
+        #dbg("setDefaults($k): Entering");
+        $k = $this->initFormField($k); // handle (late) initialization
+        /*
+        $field_def = [];
         if (!$this->getFieldName()) {
             $this->setFieldName($k);
+            $field_def = $this->useFieldDef($k);
         }
         if (!$this->getDBFieldName()) {
             $this->setDBFieldName($k);
         }
+        #dbg("FieldName=".$this->getFieldName());
+        #dbg("DBFieldName=".$this->getDBFieldName());
+        */
         $prettyText = ucwords(str_replace('_', ' ', $k));
         if (!$this->getFieldLabel()) {
             $this->setFieldLabel($prettyText);
@@ -317,6 +345,10 @@ abstract class US_FormField extends Element {
         if (!$this->getMacro('Label_Text')) {
             $this->setMacro('Label_Text', $prettyText);
         }
+        if ($reprocessFieldDef && $field_def) {
+            $this->handleOpts($field_def);
+        }
+        return $this->getFieldName();
     }
     public function isChanged() {
         return ($this->_fieldNewValue != $this->_fieldValue);
@@ -555,9 +587,11 @@ abstract class US_FormField extends Element {
         $this->calcRepData();
         return parent::getHTML($opts);
     }
-    public function getHTMLScripts() {
+    public function getHTMLScripts($opts=[]) {
         #dbg("::getHTMLScripts - ".$this->HTML_Script);
-        return $this->HTML_Script;
+        $html = $this->HTML_Script;
+        $macros = $this->getMacros($html, $opts);
+        return $this->processMacros($macros, $html, $opts);
     }
     // if an inheriting class needs to adjust the snippets
     // they can do it by setting any of ...
