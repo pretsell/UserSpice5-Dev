@@ -40,8 +40,8 @@ class US_Validate{
 			$query = $this->_db->query("SELECT * FROM $T[field_defs] WHERE name = ?", [$rulename]);
 			$results = $query->first();
 			foreach (['display_lang', 'display', 'alias', 'required', 'max', 'min',
-                                'min_val', 'max_val',
-								'unique'=>'unique_in_table', 'matches'=>'match_field',
+                                'min_val', 'max_val', 'unique'=>'unique_in_table',
+                                'matches'=>'match_field', 'match'=>'match_field',
 								'update_id', 'is_numeric', 'valid_email', 'regex',
 								'regex_display'] as $k => $rn) {
                 #dbg("k=$k, rn=$rn");
@@ -114,10 +114,12 @@ class US_Validate{
 						case 'regex':
 							$rtn[] = $ruleList[$f]['regex_display'].' ';
 							break;
+						case 'match':
 						case 'matches':
 						case 'match_field':
-                        echo " r=$r<br />\n";
-							$rtn[] = lang('VALID_MUST_MATCH', $ruleList[$r]['display']).' ';
+                            #echo " r=$r<br />\n";
+                            $fdisp = (isset($ruleList[$r]['display'])) ? $ruleList[$r]['display'] : $r;
+							$rtn[] = lang('VALID_MUST_MATCH', $fdisp).' ';
 							break;
 					}
 				}
