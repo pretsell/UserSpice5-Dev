@@ -93,6 +93,18 @@ $myForm = new Form ([
                         ['id'=>0, 'name'=>lang('NO')],
                     ],
                 ]),
+            'min_pw_score' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_MIN_PW_SCORE'),
+                    'repeat' => [
+                        ['id'=>0, 'name'=>lang('PW_VERY_WEAK')],
+                        ['id'=>1, 'name'=>lang('PW_WEAK')],
+                        ['id'=>2, 'name'=>lang('PW_OK')],
+                        ['id'=>3, 'name'=>lang('PW_STRONG')],
+                        ['id'=>4, 'name'=>lang('PW_VERY_STRONG')],
+                    ],
+                    'hint_text' => lang('HINT_MIN_PW_SCORE'),
+                ]),
             'recaptcha' =>
                 new FormField_Select([
                     'dbfield' => 'settings.recaptcha',
@@ -133,8 +145,6 @@ $myForm = new Form ([
                     ],
                 ]),
         ], [
-            'active_tab' => 'active',
-            'tab_id' => 'tab_security',
             'title' => lang('SETTINGS_SECURITY_TITLE'),
         ]),
         'tab_css' => new FormTab_Pane ([
@@ -191,27 +201,34 @@ $myForm = new Form ([
                         ], ['col_class' => 'text-center']),
                 ], ['delete_if' =>  !configGet('css_sample')]),
         ], [
-            'tab_id' => 'tab_css',
             'title' => lang("SETTINGS_CSS_TITLE"),
         ]),
         'tab_general' => new FormTab_Pane ([
             'site_name' =>
                 new FormField_Text([
-                    'dbfield' => 'site_name',
                     'display' => lang('SETTINGS_SITE_NAME'),
                     'hint_text' => lang('HINT_SITE_NAME'),
                 ]),
             'site_url' =>
                 new FormField_Text([
-                    'dbfield' => 'site_url',
                     'display' => lang('SETTINGS_SITE_URL'),
                     'hint_text' => lang('HINT_SITE_URL'),
                 ]),
             'site_language' =>
                 new FormField_Select([
-                    'dbfield' => 'site_language',
                     'display' => lang('SETTINGS_SITE_LANGUAGE'),
+                    'hint_text' => lang('HINT_SITE_LANGUAGE'),
                     'repeat' => $langs,
+                ]),
+            'date_fmt' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_DATE_FMT'),
+                    'hint_text' => lang('HINT_SETTINGS_DATE_FMT'),
+                ]),
+            'time_fmt' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TIME_FMT'),
+                    'hint_text' => lang('HINT_SETTINGS_TIME_FMT'),
                 ]),
             'install_location' =>
                 new FormField_Text([
@@ -220,10 +237,11 @@ $myForm = new Form ([
                     'hint_text' => lang('CURRENTLY_UNUSED'),
                 ]),
             'copyright_message' =>
-                new FormField_Text([
+                new FormField_Textarea([
                     'dbfield' => 'copyright_message',
                     'display' => lang('SETTINGS_COPYRIGHT_MESSAGE'),
                     'hint_text' => lang('HINT_COPYRIGHT_MESSAGE'),
+                    'editable' => true,
                 ]),
             'site_offline' =>
                 new FormField_Select([
@@ -255,9 +273,71 @@ $myForm = new Form ([
                     ],
                     'hint_text' => lang('HINT_TRACK_GUESTS'),
                 ]),
+            'upload_dir' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_UPLOAD_DIR'),
+                    'hint_text' => lang('HINT_UPLOAD_DIR'),
+                    'valid' => [
+                        'regex' => ':^$|\/$:',
+                        'regex_display' => lang('REGEX_ENDS_WITH_SLASH'),
+                    ],
+                ]),
+            'upload_allowed_ext' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_UPLOAD_ALLOWED_EXT'),
+                    'hint_text' => lang('HINT_UPLOAD_ALLOWED_EXT'),
+                ]),
+            'upload_max_size' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_UPLOAD_MAX_SIZE'),
+                    'hint_text' => lang('HINT_UPLOAD_MAX_SIZE'),
+                ]),
         ], [
-            'tab_id'=>'tab_general',
             'title'=>lang('SETTINGS_GENERAL_TITLE'),
+        ]),
+        'tab_editor' => new FormTab_Pane ([
+            'tinymce_url' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TINYMCE_URL'),
+                    'hint_text' => lang('HINT_TINYMCE_URL'),
+                ]),
+            'tinymce_apikey' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TINYMCE_APIKEY'),
+                    'hint_text' => lang('HINT_TINYMCE_APIKEY'),
+                ]),
+            'tinymce_plugins' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TINYMCE_PLUGINS'),
+                    'hint_text' => lang('HINT_TINYMCE_PLUGINS'),
+                ]),
+            'tinymce_height' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TINYMCE_HEIGHT'),
+                    'hint_text' => lang('HINT_TINYMCE_HEIGHT'),
+                ]),
+            'tinymce_menubar' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TINYMCE_MENUBAR'),
+                    'hint_text' => lang('HINT_TINYMCE_MENUBAR'),
+                ]),
+            'tinymce_toolbar' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TINYMCE_TOOLBAR'),
+                    'hint_text' => lang('HINT_TINYMCE_TOOLBAR'),
+                ]),
+            'tinymce_skin' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TINYMCE_SKIN'),
+                    'hint_text' => lang('HINT_TINYMCE_SKIN'),
+                ]),
+            'tinymce_theme' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_TINYMCE_THEME'),
+                    'hint_text' => lang('HINT_TINYMCE_THEME'),
+                ]),
+        ], [
+            'title'=>lang('SETTINGS_EDITOR_TITLE'),
         ]),
         'tab_redirects' => new FormTab_Pane ([
             'redirect_login' =>
@@ -274,15 +354,18 @@ $myForm = new Form ([
                 ]),
             'redirect_deny_nologin' =>
                 new FormField_Text([
-                    'dbfield' => 'redirect_deny_nologin',
                     'display' => lang('SETTINGS_REDIRECT_DENY_NOLOGIN'),
                     'hint_text' => lang('HINT_REDIRECT_DENY_NOLOGIN'),
                 ]),
             'redirect_deny_noperm' =>
                 new FormField_Text([
-                    'dbfield' => 'redirect_deny_noperm',
                     'display' => lang('SETTINGS_REDIRECT_DENY_NOPERM'),
                     'hint_text' => lang('HINT_REDIRECT_DENY_NOPERM'),
+                ]),
+            'redirect_site_offline' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_REDIRECT_SITE_OFFLINE'),
+                    'hint_text' => lang('HINT_REDIRECT_SITE_OFFLINE'),
                 ]),
             'multi_row_after_create' =>
                 new FormField_Select([
@@ -331,7 +414,6 @@ $myForm = new Form ([
                     'hint_text' => lang('HINT_REDIRECT_REFERRER_LOGIN'),
                 ]),
         ], [
-            'tab_id'=>'tab_redirects',
             'title'=>lang('SETTINGS_REDIRECTS_TITLE'),
         ]),
         'tab_registration' => new FormTab_Pane ([
@@ -353,7 +435,6 @@ $myForm = new Form ([
                     'hint_text' => lang('HINT_TERMS_AND_CONDITIONS'),
                 ]),
         ], [
-            'tab_id'=>'tab_registration',
             'title'=>lang('SETTINGS_REGISTRATION_TITLE'),
         ]),
         'tab_google' => new FormTab_Pane ([
@@ -386,7 +467,6 @@ $myForm = new Form ([
                     'hint_text' => lang('HINT_GLOGIN_CALLBACK'),
                 ]),
         ], [
-            'tab_id'=>'tab_google',
             'title'=>lang('SETTINGS_GOOGLE_TITLE'),
         ]),
         'tab_facebook' => new FormTab_Pane ([
@@ -419,7 +499,6 @@ $myForm = new Form ([
                     'hint_text' => lang('HINT_FBLOGIN_CALLBACK'),
                 ]),
         ], [
-            'tab_id'=>'tab_facebook',
             'title'=>lang('SETTINGS_FACEBOOK_TITLE'),
         ]),
     ]),
