@@ -10,11 +10,14 @@ class FormField_Checkbox extends US_FormField_Checkbox {
 }
 class FormField_Checklist extends US_FormField_Checklist {
 }
-# "MultiCheckbox" is an alias for "Checklist"
+# "MultiCheckbox" is an alias for "Checklist" (note it extends FormField_Checklist
+# and not US_FormField_Checklist)
 class FormField_MultiCheckbox extends FormField_Checklist {
     # DO NOT MAKE CHANGES HERE - make changes to FormField_Checklist above
     # unless you are deliberately separating the functionality of what was
     # originally designed to be a simple alias
+}
+class FormField_File extends US_FormField_File {
 }
 class FormField_Hidden extends US_FormField_Hidden {
 }
