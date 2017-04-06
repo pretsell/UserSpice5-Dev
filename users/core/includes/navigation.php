@@ -13,7 +13,8 @@ $sql = "SELECT menus.id, menu_title, parent, dropdown, logged_in,
             CONCAT(IF(link <> '', link, pages.page), link_args) AS link
         FROM ".$GLOBALS['T']['menus']." menus
         LEFT JOIN ".$GLOBALS['T']['pages']." pages ON (pages.id = menus.page_id)
-        WHERE menu_title='main' ORDER BY display_order";
+        WHERE menu_title='main'
+        ORDER BY display_order";
 $main_nav_all = $GLOBALS['db']->query($sql);
 
 /*
