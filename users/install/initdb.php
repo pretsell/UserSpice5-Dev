@@ -341,7 +341,27 @@ $init_commands = [
           `fbsecret` varchar(255) NOT NULL,
           `gcallback` varchar(255) NOT NULL,
           `fbcallback` varchar(255) NOT NULL,
-          `allow_username_change` tinyint(1) NOT NULL DEFAULT '1'
+          `allow_username_change` tinyint(1) NOT NULL DEFAULT '1',
+          `multi_row_after_delete` tinyint(4) NOT NULL,
+          `multi_row_after_create` tinyint(4) NOT NULL,
+          `multi_row_after_edit` tinyint(4) NOT NULL,
+          `single_row_after_delete` tinyint(4) NOT NULL,
+          `single_row_after_create` tinyint(4) NOT NULL,
+          `single_row_after_edit` tinyint(4) NOT NULL,
+          `tinymce_url` varchar(255) NOT NULL,
+          `tinymce_apikey` varchar(100) NOT NULL,
+          `tinymce_plugins` varchar(255) NOT NULL,
+          `tinymce_height` int(11) NOT NULL,
+          `tinymce_menubar` varchar(255) NOT NULL,
+          `tinymce_skin` varchar(100) NOT NULL DEFAULT 'lightgray',
+          `tinymce_theme` varchar(100) NOT NULL DEFAULT 'modern',
+          `tinymce_toolbar` varchar(255) NOT NULL,
+          `date_fmt` varchar(100) NOT NULL,
+          `time_fmt` varchar(100) NOT NULL,
+          `min_pw_score` int(11) NOT NULL,
+          `upload_dir` varchar(255),
+          `upload_max_size` int(11),
+          `upload_allowed_ext` varchar(255),
       ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}settings` (`id`, `site_name`, `site_url`,
             `install_location`, `copyright_message`, `version`, `site_language`,
@@ -349,31 +369,52 @@ $init_commands = [
             `recaptcha`, `force_ssl`, `css_sample`, `css1`, `css2`, `css3`,
             `mail_method`, `smtp_server`, `smtp_port`, `smtp_transport`,
             `email_login`, `email_pass`, `from_name`, `from_email`, `email_act`,
-            `recaptcha_private`, `recaptcha_public`, `email_verify_template`,
+            `recaptcha_private`, `recaptcha_public`,
+            `email_verify_template`,
             `forgot_password_template`,
             `redirect_login`, `redirect_logout`, `redirect_deny_nologin`,
             `redirect_deny_noperm`, `redirect_site_offline`,
-            `multi_row_after_create`, `multi_row_after_edit`,
-            `multi_row_after_delete`, `single_row_after_create`,
-            `single_row_after_edit`, `single_row_after_delete`,
+            `multi_row_after_create`, `multi_row_after_edit`, `multi_row_after_delete`,
+            `single_row_after_create`, `single_row_after_edit`, `single_row_after_delete`,
             `redirect_referrer_login`, `session_timeout`, `allow_remember_me`,
             `backup_dest`, `agreement`, `glogin`, `fblogin`, `gid`, `gsecret`,
-            `fbid`, `fbsecret`, `gcallback`, `fbcallback`, `allow_username_change`) VALUES
-        (1, 'UserSpice5', 'http://localhost/UserSpice5-Dev/',
-            '', 'US', '5.0.0a', 'english.php',
-            0, 1, 1, 1,
-            0, 0, 1, 'core/css/color_schemes/standard.css', 'core/css/blank.css', 'core/css/blank.css',
-            'smtp', '', 25, 'TLS',
-            '', '', 'UserSpice Admin', '', 0,
-            '', '', '&lt;p&gt;Congratulations {{fname}},&lt;/p&gt;\n&lt;p&gt;Thanks for signing up Please click the link below to verify your email address.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Once you verify your email address you will be ready to login!&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;',
+            `fbid`, `fbsecret`,
+            `gcallback`,
+            `fbcallback`,
+            `allow_username_change`,
+            `tinymce_url`, `tinymce_apikey`, `tinymce_plugins`, `tinymce_height`,
+            `tinymce_skin`, `tinymce_theme`, `tinymce_menubar`,
+            `tinymce_toolbar`,
+            `date_fmt`, `time_fmt`, `min_pw_score`,
+            `upload_dir`, `upload_max_size`, `upload_allowed_ext`) VALUES
+        (1, 'UserSpice5', 'http://localhost/UserSpice5-Dev/', -- id, site_name, site_url
+            '', 'US', '5.0.0a', 'english.php', -- install_location, copyright_message, version, site_language
+            0, 1, 1, 1, -- site_offline, debug_mode, query_count, track_guest
+            0, 0, 1, -- recaptcha, force_ssl, css_sample, (next line: css1, css2, css3)
+            'core/css/color_schemes/standard.css', 'core/css/blank.css', 'core/css/blank.css',
+            'smtp', '', 25, 'TLS', -- mail_method, smtp_server, smtp_port, smtp_transport
+            '', '', 'UserSpice Admin', '', 0, -- email_login, email_pass, from_name, from_email, email_act
+            '', '', -- recaptcha_private, recaptcha_public, (next line: email_verify_template; following: forgot_password_template)
+            '&lt;p&gt;Congratulations {{fname}},&lt;/p&gt;\n&lt;p&gt;Thanks for signing up Please click the link below to verify your email address.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Once you verify your email address you will be ready to login!&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;',
             '&lt;p&gt;Hello {{fname}},&lt;/p&gt;\n&lt;p&gt;You are receiving this email because a request was made to reset your password. If this was not you, you may disgard this email.&lt;/p&gt;\n&lt;p&gt;If this was you, click the link below to continue with the password reset process.&lt;/p&gt;\n&lt;p&gt;{{url}}&lt;/p&gt;\n&lt;p&gt;Sincerely,&lt;/p&gt;\n&lt;p&gt;-The {{sitename}} Team-&lt;/p&gt;',
-            'profile.php', 'index.php', 'login.php',
-            'index.php', 'offline.php',
-            1, 1, 1,
-            2, 2, 2,
-            1, 86400, 1,
-            'backup_userspice/', 'Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our privacy policy govern our relationship with you in relation to this website. If you disagree with any part of these terms and conditions, please do not use our website.\r\n\r\nThe use of this website is subject to the following terms of use:\r\n\r\nThe content of the pages of this website is for your general information and use only. It is subject to change without notice.\r\n\r\nThis website uses cookies to monitor browsing preferences. If you do allow cookies to be used, the following personal information may be stored by us for use by third parties.\r\n\r\nNeither we nor any third parties provide any warranty or guarantee as to the accuracy, timeliness, performance, completeness or suitability of the information and materials found or offered on this website for any particular purpose.\r\n\r\nYou acknowledge that such information and materials may contain inaccuracies or errors and we expressly exclude liability for any such inaccuracies or errors to the fullest extent permitted by law.\r\n\r\nYour use of any information or materials on this website is entirely at your own risk, for which we shall not be liable. It shall be your own responsibility to ensure that any products, services or information available through this website meet your specific requirements.\r\n\r\nThis website contains material which is owned by or licensed to us. This material includes, but is not limited to, the design, layout, look, appearance and graphics. Reproduction is prohibited other than in accordance with the copyright notice, which forms part of these terms and conditions.\r\nAll trade marks reproduced in this website which are not the property of, or licensed to, the operator are acknowledged on the website.\r\n\r\nUnauthorised use of this website may give rise to a claim for damages and/or be a criminal offence.\r\n\r\nFrom time to time this website may also include links to other websites. These links are provided for your convenience to provide further information. They do not signify that we endorse the website(s). We have no responsibility for the content of the linked website(s).', 0, 0, '', '',
-            '', '', 'https://us.raysee.net/users/helpers/gcallback.php', 'https://us.raysee.net/users/helpers/fbcallback.php', 1)",
+            'profile.php', 'index.php', 'login.php', -- redirect_(login,logout,deny_nologin)
+            'index.php', 'offline.php', -- redirect_(deny_noperm,site_offline)
+            1, 1, 1, -- multi_row_after_(create,edit,delete)
+            2, 2, 2, -- single_row_after_(create,edit,delete)
+            1, 86400, 1, -- redirect_referrer_login, session_timeout, allow_remember_me
+            'backup_userspice/', -- backup_dest, (next line: agreement)
+            'Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our privacy policy govern our relationship with you in relation to this website. If you disagree with any part of these terms and conditions, please do not use our website.\r\n\r\nThe use of this website is subject to the following terms of use:\r\n\r\nThe content of the pages of this website is for your general information and use only. It is subject to change without notice.\r\n\r\nThis website uses cookies to monitor browsing preferences. If you do allow cookies to be used, the following personal information may be stored by us for use by third parties.\r\n\r\nNeither we nor any third parties provide any warranty or guarantee as to the accuracy, timeliness, performance, completeness or suitability of the information and materials found or offered on this website for any particular purpose.\r\n\r\nYou acknowledge that such information and materials may contain inaccuracies or errors and we expressly exclude liability for any such inaccuracies or errors to the fullest extent permitted by law.\r\n\r\nYour use of any information or materials on this website is entirely at your own risk, for which we shall not be liable. It shall be your own responsibility to ensure that any products, services or information available through this website meet your specific requirements.\r\n\r\nThis website contains material which is owned by or licensed to us. This material includes, but is not limited to, the design, layout, look, appearance and graphics. Reproduction is prohibited other than in accordance with the copyright notice, which forms part of these terms and conditions.\r\nAll trade marks reproduced in this website which are not the property of, or licensed to, the operator are acknowledged on the website.\r\n\r\nUnauthorised use of this website may give rise to a claim for damages and/or be a criminal offence.\r\n\r\nFrom time to time this website may also include links to other websites. These links are provided for your convenience to provide further information. They do not signify that we endorse the website(s). We have no responsibility for the content of the linked website(s).',
+            0, 0, '', '', -- glogin, fblogin, gid, gsecret
+            '', '', -- fbid, fbsecret
+            'https://us.raysee.net/users/helpers/gcallback.php', -- gcallback
+            'https://us.raysee.net/users/helpers/fbcallback.php', -- fbcallback
+            1, -- allow_username_change
+            '{US_URL_ROOT}resources/js/tinymce/tinymce.min.js', --tinymce_url
+            '', 'table', 200, --tinymce_(apikey,plugins,height)
+            'lightgray', 'modern', 'false', -- tinymce_(skin,theme,menubar,<next line>toolbar)
+            'undo redo | cut copy paste | formatselect | fontselect fontsizeselect | table | bold italic | bullist numlist | outdent indent | alignleft aligncenter alignright | image | removeformat',
+            'd-M-Y', 'h:i:sa', 2, -- date_fmt, time_fmt, min_pw_score
+            '{US_ROOT_DIR}uploads', 1000000, '' ) -- upload_(dir,max_size,allowed_ext)",
     "CREATE TABLE `{$prefix}users` (
           `id` int(11) NOT NULL,
           `email` varchar(155) NOT NULL,
@@ -522,7 +563,9 @@ if (@$_POST['save']) {
         }
     }
     $errcount=0;
+    $repl = [ '{US_URL_ROOT}'=>US_URL_ROOT, '{US_ROOT_DIR}'=>US_ROOT_DIR, ];
     foreach ($init_commands as $sql) {
+        $sql = str_replace(array_keys($repl), array_values($repl), $sql);
         $db->query($sql);
         if ($e = $db->error()) {
             var_dump($e);
