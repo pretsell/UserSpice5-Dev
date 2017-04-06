@@ -43,7 +43,8 @@ class US_Validate{
                                 'min_val', 'max_val', 'unique'=>'unique_in_table',
                                 'matches'=>'match_field', 'match'=>'match_field',
 								'update_id', 'is_numeric', 'valid_email', 'regex',
-								'regex_display'] as $k => $rn) {
+								'regex_display', 'upload_max_size', 'upload_ext', 'upload_errs']
+                                as $k => $rn) {
                 #dbg("k=$k, rn=$rn");
 				if (is_numeric($k)) $k = $rn;
 #var_dump($results);
@@ -69,6 +70,9 @@ class US_Validate{
 		}
 		return $newRuleList;
 	}
+    public function addRule($ruleName, $ruleVal) {
+        $this->_ruleList[$ruleName] = $ruleVal;
+    }
 
     public function listFields() {
         return array_keys($this->_ruleList);
@@ -121,6 +125,14 @@ class US_Validate{
                             $fdisp = (isset($ruleList[$r]['display'])) ? $ruleList[$r]['display'] : $r;
 							$rtn[] = lang('VALID_MUST_MATCH', $fdisp).' ';
 							break;
+                        case 'upload_max_size':
+                            $rtn[] = lang('VALID_MAX_FILE_SIZE', $r).' ';
+                            break;
+                        case 'upload_ext':
+                            if ($r) {
+                                $rtn[] = lang('VALID_UPLOAD_EXT', implode(", ", (array)$r)).' ';
+                            }
+                            break;
 					}
 				}
 			}
@@ -136,7 +148,7 @@ class US_Validate{
         }
 		#var_dump($items);
 		foreach ($items as $item => $rules) {
-            #dbg($item);
+            #dbg("ITEM: ".$item);
             #var_dump($rules);
 			$item = sanitize($item);
             if (!isset($rules['display'])) {
@@ -145,18 +157,26 @@ class US_Validate{
 			$display = $rules['display'];
 			foreach ($rules as $rule => $rule_value) {
                 #dbg("Validate::check(): rule=$rule<br />\n");
-				$value = trim($source[$item]);
-				$value = sanitize($value);
+                if (is_array($source[$item])) {
+                    $value = $source[$item];
+                } else {
+    				$value = trim($source[$item]);
+    				$value = Input::sanitize($value);
+                }
 
 				if (in_array($rule, ['display','regex_display','alias', 'update_id']))
 					continue; // these aren't really "rules" per se
                 #dbg("Validate::check(): after continue<br />\n");
                 #dbg("Validate::check(): rule=$rule, rule_value=$rule_value, value='$value'<br />\n");
-				if ($rule === 'required' && $rule_value && empty($value)) {
-                    #dbg("ERROR - required<br />\n");
-					$this->addError([lang('VALID_ERR_REQUIRED', $display),$item]);
+				if ($rule === 'required') {
+                    if ($rule_value && empty($value)) {
+                        #dbg("ERROR - required<br />\n");
+    					$this->addError([lang('VALID_ERR_REQUIRED', $display),$item]);
+                    } elseif ($rule_value && isset($value['error']) && $value['error'] == UPLOAD_ERR_NO_FILE) {
+                        $this->addError([lang('VALID_ERR_UPLOAD_REQUIRED', $display)]);
+                    }
 				} elseif (!empty($value)) {
-                    #dbg("Validate::check(): rule=$rule, rule_value=$rule_value item=$item<br />\n");
+                    #dbg("Validate::check(): rule=$rule, rule_value=<pre>".print_r($rule_value,true)."</pre>, item=$item<br />\n");
 					switch ($rule) {
                         case 'min_val':
                             if ($value < $rule_value) {
@@ -236,6 +256,39 @@ class US_Validate{
 								$this->addError([lang('VALID_ERR_MUST_BE_EMAIL', $display),$item]);
 							}
 							break;
+
+                        case 'upload_max_size':
+                            if ($value['size'] > $rule_value) {
+                                $this->addError([lang('VALID_ERR_MAX_FILE_SIZE', $rule_value),$item]);
+                            }
+                            break;
+
+                        case 'upload_ext':
+                            if ($rule_value) {
+                                $pathInfo = pathinfo($value['name']);
+                                # no $rule_value means any extensions are allowed
+                                if (!in_array($pathInfo['extension'], $rule_value)) {
+                                    $this->addError([lang('VALID_ERR_UPLOAD_EXT', implode(", ", (array)$rule_value)),$item]);
+                                }
+                            }
+                            break;
+
+                        case 'upload_errs':
+                            // If "OK" or "NO_FILE" that's ok - if "NO_FILE" wasn't OK it would
+                            // be caught in the "required" rule above
+                            if (!in_array($value['error'], [UPLOAD_ERR_OK, UPLOAD_ERR_NO_FILE])) {
+                                $upload_errors = [
+                                    UPLOAD_ERR_INI_SIZE => 'UPLOAD_ERR_INI_SIZE',
+                                    UPLOAD_ERR_FORM_SIZE => 'UPLOAD_ERR_FORM_SIZE',
+                                    UPLOAD_ERR_PARTIAL => 'UPLOAD_ERR_PARTIAL',
+                                    #UPLOAD_ERR_NO_FILE => 'UPLOAD_ERR_NO_FILE', // handled in "required"
+                                    UPLOAD_ERR_NO_TMP_DIR => 'UPLOAD_ERR_NO_TMP_DIR',
+                                    UPLOAD_ERR_CANT_WRITE => 'UPLOAD_ERR_CANT_WRITE',
+                                    UPLOAD_ERR_EXTENSION => 'UPLOAD_ERR_EXTENSION',
+                                ];
+                                $this->addError([lang($upload_errors[$value['error']]), $item]);
+                            }
+                            break;
 					}
 				}
 			}
