@@ -282,9 +282,9 @@ abstract class US_Element {
                 $idx = 0;
                 foreach ($row as $k=>$v) {
                     $this->debug(2, "::getHTMLRepElement(): k=$k, v=$v");
-                    $rowMacros['{'.$k.'}'] = $v;
+                    $rowMacros['{'.strtoupper($k).'}'] = $v;
                     if (isset($this->repMacroAliases[$idx]) && !isset($row[$this->repMacroAliases[$idx]])) {
-                        $rowMacros[$this->repMacroAliases[$idx]] = $v;
+                        $rowMacros['{'.strtoupper($this->repMacroAliases[$idx]).'}'] = $v;
                     }
                     $idx++;
                 }
