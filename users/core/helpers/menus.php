@@ -1,12 +1,17 @@
 <?php
-function _assert( $expr, $msg){ if( !$expr ) print "<br/><b>ASSERTION FAIL: </b>{$msg}<br>";  }
+function _assert($expr, $msg) {
+    if (!$expr) {
+        print "<br/><b>ASSERTION FAIL: </b>{$msg}<br>";
+    }
+}
 
-function prepareMenuTree($menuResults){
+function prepareMenuTree($menuResults) {
 	/*
 	Get instance of tree manager and build the tree
 	*/
 	$treeManager = treeManager::get();
 	$menuTree = $treeManager->getTree($menuResults, 'id','parent','display_order');
+    #var_dump($menuTree);
 	/*
 	Indent the tree
 	*/
@@ -15,7 +20,7 @@ function prepareMenuTree($menuResults){
 	return $menuTree;
 }
 
-function prepareIndentedMenuTree($menuResults){
+function prepareIndentedMenuTree($menuResults) {
 	/*
 	Get instance of tree manager and build the tree
 	*/
@@ -29,22 +34,20 @@ function prepareIndentedMenuTree($menuResults){
 	return $menuIndentedTree;
 }
 
-function prepareDropdownString($menuItem){
+function prepareDropdownString($menuItem) {
 	$itemString='';
 	$itemString.='<li class="dropdown">';
 	$itemString.='<a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="'.$menuItem['icon_class'].'"></span> '.$menuItem['label'].' <span class="caret"></span></a>';
 	$itemString.='<ul class="dropdown-menu">';
-	foreach ($menuItem['children'] as $childItem){
+	foreach ($menuItem['children'] as $childItem) {
 		$itemString.=prepareItemString($childItem);
 	}
 	$itemString.='</ul></li>';
 	return $itemString;
 }
 
-function prepareItemString($menuItem){
+function prepareItemString($menuItem) {
 	$itemString='';
 	$itemString.='<li><a href="'.$menuItem['link'].'"><span class="'.$menuItem['icon_class'].'"></span> '.$menuItem['label'].'</a></li>';
 	return $itemString;
-
 }
-?>
