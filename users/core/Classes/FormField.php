@@ -48,6 +48,7 @@ abstract class US_FormField extends Element {
         $_curPage=0,   // current page
         $_pageVarName='page',
         $_initOpts=[],
+        $_processor=[],
         $_totalPages=0;// total number of pages
     public $repEmptyAlternateReplacesAll = true;
     public
@@ -84,10 +85,11 @@ abstract class US_FormField extends Element {
         $MACRO_Readonly = '',
         $MACRO_Page_Index = '';
 
-    public function __construct($opts=[]) {
+    public function __construct($opts=[], $processor=[]) {
         // We cannot do our initialization here because we need the name of the field
         // which is passed in from the parent Form
         $this->_initOpts = $opts;
+        $this->_processor = $processor;
     }
     public function initFormField($IdxFn='') {
         $opts = $this->_initOpts;
@@ -111,6 +113,9 @@ abstract class US_FormField extends Element {
         }
         if (is_null($this->getPlaceholder())) {
             $this->setPlaceholder($this->getFieldLabel());
+        }
+        if ($this->_processor && !isset($this->_processor['idfield'])) {
+            $this->_processor['idfield'] = $fn;
         }
         parent::__construct($opts);
         # Now handle what we found in $field_def, but don't let
@@ -177,6 +182,7 @@ abstract class US_FormField extends Element {
             case 'sqlorder':
                 $this->setSQLOrder($val);
                 return true;
+            case 'bindvals':
             case 'sqlbindvals':
                 $this->setSQLBindVals($val);
                 return true;
@@ -218,8 +224,10 @@ abstract class US_FormField extends Element {
     }
 
     public function calcRepData($insist=false) {
-        $this->debug(1, '::calcRepData(): Entering');
-        if (!$this->isRepeating() || ($this->getRepData() && !$insist)) {
+        $this->debug(1, '::calcRepData(): Entering ('.$this->_fieldName.')');
+        if (!$this->isRepeating() || (!$this->repDataIsEmpty() && !$insist)) {
+            # If it's not a repeating-data field or if the repeating data already
+            # has something in it then get out...
             return false;
         }
         $this->debug(2, '::calcRepData(): Continuing');
@@ -248,7 +256,7 @@ abstract class US_FormField extends Element {
         $this->debug(5,"from=$from");
         $this->debug(5,"groupBy=$groupBy");
         $this->debug(5,"where=$where");
-        $this->debug(2, '::calcRepData(): Still Continuing');
+        $this->debug(2, '::calcRepData(): Still Continuing 2');
         if ($pageItems) {
             if ($fullSql) {
                 dbg("FATAL ERROR: Cannot do pagination specifying straight SQL");
@@ -287,6 +295,7 @@ abstract class US_FormField extends Element {
         }
         $this->debug(3, "::calcRepData(): sql=$sql");
         $this->setRepData($this->_db->query($sql, $bindVals)->results());
+        #dbg("ERROR STRING: ".$this->_db->errorString());
         return (boolean)$this->getRepData();
     }
     public function setRepData($val) {
@@ -324,34 +333,27 @@ abstract class US_FormField extends Element {
     // the key to the __construct hash handed to the field list (1st arg)
     // can initialize both the field name and the display labels
     public function setDefaults(&$k, $reprocessFieldDef=false) {
-        #dbg("setDefaults($k): Entering");
+        $this->debug(1, "::setDefaults($k): Entering");
         $k = $this->initFormField($k); // handle (late) initialization
-        /*
-        $field_def = [];
-        if (!$this->getFieldName()) {
-            $this->setFieldName($k);
-            $field_def = $this->useFieldDef($k);
+        $langKey = strtoupper($k);
+        if (hasLang($langKey)) {
+            $prettyText = lang($langKey);
+        } else {
+            $prettyText = ucwords(str_replace('_', ' ', $k));
         }
-        if (!$this->getDBFieldName()) {
-            $this->setDBFieldName($k);
-        }
-        #dbg("FieldName=".$this->getFieldName());
-        #dbg("DBFieldName=".$this->getDBFieldName());
-        */
-        $prettyText = ucwords(str_replace('_', ' ', $k));
         if (!$this->getFieldLabel()) {
             $this->setFieldLabel($prettyText);
         }
         if (!$this->getMacro('Label_Text')) {
             $this->setMacro('Label_Text', $prettyText);
         }
-        if ($reprocessFieldDef && $field_def) {
-            $this->handleOpts($field_def);
-        }
         return $this->getFieldName();
     }
     public function isChanged() {
         return ($this->_fieldNewValue != $this->_fieldValue);
+    }
+    public function getProcessor() {
+        return $this->_processor;
     }
 	public function getSQL(){
 		return $this->_sql;
@@ -584,7 +586,8 @@ abstract class US_FormField extends Element {
     }
 
     public function getHTML($opts=[]) {
-        $this->calcRepData();
+        #dbg("FormField::getHTML() Entering, calling calcRepData()");
+        #$this->calcRepData();
         return parent::getHTML($opts);
     }
     public function getHTMLScripts($opts=[]) {
