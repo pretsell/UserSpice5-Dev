@@ -85,7 +85,7 @@ abstract class US_FormField_Checklist extends FormField {
         $HTML_Post = '{FOOTER}',
         $checkboxIndexById = '<label class="{LABEL_CLASS}"><input type="{TYPE}" name="{COLUMN_NAME_PREFIX}{NAME}[{ID}]" value="1">{INTER_SPACE}{COLUMN_VALUE}</label>{SEPARATOR}',
         $checkboxIndexBySeq = '<label class="{LABEL_CLASS}"><input type="{TYPE}" name="{COLUMN_NAME_PREFIX}{NAME}[]" value="{ID}">{INTER_SPACE}{COLUMN_VALUE}</label>{SEPARATOR}';
-    public $repMacroAliases = ['{ID}', '{COLUMN_VALUE}'],
+    public $repMacroAliases = ['ID', 'COLUMN_VALUE'],
         $repElement = 'HTML_Input',
         $MACRO_Column_Name_Prefix = '',
         $MACRO_Footer='<br />',
@@ -122,7 +122,138 @@ abstract class US_FormField_Checklist extends FormField {
         return parent::handle1Opt($name, $val);
     }
 } /* Checklist */
-# class US_FormField_MultiCheckbox - this becomes an alias over in local/, not here in core/
+
+abstract class US_FormField_File extends FormField {
+    protected $_fieldType = "file";
+    protected $_isDBField = false; // unlikely that a file will be stored in the DB
+    protected $_rename = "", // empty string means don't rename
+        $_uploadDir="", // destination directory for uploads
+        $_required=false, // is this upload required
+        $_allowedExt=[], // allowed extensions (i.e., jpg,png,gif)
+        $_maxSize=null, // maximum size
+        $_allowOverwrite = false; // if file exists do we overwrite?
+    public $elementList = ['Pre', 'Input', 'Post'], // Pre and Post come from FormField
+        $HTML_Input = '
+            <input type="hidden" name="MAX_FILE_SIZE" value="{MAX_FILE_SIZE}"/>
+            <input type="{TYPE}" class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}" {DISABLED} {READONLY} />
+            ';
+    public $MACRO_Max_File_Size = -1;
+
+    public function __construct($opts=[], $processor=[]) {
+        # Set some appropriate defaults that can be over-ridden by parent::__construct()
+        $this->setMaxSize(configGet('upload_max_size', 1));
+        $this->setUploadDir(configGet('upload_dir', US_ROOT_DIR."uploads"));
+        $this->setAllowedExt(configGet('upload_allowed_ext'));
+        parent::__construct($opts, $processor);
+    }
+    public function handleOpts($opts=[]) {
+        $rtn = parent::handleOpts($opts);
+        # If the dev didn't already set up validation then set it up here
+        # (normally dev should just specify the options and let us set it up here)
+        if (is_null($this->_validateObject)) {
+            $this->setValidator([
+                'upload_max_size' => $this->getMaxSize(),
+                'upload_ext' => $this->getAllowedExt(),
+                'required' => $this->_required,
+                'upload_errs' => true,
+            ]);
+        }
+        return $rtn;
+    }
+    public function handle1Opt($name, &$val) {
+        switch (strtolower(str_replace('_', '', $name))) {
+            case 'maxfilesize':
+            case 'maxuploadsize':
+            case 'uploadmaxsize':
+                $this->setMaxSize($val);
+                return true;
+            case 'ext':
+            case 'extension':
+            case 'allowedextension':
+            case 'uploadext':
+                $this->setAllowedExt($val);
+                return true;
+            case 'uploaddir':
+            case 'dir':
+                $this->setUploadDir($val);
+                return true;
+            case 'overwrite':
+            case 'allowoverwrite':
+                $this->_allowOverwrite = $val;
+                return true;
+            case 'required':
+                $this->_required = $val;
+                return true;
+        }
+        return parent::handle1Opt($name, $val);
+    }
+    public function getMaxSize() {
+        return $this->_maxSize;
+    }
+    public function setMaxSize($val) {
+        $this->_maxSize = $val;
+    }
+    public function setUploadDir($val) {
+        $this->_uploadDir = $val;
+    }
+    public function setAllowedExt($val) {
+        if (is_array($val)) {
+            $this->_allowedExt = $val;
+        } elseif (empty($val)) {
+            $this->_allowedExt = [];
+        } else {
+            $this->_allowedExt = preg_split('/[,|\s]+/', trim($val), PREG_SPLIT_NO_EMPTY);
+        }
+    }
+    public function getAllowedExt() {
+        return $this->_allowedExt;
+    }
+    public function saveUpload() {
+        $myFile = $_FILES[$this->getFieldName()];
+        if ($myFile['error'] == UPLOAD_ERR_OK) {
+            $uploadDir = $this->getUploadDir();
+            if (!$uploadDir) {
+                $this->errors[] = lang("UPLOAD_DIR_NOT_SET");
+                return false;
+            }
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir); // take a shot at creating it
+            }
+            if (!file_exists($uploadDir)) {
+                $this->errors[] = lang("UPLOAD_DIR_NONEXIST");
+                return false;
+            } else {
+                $fullDest = $uploadDir.$myFile['name'];
+                if (file_exists($fullDest) && !$this->getAllowOverwrite()) {
+                    $this->errors[] = lang("UPLOAD_FILE_EXISTS_NO_OVERWRITE");
+                } else {
+                    move_uploaded_file($myFile['tmp_name'], $fullDest);
+                    $this->successes[] = lang('UPLOAD_SUCCESS', $fullDest);
+                }
+            }
+        }
+    }
+    public function getUploadDir() {
+        if ($this->_uploadDir) {
+            return $this->_uploadDir;
+        } else {
+            return configGet('upload_dir', US_ROOT_DIR.'uploads');
+        }
+    }
+    public function dataIsValid($data=null) {
+        if ($this->hasValidation()) {
+            if (!$data) {
+                $data = $_FILES;
+            }
+            return $this->getValidator()->check($data)->passed();
+        } else {
+            return true; // if no validation then it cannot fail
+        }
+    }
+    public function getAllowOverwrite() {
+        return $this->_allowOverwrite;
+    }
+} /* File (upload) */
 
 abstract class US_FormField_Hidden extends FormField {
     protected $_fieldType = "hidden";
@@ -139,7 +270,7 @@ abstract class US_FormField_MultiHidden extends FormField {
             ';
         #$_dataFields = [],
         #$_dataFieldLabels = [];
-    public $repMacroAliases = ['{ID}', '{COLUMN_NAME}'],
+    public $repMacroAliases = ['ID', 'COLUMN_NAME'],
         $repElement = 'HTML_Input',
         $MACRO_Column_Name_Prefix = '';
 
@@ -291,7 +422,7 @@ abstract class US_FormField_Select extends FormField {
     protected $_fieldType = "select";
     public $MACRO_Selected = '';
     public $idField = 'id';
-    public $repMacroAliases = ['{OPTION_VALUE}', '{OPTION_LABEL}'];
+    public $repMacroAliases = ['OPTION_VALUE', 'OPTION_LABEL'];
     public
         $HTML_Pre = '
             <div class="{DIV_CLASS}"> <!-- Select (name={FIELD_NAME}, id={FIELD_ID}) -->
@@ -373,7 +504,7 @@ abstract class US_FormField_Table extends FormField {
     protected $_fieldType = "table",
         $_dataFields = [],
         $_dataFieldLabels = [];
-    public $repMacroAliases = ['{ID}', '{NAME}'];
+    public $repMacroAliases = ['ID', 'NAME'];
     public
         $MACRO_Table_Class = "table-hover",
         $MACRO_TH_Row_Class = "",
@@ -401,6 +532,12 @@ abstract class US_FormField_Table extends FormField {
             ',
         $HTML_Checkbox_Id = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{ID}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
         $HTML_Checkbox_Value = '<input type="checkbox" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
+        $HTML_Hidden_Id = '<input type="hidden" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{ID}"/>',
+        $HTML_Fields = [
+            'text' => '<input type="text" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{{FIELD_NAME}}"/>',
+            'hidden' => '<input type="hidden" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{{FIELD_NAME}}"/>',
+            'checkbox' => '<input type="checkbox" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
+        ],
         $repElement = 'HTML_Input';
 
     public function handle1Opt($name, &$val) {
@@ -411,11 +548,19 @@ abstract class US_FormField_Table extends FormField {
                 if (is_array($val)) {
                     $val = '<td>'.implode('</td><td>', $val).'</td>';
                 }
+                preg_match_all('/{([a-z_]+)\((text|hidden|checkbox)(?:,\s*([^()]*))?\)}/i', $val, $m, PREG_SET_ORDER);
+                #var_dump($m);
+                #var_dump($val);
+                foreach ($m as $x) {
+                    $val = str_replace($x[0], str_ireplace(['{FIELD_NAME}', '{LABEL}'], [$x[1],@$x[3]], $this->HTML_Fields[strtolower($x[2])]), $val);
+                }
+                #var_dump($val);
                 $this->HTML_Input = $this->processMacros(
                     [
                         '{TABLE_DATA_CELLS}'=>$val,
                         '{CHECKBOX_ID}' => $this->HTML_Checkbox_Id,
                         '{CHECKBOX_VALUE}' => $this->HTML_Checkbox_Value,
+                        '{HIDDEN_ID}' => $this->HTML_Hidden_Id,
                     ],
                     $this->HTML_Input);
                 #dbg('AFTER: HTML_Input='.htmlentities($this->HTML_Input));
