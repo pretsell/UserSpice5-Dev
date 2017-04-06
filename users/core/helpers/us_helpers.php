@@ -792,6 +792,10 @@ function resultBlock($errors,$successes) {
 	}
 }
 
+function hasLang($key) {
+	global $lang;
+    return isset($lang[$key]);
+}
 //Inputs language strings from selected language.
 function lang($key,$markers = NULL) {
 	global $lang;
