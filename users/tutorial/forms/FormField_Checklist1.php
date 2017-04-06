@@ -4,6 +4,7 @@ $fooData = $db->queryAll('foo')->results(); // contains columns `id` and `foo`
 $myForm = new Form([
     'delete' => new FormField_Checklist([
         'data' => $fooData,
+        #'indexBy' => 'id',
         #'th_row' => '<th>Mark for Deletion</th><th>Foo</th>',
         #'td_row' => '<td>{CHECKBOX_ID}</td><td>{FOO}</td>',
         #'checkbox_label' => 'Mark for Deletion',

@@ -19,10 +19,12 @@ $myForm = new Form([
     'autoload'=>true,
     'autosave'=>true,
     'autoshow'=>true,
-    #'autoredirect'=>false,
-    'multirow' => true, // make sure we redirect according to multi-row config
-    #'title'=>'Deleting from Multi-Table',
-    'delete_multi_button' => 'deleteMulti',
-    'delete_multi_row_where' => ['id' => '{delFoo}'],
+    'autoredirect'=>false,
+    'multirow' => true, // for redirect rules
+    'multiDelete' => [
+        'action' => 'delete',
+        'button' => 'deleteMulti',
+        'idfield' => 'delFoo',
+    ],
     #'debug' => 4,
 ]);
