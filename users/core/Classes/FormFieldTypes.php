@@ -158,6 +158,8 @@ abstract class US_FormField_File extends FormField {
                 'upload_errs' => true,
             ]);
         }
+        #dbg("Setting max to ".$this->getMaxSize());
+        $this->setMacro('Max_File_Size', $this->getMaxSize());
         return $rtn;
     }
     public function handle1Opt($name, &$val) {
@@ -228,6 +230,7 @@ abstract class US_FormField_File extends FormField {
                     $this->errors[] = lang("UPLOAD_FILE_EXISTS_NO_OVERWRITE");
                 } else {
                     move_uploaded_file($myFile['tmp_name'], $fullDest);
+                    $this->setFieldValue($fullDest);
                     $this->successes[] = lang('UPLOAD_SUCCESS', $fullDest);
                 }
             }
@@ -263,6 +266,11 @@ abstract class US_FormField_Hidden extends FormField {
             ';
 } /* Hidden */
 
+abstract class US_FormField_HTML extends FormField {
+    public $_isDBField = false,
+        $HTML_Input = '{VALUE}';
+} /* HTML */
+
 abstract class US_FormField_MultiHidden extends FormField {
     protected $_fieldType = "hidden";
     public $elementList = ['Input'], // no Pre or Post
@@ -276,14 +284,16 @@ abstract class US_FormField_MultiHidden extends FormField {
 
     public function handle1Opt($name, &$val) {
         switch (strtolower(str_replace('_', '', $name))) {
-            case 'sqlcols':
+            case 'hiddencols':
                 $saveInput = $this->HTML_Input;
                 $this->HTML_Input = '';
                 foreach ($val as $v) {
                     if ($v == 'id') continue;
-                    $this->HTML_Input .= str_replace(['{COLUMN_NAME}','{COLUMN_VALUE}'], [$v, '{'.$v.'}'], $saveInput);
+                    $this->HTML_Input .= str_replace(
+                        ['{COLUMN_NAME}','{COLUMN_VALUE}'],
+                        [$v, '{'.$v.'}'], $saveInput);
                 }
-                #dbg("HIDDEN INPUT: ".$this->HTML_Input);
+                #dbg("HIDDEN INPUT: ".htmlentities($this->HTML_Input));
                 return true;
             case 'prefix':
                 $this->setMacro('Column_Name_Prefix', $val);
@@ -359,7 +369,7 @@ abstract class US_FormField_Recaptcha extends FormField {
         $HTML_Post = '
             </div> <!-- {DIV_CLASS} recaptcha -->
             ',
-        $HTML_Script = '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
+        $HTML_Script = '<script type="text/javascript" src="https://www.google.com/recaptcha/api.js" async defer></script>';
     public function dataIsValid($data) {
 		$remoteIp=$_SERVER["REMOTE_ADDR"];
 		$gRecaptchaResponse=Input::sanitize($data['g-recaptcha-response']);
@@ -411,7 +421,7 @@ abstract class US_FormField_SearchQ extends FormField {
         $HTML_Post = '
             </div> <!-- SearchQ -->
             ',
-        $HTML_Script = '<script src="'.US_URL_ROOT.'resources/js/search.js" charset="utf-8"></script>';
+        $HTML_Script = '<script type="text/javascript" src="'.US_URL_ROOT.'resources/js/search.js" charset="utf-8"></script>';
     public $MACRO_Field_Id = 'system-search',
         $MACRO_Field_Name = 'q',
         $MACRO_Placeholder = 'Search Text...';
@@ -455,6 +465,10 @@ abstract class US_FormField_Select extends FormField {
     }
     public function setPlaceholderRow($v) {
         $this->placeholderRow = $v;
+    }
+    public function repDataIsEmpty($considerPlaceholder=false) {
+        return (!(boolean)$this->repData &&
+            (!$considerPlaceholder || !(boolean)$this->placeholderRow));
     }
     public function getRepData() {
         if ($this->placeholderRow) {
@@ -503,7 +517,9 @@ abstract class US_FormField_Select extends FormField {
 abstract class US_FormField_Table extends FormField {
     protected $_fieldType = "table",
         $_dataFields = [],
-        $_dataFieldLabels = [];
+        $_dataFieldLabels = [],
+        $selectOptions = [],
+        $multiCheckboxes = [];
     public $repMacroAliases = ['ID', 'NAME'];
     public
         $MACRO_Table_Class = "table-hover",
@@ -530,29 +546,49 @@ abstract class US_FormField_Table extends FormField {
             {PAGE_INDEX}
             </div> <!-- {DIV_CLASS} Table (name={FIELD_NAME}) -->
             ',
+        $HTML_Checkallbox = '<label><input type="checkbox" id="checkall-{FIELD_NAME}" />{LABEL_TEXT}</label>',
         $HTML_Checkbox_Id = '<input type="checkbox" name="{FIELD_NAME}[]" id="{FIELD_NAME}-{ID}" value="{ID}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
         $HTML_Checkbox_Value = '<input type="checkbox" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
         $HTML_Hidden_Id = '<input type="hidden" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{ID}"/>',
         $HTML_Fields = [
             'text' => '<input type="text" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{{FIELD_NAME}}"/>',
             'hidden' => '<input type="hidden" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{{FIELD_NAME}}"/>',
-            'checkbox' => '<input type="checkbox" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="{VALUE}"/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
+            'checkbox' => '<input type="hidden" name="{FIELD_NAME}[{ID}]" value="0" /><input type="checkbox" name="{FIELD_NAME}[{ID}]" id="{FIELD_NAME}-{ID}" value="1" {CHECKED}/><label class="{LABEL_CLASS}" for="{FIELD_NAME}-{ID}">&nbsp;{CHECKBOX_LABEL}</label>',
+            'select' => 'GOOD LUCK!',
         ],
+        $HTML_Checkall_Script = '<script type="text/javascript" src="'.US_URL_ROOT.'resources/js/jquery-check-all.min.js"></script>',
+        $HTML_Checkall_Init = '<script>$("#checkall-{FIELD_NAME}").checkAll({ childCheckBoxes:"{FIELD_NAME}", showIndeterminate:true });</script>',
         $repElement = 'HTML_Input';
 
     public function handle1Opt($name, &$val) {
-        switch (strtolower(str_replace('_', '', $name))) {
+        # this goes above the switch because otherwise underscores
+        # in the field name get lost
+        if (preg_match('/^select\((.*)\)$/', $name, $m)) {
+            $this->selectOptions[$m[1]] = $val;
+            return true;
+        }
+        $simpleName = strtolower(str_replace('_', '', $name));
+        switch ($simpleName) {
             case 'tabledatacells':
             case 'tdrow':
                 #dbg('setting table_data_cells');
                 if (is_array($val)) {
                     $val = '<td>'.implode('</td><td>', $val).'</td>';
                 }
-                preg_match_all('/{([a-z_]+)\((text|hidden|checkbox)(?:,\s*([^()]*))?\)}/i', $val, $m, PREG_SET_ORDER);
+                preg_match_all('/{([a-z_][a-z_0-9]*)\((text|hidden|checkbox)(-?seq)?(?:,\s*([^()]*))?\)}/i', $val, $m, PREG_SET_ORDER);
                 #var_dump($m);
                 #var_dump($val);
                 foreach ($m as $x) {
-                    $val = str_replace($x[0], str_ireplace(['{FIELD_NAME}', '{LABEL}'], [$x[1],@$x[3]], $this->HTML_Fields[strtolower($x[2])]), $val);
+                    $repl = [ '{FIELD_NAME}' => $x[1], '{LABEL}' => @$x[4], ];
+                    if (isset($x[3]) && $x[3]) {
+                        $repl['{ID}']='{SEQ}';
+                    }
+                    if (strtolower($x[2]) == 'checkbox') {
+                        $repl['{CHECKED}'] = "{{$x[1]}-CHECKED}";
+                        $this->multiCheckboxes[] = $x[1];
+                    }
+                    $inputFld = str_ireplace(array_keys($repl), array_values($repl), $this->HTML_Fields[strtolower($x[2])]);
+                    $val = str_replace($x[0], $inputFld, $val);
                 }
                 #var_dump($val);
                 $this->HTML_Input = $this->processMacros(
@@ -561,6 +597,7 @@ abstract class US_FormField_Table extends FormField {
                         '{CHECKBOX_ID}' => $this->HTML_Checkbox_Id,
                         '{CHECKBOX_VALUE}' => $this->HTML_Checkbox_Value,
                         '{HIDDEN_ID}' => $this->HTML_Hidden_Id,
+                        '{HIDDEN_SEQ}' => str_replace('ID', 'SEQ', $this->HTML_Hidden_Id),
                     ],
                     $this->HTML_Input);
                 #dbg('AFTER: HTML_Input='.htmlentities($this->HTML_Input));
@@ -570,6 +607,12 @@ abstract class US_FormField_Table extends FormField {
                 #dbg('setting table_head_cells');
                 if (is_array($val)) {
                     $val = '<th>'.implode('</th><th>', $val).'</th>';
+                }
+                if (preg_match('/{([^{}]*)\(checkallbox\)}/i', $val, $m)) {
+                    $newHTML = str_replace('{LABEL_TEXT}', $m[1], $this->HTML_Checkallbox);
+                    $val = str_replace($m[0], $newHTML, $val);
+                    $this->HTML_Script[] = $this->HTML_Checkall_Script;
+                    $this->HTML_Script[] = $this->HTML_Checkall_Init;
                 }
                 $this->HTML_Pre = $this->processMacros(
                     ['{TABLE_HEAD_CELLS}'=>$val], $this->HTML_Pre);
@@ -592,6 +635,32 @@ abstract class US_FormField_Table extends FormField {
                 return true;
         }
         return parent::handle1Opt($name, $val);
+    }
+    public function specialRowMacros(&$macros, $row) {
+        // find cells with "{field(SELECT)}" and replace it with select/option tags
+        // as specified in select(field) option
+        foreach ($this->selectOptions as $k => $opts) {
+            $html = "<select name=\"{$k}[$row[id]]\">";
+            foreach ($opts as $val => $disp) {
+                if (@$row[$k] == $val) {
+                    $selected = 'selected="selected"';
+                } else {
+                    $selected = "";
+                }
+                $html .= "<option value=\"$val\" $selected>$disp</option>";
+            }
+            $html .= '</select>';
+            $macros['{'.$k.'(select)}'] = $html;
+        }
+        foreach ($this->multiCheckboxes as $field) {
+            if (@$row[$field]) {
+                $macros["{{$field}-CHECKED}"] = 'checked';
+            } else {
+                $macros["{{$field}-CHECKED}"] = '';
+            }
+        }
+        #dbg("FormField_Table::specialRowMacros(): macros=");
+        #pre_r($macros);
     }
 } /* Table */
 
