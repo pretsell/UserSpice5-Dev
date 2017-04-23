@@ -63,6 +63,7 @@ abstract class US_Element {
         $_deleteMe=false,
         $_deleteIfEmpty=false,
         $_dbTable=null, // used for form processing, editing the DB
+        $_mainFormObj=null,
         $errors=[],
         $successes=[];
     public $debug = -1;
@@ -141,6 +142,9 @@ abstract class US_Element {
             case 'nodata':
                 $this->setRepEmptyAlternate($val);
                 return true;
+            case 'script':
+                $this->HTML_Scripts[] = $val;
+                return true;
         }
         $setMethod = 'set'.$name;
         $caseName = $this->fixCase($name);
@@ -185,7 +189,7 @@ abstract class US_Element {
         $this->debug(1, '::getHTML(): Entering');
         $elementList = $this->getElementList($opts);
         $html = '';
-        if ($this->isRepeating() && $this->getRepEmptyAlternateReplacesAll() && $this->repDataIsEmpty()) {
+        if ($this->isRepeating() && $this->getRepEmptyAlternateReplacesAll() && $this->repDataIsEmpty(true)) {
             $this->debug(2, '::getHTML(): calling getRepEmptyAlternate()');
             $html = $this->getRepEmptyAlternate();
         } else {
@@ -253,15 +257,16 @@ abstract class US_Element {
         $this->debug(1, "::getHTMLRepElement(): Entering");
         $this->debug(2, "::getHTMLRepElement(): element=$element");
         #dbg("getHTMLRepElement(<pre>".substr($element, 0, 20)."</pre>...): Entering (".get_class($this).")");
-        if ($this->repDataIsEmpty()) {
+        if ($this->repDataIsEmpty(true)) {
             $this->debug(2, "::getHTMLRepElement(): returning empty alternate");
             return $this->getRepEmptyAlternate();
         }
         #dbg("getHTMLRepElement(): Not empty");
         $html = '';
         $this->debug(2, "::getHTMLRepElement(): Before Loop");
+        $seq=1;
         foreach ($this->getRepData() as $k=>$row) {
-            $this->debug(5, "::getHTMLRepElement(): k=$k, row=".print_r($row,true));
+            $this->debug(5, "::getHTMLRepElement(): k=$k, row=<pre>".print_r($row,true)."</pre>");
             #dbg('REP ELEMENT class='.get_class($this).'==>'.$k);
             #if ($k == 'grouptype_id') var_dump($row);
             if (is_object($row) && (method_exists($row, 'getHTML') || method_exists($row, 'getRowMacros'))) {
@@ -278,7 +283,7 @@ abstract class US_Element {
                 $rowMacros = [];
             } else {
                 #dbg("PRESUMABLY ASSOCIATIVE ARRAY (or iterable object)");
-                $rowMacros = [];
+                $rowMacros = ['{SEQ}' => $seq++];
                 $idx = 0;
                 foreach ($row as $k=>$v) {
                     $this->debug(2, "::getHTMLRepElement(): k=$k, v=$v");
@@ -292,14 +297,17 @@ abstract class US_Element {
                 $this->specialRowMacros($rowMacros, $row);
             }
             if ($this->debug>=5) { dbg("printout of rowMacros:"); var_dump($rowMacros); }
-            $this->debug(5, "::getHTMLRepElement(): element=$element");
+            $this->debug(6, "::getHTMLRepElement(): element=$element");
             $html .= str_ireplace(array_keys($rowMacros), array_values($rowMacros), $element);
-            $this->debug(5, "::getHTMLRepElement(): html=$html");
+            $this->debug(6, "::getHTMLRepElement(): html=$html");
         }
         return $html;
     }
     public function getDBTable() {
         return $this->_dbTable;
+    }
+    public function setDefaults(&$k, $mainFormObj) {
+        $this->_mainFormObj = $mainFormObj;
     }
     public function setDBTable($table) {
         $this->_dbTable = $table;
@@ -322,9 +330,6 @@ abstract class US_Element {
     public function specialRowMacros(&$macros, $row) {
         // in children classes this may set 'selected="selected"' or
         // 'checked="checked"' or etc.
-    }
-    public function repDataIsEmpty() {
-        return !(boolean)$this->repData;
     }
     public function processMacros($macros, $html, $opts=[]) {
         if (in_array('nomacros', $opts)) {
@@ -395,6 +400,9 @@ abstract class US_Element {
     }
     public function getRepEmptyAlternateReplacesAll() {
         return $this->repEmptyAlternateReplacesAll;
+    }
+    public function repDataIsEmpty($considerPlaceholder=false) {
+        return !(boolean)$this->repData;
     }
     public function setRepData($val) {
         $this->repData = $val;
