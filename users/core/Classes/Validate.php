@@ -156,11 +156,11 @@ class US_Validate{
             }
 			$display = $rules['display'];
 			foreach ($rules as $rule => $rule_value) {
-                #dbg("Validate::check(): rule=$rule<br />\n");
-                if (is_array($source[$item])) {
+                #dbg("Validate::check(): rule=$rule item=$item\n");
+                if (is_array(@$source[$item])) {
                     $value = $source[$item];
                 } else {
-    				$value = trim($source[$item]);
+    				$value = trim(@$source[$item]);
     				$value = Input::sanitize($value);
                 }
 
@@ -267,7 +267,7 @@ class US_Validate{
                             if ($rule_value) {
                                 $pathInfo = pathinfo($value['name']);
                                 # no $rule_value means any extensions are allowed
-                                if (!in_array($pathInfo['extension'], $rule_value)) {
+                                if (isset($pathInfo['extension']) && !in_array($pathInfo['extension'], $rule_value)) {
                                     $this->addError([lang('VALID_ERR_UPLOAD_EXT', implode(", ", (array)$rule_value)),$item]);
                                 }
                             }
