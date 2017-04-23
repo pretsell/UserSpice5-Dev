@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
  * FORM: admin_grouptype.php
- *  - called with ?id=n to view/modify existing rows
- *  - called without ?id=n to add a new rows
+ *  - called with ?id=n to view/modify/delete an existing row
+ *  - called without ?id=n to add a new row
  *
  * This script makes possible:
- * - editing data in table `grouptypes`
+ * - add/modify/delete a single row at a time in table `grouptypes`
  *
  * See comments at the top of admin_grouptypes.php for a description of GroupTypes.
  *
@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 checkToken();
 
-# grouptypes.id must be specified via ?id=n
+# grouptypes.id is specified via ?id=n; if not we create a new row
 if (!$grouptype_id = Input::get('id')) {
     $creating = true;
 } else {
@@ -51,7 +51,7 @@ if (!$grouptype_id = Input::get('id')) {
 $myForm = new Form([
     'name' =>
         new FormField_Text([
-            'dbfield' => 'grouptypes.name',
+            'dbfield' => 'grouptypes.name', // see `field_defs`
             'new_valid' => [
                 'action'=>($creating?'add':'update'),
                 'update_id'=>$grouptype_id,
@@ -59,7 +59,7 @@ $myForm = new Form([
         ]),
     'short_name' =>
         new FormField_Text([
-            'dbfield' => 'grouptypes.short_name',
+            'dbfield' => 'grouptypes.short_name', // see `field_defs`
             'new_valid' => [
                 'action'=>($creating?'add':'update'),
                 'update_id'=>$grouptype_id,
@@ -76,7 +76,6 @@ $myForm = new Form([
             'delete_if' => $creating,
         ]),
 ], [
-    #'title' => lang('ADMIN_GROUPTYPE_TITLE'),
     'table' => 'grouptypes',
     'TableId' => $grouptype_id,
     'default' => 'autoprocess',
