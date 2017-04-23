@@ -112,6 +112,7 @@ foreach ([$formName, basename($_SERVER['PHP_SELF'])] as $fn) {
     if ($formPath = pathFinder($fn, '', 'forms_path',
             [US_ROOT_DIR.'local/forms/', US_ROOT_DIR.'core/forms/'])) {
         $found = true;
+        break;
     }
 }
 if ($found) {
