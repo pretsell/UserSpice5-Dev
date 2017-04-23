@@ -30,6 +30,8 @@ class US_Form extends Element {
         $_keepAdminDashBoard=false, // true for admin pages
         $_hasFieldValues=false, // flag that setFieldValues() was called
         $_dbTableId=null, // which row we load and update
+        $_headerSnippets=[], // used for CSS styles, etc. (anything you need to put in the header)
+        $_footerSnippets=[], // used for JS scripts, etc. (anything you need to put in the footer)
         $_dbAutoLoad=false, // whether we autoload from $_dbTable and $_dbTableId
         $_autoShow=false, // whether we echo $this->getHTML() at the end of __construct()
         $_autoSaveUploads=false, // whether we save uploads at the end of __construct()
@@ -81,7 +83,7 @@ class US_Form extends Element {
             ],
         ],
         $_deleteSingleRowButton=['delete', 'delete_button'],
-        $_deleteKey='delete',
+        $_deleteKey='id', // default to delete the current ID
         $_saveSingleRowButton=['save', 'save_button'],
         $_actionButton=null; // which button was pressed to process the form
     # These are the elements (each corresponding to $HTML_*) which
@@ -145,7 +147,7 @@ class US_Form extends Element {
         $MACRO_Form_Title = null;
 
 	public function __construct($fields=[], $opts=[]){
-        if (in_array(@$opts['default'], ['all', 'fields', 'processing'])) {
+        if (in_array(@$opts['default'], ['all', 'fields', 'processing', 'autoprocess', 'formprocess', 'process'])) {
             if (isset($opts['dbtable'])) {
                 $table = $opts['dbtable'];
             } elseif (isset($opts['table'])) {
@@ -156,7 +158,7 @@ class US_Form extends Element {
             }
             $this->setDBTable($table);
         }
-        if (in_array(@$opts['default'], ['all', 'processing', 'autoprocess', 'formprocess'])) {
+        if (in_array(@$opts['default'], ['all', 'processing', 'autoprocess', 'formprocess', 'process'])) {
             # tableId will be defaulted in dbAutoLoad()
             $this->setDbAutoLoad(true);
             $this->setDbAutoLoadPosted($_POST);
@@ -200,7 +202,7 @@ class US_Form extends Element {
         $newFieldList = [];
         foreach ($opts[$this->repElement] as $f => &$v) {
             if (is_object($v) && method_exists($v, 'setDefaults')) {
-                $v->setDefaults($f); // $f is by reference and may be renamed
+                $v->setDefaults($f, $this); // $f is by reference and may be renamed
             }
             $newFieldList[$f] = $v; // this might rename $f if an alias occurred in setDefaults()
         }
@@ -223,6 +225,9 @@ class US_Form extends Element {
         if (!$this->getKeepAdminDashBoard()) {
             $this->deleteElements('AdminDashboard');
         }
+        if ($this->getAutoSaveUploads()) {
+            $this->saveUploads();
+        }
         if ($this->getDbAutoLoadPosted()) {
             $this->setNewValues($this->getDbAutoLoadPosted());
         }
@@ -242,9 +247,6 @@ class US_Form extends Element {
                     $this->dbAutoLoad();
                 }
             }
-        }
-        if ($this->getAutoSaveUploads()) {
-            $this->saveUploads();
         }
         $this->defaultTabs();
         if ($this->getAutoShow()) {
@@ -287,6 +289,16 @@ class US_Form extends Element {
             case 'excludefields':
                 $this->setExcludeFields($val);
                 return true;
+            case 'footercode':
+            case 'footersnippet':
+            case 'footersnippets':
+                $this->setFooterSnippets($val);
+                return true;
+            case 'headercode':
+            case 'headersnippet':
+            case 'headersnippets':
+                $this->setHeaderSnippets($val);
+                return true;
             case 'autosave':
             case 'dbautosave':
                 $this->setDbAutoSave($val);
@@ -328,7 +340,7 @@ class US_Form extends Element {
                 $this->setIsMultiRow($val);
                 return true;
             case (preg_match('/^multi/', $simpleName) ? $simpleName : null): // special regex so multi1, multi2, multi_x can be used for many options
-            dbg("MULTI!!! name=$name");
+                #dbg("MULTI!!! name=$name");
                 $this->addProcessor($val);
                 return true;
         }
@@ -437,12 +449,12 @@ class US_Form extends Element {
                 $this->deleteField($fieldName);
             }
             if ($doCalcRep && (method_exists($f, 'calcRepData'))) {
-                $this->debug(5,"Calculating repData for field=$fieldName");
-                $f->calcRepData($fieldName);
+                $this->debug(5,"processFields(): Calculating repData for field=$fieldName");
+                $f->calcRepData(true); // recalc even if already has data
             }
             if ($doDeleteIfEmpty && method_exists($f, 'getDeleteIfEmpty') &&
                     method_exists($f, 'repDataIsEmpty') &&
-                    $f->getDeleteIfEmpty() && $f->repDataIsEmpty($recursive)) {
+                    $f->getDeleteIfEmpty() && $f->repDataIsEmpty(false, $recursive)) {
                 $this->debug(4,"Deleting empty field=$fieldName");
                 $this->deleteField($fieldName);
             }
@@ -493,7 +505,7 @@ class US_Form extends Element {
             $dbData = $this->_db->findById($this->getDBTable(), $this->getDBTableId());
             if ($dbData && $dbData->count() > 0) {
                 #dbg("Form::dbAutoLoad(): found dbData record");
-                return $this->setFieldValues($dbData->first());
+                $this->setFieldValues($dbData->first());
             } else {
                 #dbg("AutoLoad failure - no row matching id={$this->_dbTableId} for table={$this->_dbTable}");
                 $this->errors[] = "ERROR: No row matching id={$this->_dbTableId}. This form is in an error state.";
@@ -503,9 +515,14 @@ class US_Form extends Element {
         $this->processFields(true, false, true, false); // run calcRepData on any/all relevant fields
     }
     public function dbAutoSave() {
-        $this->debug(-1, "Form::dbAutoSave(): Entering");
+        $this->debug(1, "Form::dbAutoSave(): Entering");
         if ($this->buttonPressed($this->getSaveSingleRowButton())) { // was save button clicked?
             if (!$this->saveSingleRow()) { // includes checking validate
+                return false;
+            }
+        }
+        if ($this->buttonPressed($this->getDeleteSingleRowButton())) { // was save button clicked?
+            if (!$this->deleteSingleRow()) {
                 return false;
             }
         }
@@ -516,11 +533,11 @@ class US_Form extends Element {
         if ($this->getDBTableId()) { // update existing row
             $this->debug(2,"Form::saveSingleRow(): Updating ".$this->getDBTableId());
             if (($rtn = $this->_updateIfValid()) == self::UPDATE_SUCCESS) {
-                $this->successes[] = lang($this->_msgTokenUpdateSuccess);
+                $this->successes[] = $this->getMessage([], 'single', 'update', 'success');
                 $this->postSuccessfulSave('update');
                 return true;
             } elseif ($rtn == self::UPDATE_ERROR) {
-                $this->errors[] = lang($this->_msgTokenUpdateFailed);
+                $this->errors[] = $this->getMessage([], 'single', 'update', 'fail');
                 return false; // probably invalid - get out and display validate errors
             } else { // assume self::UPDATE_NO_CHANGE
                 return true;
@@ -528,11 +545,11 @@ class US_Form extends Element {
         } else { // insert new row
             #dbg("Form::saveSingleRow(): Inserting");
             if (($rtn = $this->_insertIfValid()) == self::UPDATE_SUCCESS) {
-                $this->successes[] = lang($this->_msgTokenInsertSuccess);
+                $this->successes[] = $this->getMessage([], 'single', 'insert', 'success');
                 $this->postSuccessfulSave('insert', $this->_db->lastId());
                 return true;
             } elseif ($rtn == self::UPDATE_ERROR) {
-                $this->errors[] = lang($this->_msgTokenInsertFailed);
+                $this->errors[] = $this->getMessage([], 'single', 'insert', 'fail');
                 return false;
             } else { // assume self::UPDATE_NO_CHANGE
                 return true;
@@ -550,7 +567,7 @@ class US_Form extends Element {
             # Check if the button was pressed (if no button set, just assume we should do the action)
             $buttons = $this->getMultiOpt($optSet, 'button', $this->getSaveSingleRowButton());
             if ($buttons && !$this->buttonPressed($buttons)) {
-                dbg("processMultiRowActions(): k=$k - Button not pressed. Going to next.");
+                #dbg("processMultiRowActions(): k=$k - Button not pressed. Going to next.");
                 continue;
             }
             # Now grab the rest of the options from this $multiOpts element
@@ -572,8 +589,8 @@ class US_Form extends Element {
             $errCount = $successCount = 0;
             $db = $this->_db;
             # Loop through each $id that should be processed
-            foreach ($_POST[$idfield] as $k=>$id) {
-                dbg("processMultiRowActions(): Top of loop k=$k, id=$id");
+            foreach ((array)@$_POST[$idfield] as $k=>$id) {
+                #dbg("processMultiRowActions(): Top of loop k=$k, id=$id");
                 # If $idfield is by index instead of by value, fix $id appropriately
                 if ($idbyidx) {
                     if (!$id) {
@@ -586,7 +603,7 @@ class US_Form extends Element {
                 $fields = $this->mkFieldList($fieldsTemplate, $inputVals, $id);
                 $inputVals = $this->getInputVals($whereTemplate, $method);
                 $where = $this->mkFieldList($whereTemplate, $inputVals, $id);
-                dbg("Processing with dbtable=$dbtable, id=$id, fields=<pre>".print_r($fields,true)."</pre>, where=<pre>".print_r($where,true)."</pre>");
+                #dbg("Processing with dbtable=$dbtable, id=$id, fields=<pre>".print_r($fields,true)."</pre>, where=<pre>".print_r($where,true)."</pre>");
                 # Do the actual database processing
                 if ($function) {
                     # if a function was specified, call it (allows for maintaining referential integrity or etc)
@@ -626,11 +643,15 @@ class US_Form extends Element {
                 }
             } // foreach through all $id
             if ($errCount) {
-                $this->errors[] = $this->getMessage($optSet, 'multi', $action, 'fail');
+                if ($msg = $this->getMessage($optSet, 'multi', $action, 'fail')) {
+                    $this->errors[] = $msg;
+                }
             } elseif ($successCount > 0) {
-                $this->successes[] = $this->getMessage($optSet, 'multi', $action, 'success', [$successCount]);
-            } else {
-                $this->successes[] = $this->getMessage($optSet, 'multi', $action, 'nothing');
+                if ($msg = $this->getMessage($optSet, 'multi', $action, 'success', [$successCount])) {
+                    $this->successes[] = $msg;
+                }
+            } elseif ($msg = $this->getMessage($optSet, 'multi', $action, 'nothing')) {
+                $this->successes[] = $msg;
             }
         } // foreach through all $MultiOpts
         return $rtn;
@@ -653,8 +674,10 @@ class US_Form extends Element {
             return lang($optSet['msgtoken_'.$status], $args);
         } elseif (isset($this->_msgStrings[$single_multi][$action][$status])) {
             return $this->_msgStrings[$single_multi][$action][$status];
-        } else {
+        } elseif ($this->_msgTokens[$single_multi][$action][$status]) {
             return lang($this->_msgTokens[$single_multi][$action][$status], $args);
+        } else {
+            return false;
         }
     }
     public function getInputVals($template, $method='post') {
@@ -675,6 +698,7 @@ class US_Form extends Element {
                 } else {
                     # At some point we're going to find an unset value, but what to do if found?
                     # For now I'll just let it throw an error, I guess...
+                    if (!isset($inputVals[$m[1]][$id])) { dbg("m[1]={$m[1]}, id=$id"); pre_r($inputVals); }
                     $rtn[$k] = $inputVals[$m[1]][$id];
                 }
             } else {
@@ -684,17 +708,23 @@ class US_Form extends Element {
         return $rtn;
     }
     public function deleteSingleRow() {
+        #dbg("Form::deleteSingleRow(): Entering");
         $deleted = 0;
         foreach ((array)Input::get($this->getDeleteKey()) as $delId) {
+            #dbg("Deleting id=$delId");
             if ($this->_db->deleteById($this->getDbTable(), $delId)) {
                 $deleted += $this->_db->count();
             }
         }
-        if ($this->_db->error()) {
-            $this->errors[] = lang($this->_msgTokenDeleteFailed);
+        if ($this->_db->error() || $deleted < 1) {
+            #die("GOT ERROR");
+            #exit;
+            $this->errors[] = $this->getMessage([], 'single', 'delete', 'fail');
             return false;
         } else {
-            $this->successes[] = lang($this->_msgTokenDeleteSuccess, $deleted);
+            #die("NO ERROR");
+            #exit;
+            $this->successes[] = $this->getMessage([], 'single', 'delete', 'success', $deleted);
             $this->postSuccessfulSave('delete', null, false);
             return true;
         }
@@ -728,27 +758,37 @@ class US_Form extends Element {
         }
     }
 
-    public function setDefaults($k) {
-        // do nothing in forms - it is handled by the construct so no need for recursion
-    }
     public function getProcessors() {
         return $this->_processors;
     }
     public function getHTMLHeader($opts=[], $noFill=false) {
-        return getInclude(pathFinder('includes/header.php'));
+        if (isset($GLOBALS['headerSnippets'])) {
+            $vars['headerSnippets'] = array_merge($GLOBALS['headerSnippets'], $this->getHeaderSnippets());
+        } else {
+            $vars['headerSnippets'] = $this->getHeaderSnippets();
+        }
+        return getInclude(pathFinder('includes/header.php'), $vars);
     }
     public function getHTMLNavigation($opts=[], $noFill=false) {
         return getInclude(pathFinder('includes/navigation.php'));
     }
     public function getHTMLPageFooter($opts=[], $noFill=false) {
-        return getInclude(pathFinder('includes/page_footer.php'));
+        if (isset($GLOBALS['footerSnippets'])) {
+            $vars['footerSnippets'] = array_merge($GLOBALS['footerSnippets'], $this->getFooterSnippets());
+        } else {
+            $vars['footerSnippets'] = $this->getFooterSnippets();
+        }
+        return getInclude(pathFinder('includes/page_footer.php'), $vars);
     }
     public function getHTMLFooter($opts=[], $noFill=false) {
         $html = getInclude(pathFinder('includes/html_footer.php'));
         $scripts = [];
         foreach ($this->getAllFields() as $f=>$field) {
             if (method_exists($field, 'getHTMLScripts')) {
+                #dbg("getHTMLFooter f=$f");
                 $scripts = array_merge($scripts, (array)$field->getHTMLScripts());
+                #dbg("SCRIPTS:");
+                #pre_r($scripts);
             }
         }
         $scripts = array_unique($scripts);
@@ -770,6 +810,7 @@ class US_Form extends Element {
         }
         if (stripos($s, "{INCLUDE_ADMIN_DASHBOARD}") !== false) {
             $macros['{INCLUDE_ADMIN_DASHBOARD}'] = getInclude(pathFinder('includes/admin_dashboard.php'));
+            $this->setFooterSnippets('<script>$("#admin")</script>');
         }
         if (stripos($s, "{FORM_ENCTYPE}") !== false) {
             if ($this->hasFormFieldType('FormField_File')) {
@@ -814,6 +855,18 @@ class US_Form extends Element {
     public function getDeleteKey() {
         return $this->_deleteKey;
     }
+    public function getHeaderSnippets() {
+        return $this->_headerSnippets;
+    }
+    public function setHeaderSnippets($val) {
+        $this->_headerSnippets = $val;
+    }
+    public function getFooterSnippets() {
+        return $this->_footerSnippets;
+    }
+    public function setFooterSnippets($val) {
+        $this->_footerSnippets = $val;
+    }
     public function getAutoSaveUploads() {
         return $this->_autoSaveUploads;
     }
@@ -839,6 +892,10 @@ class US_Form extends Element {
         $this->_autoRedirect = $val;
     }
     public function getRedirectAfterSave() {
+        # If form specifies then it over-rides
+        if (($r = $this->getAutoRedirect()) && is_string($r)) {
+            return $r;
+        }
         return $this->_redirectAfterSave;
     }
     public function setRedirectAfterSave($val) {
@@ -933,7 +990,7 @@ class US_Form extends Element {
         } else {
             # perhaps it's in a FormTab_Contents or other form-section class
             foreach ($this->repData as $k=>$v) {
-                if (method_exists($v, 'getField') && ($f = $v->getField($fieldName))) {
+                if (is_a($v, 'Form') && method_exists($v, 'getField') && ($f = $v->getField($fieldName))) {
                     return $f;
                 }
             }
@@ -999,7 +1056,7 @@ class US_Form extends Element {
         $fieldList = $this->fixFieldList($fieldFilter, $onlyDB, $onlyDbTable);
         $rtn = [];
         #dbg("fieldListNewValues(): fieldlist=");
-        #var_dump($fieldList);
+        #pre_r($fieldList);
         foreach ($fieldList as $f) {
             if (!$onlyDB || $this->getField($f)->getIsDBField()) {
                 if (($newVal = $this->getField($f)->getNewValue()) !== null) {
@@ -1028,7 +1085,7 @@ class US_Form extends Element {
         }
         return false;
     }
-    public function repDataIsEmpty($recursive=false) {
+    public function repDataIsEmpty($considerPlaceholder=false, $recursive=false) {
         if (!$recursive) {
             return !(boolean)$this->repData;
         }
@@ -1039,7 +1096,7 @@ class US_Form extends Element {
                 continue;
             }
             if (method_exists($r, 'repDataIsEmpty')) {
-                if ($r->repDataIsEmpty($recursive)) {
+                if ($r->repDataIsEmpty($considerPlaceholder, $recursive)) {
                     $isEmpty = true;
                 } else {
                     $isEmpty = false;
@@ -1128,7 +1185,11 @@ class US_Form extends Element {
             # Strip out any $fields rows that have their own getDbTable()
             if ($this->_db->update($this->getDbTable(), $this->getDbTableId(), $fields)) {
                 #dbg("_updateIfValid(): SUCCESS");
-                return self::UPDATE_SUCCESS; // means update occurred
+                if ($this->_db->count() > 0) {
+                    return self::UPDATE_SUCCESS; // means update occurred
+                } else {
+                    return self::UPDATE_NO_CHANGE; // means no error, but no update
+                }
             } else {
                 $this->errors[] = lang('SQL_ERROR').' ('.$this->_db->errorString().')';
                 return self::UPDATE_ERROR; // error return value
@@ -1158,7 +1219,7 @@ class US_Form extends Element {
         $this->_validatePassed = true; // assume it passes unless we get errors
         $errors = [];
         foreach ($fieldList as $f) {
-            dbg("checkFieldValidation(): f=$f");
+            #dbg("checkFieldValidation(): f=$f");
             # some fields (a submit button, for instance, don't have validation)
             if (!$this->getField($f)->dataIsValid($data)) {
                 $this->_validatePassed = false;
