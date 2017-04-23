@@ -33,31 +33,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * special "role groups" are acted upon. Typically $mode='ROLE' is executed
  * from admin_role.php which then includes this file.
  *
+ * For a description of the difference between "normal groups" and "role groups"
+ * please see the comments at the top of core/forms/admin_role.php
+ *
  * If you are coming from UserSpice4 or before then you are used to calling
  * "groups" by their old name, "permissions". All references, table names,
  * column names have been changed from "permissions" to "groups".
  *
- * Groups are very similar to user-groups in many operating systems. Authorizations
- * are granted to groups and all members of that group are granted that authorization.
- * Groups can be members of other groups (nested to 4 levels deep) and all members
- * of a child group are considered to be members of the parent group.
- *
- * For a description of the difference between "normal groups" and "role groups"
- * please see the comments at the top of core/forms/admin_role.php
- *
- * This script (that you are viewing) is included by users/forms/master_form.php.
- * All securePage() calls and other includes are executed prior to this script being
- * included. Thus in this script we just handle the work of the form itself.
- *
- * DO NOT CHANGE THIS SCRIPT. If you wish to customize it, COPY IT TO users/local/forms
- * and then modify it. users/forms/master_form.php will automatically detect your customized
- * version and load that copy rather than this one.
+ * Groups are conceptually very similar to user-groups in many operating systems.
+ * Authorizations are granted to groups and all members of that group are granted
+ * that authorization. Groups can be members of other groups (nested to 4 levels
+ * deep) and all members of a child group are considered to be members of the
+ * parent group.
+ */
+/*
+ * {STANDARD FORM COMMENT - DONT EDIT CORE}
  */
 
 checkToken();
 
 /*
  * Set up variables to track whether we are in ROLE or GROUP mode
+ * The $mode (either 'ROLE' or 'GROUP') is used throughout this form to determine
+ * which messages to display, what sections of the form to display, etc.
  */
 if (isset($mode) && $mode == 'ROLE') {
     $parentPage = 'admin_roles.php';
@@ -76,11 +74,6 @@ if (!($group_id = Input::get('id')) || !groupIdExists($group_id)) {
 }
 
 $groupDetails = fetchGroupDetails($group_id);
-if ($m = Input::get('msg')) {
-    if ($groupDetails && in_array($m, ['GROUP_ADD_SUCCESSFUL'])) {
-        $successes[] = lang($m, $groupDetails->name);
-    }
-}
 if ($groupDetails) {
     $grouptype_id = $groupDetails->grouptype_id;
 } else {
@@ -88,47 +81,51 @@ if ($groupDetails) {
 }
 $grouptypesData = $db->queryAll('grouptypes')->results();
 $myForm = new Form([
-    'toc' => new FormField_TabToc(['field' => 'toc', ]),
+    'toc' => new FormField_TabToc, // table of contents for tab panes
     'tabRow' => new Form_Row ([
         'tabCol' => new Form_Col ([
             'tabs' => new FormTab_Contents ([
                 'groupInfo' => new FormTab_Pane ([
                     'is_role' => new FormField_Hidden ([
-                        'dbfield' => 'is_role',
                         'value' => 1,
                         'keep_if' => ($creating && $mode == 'ROLE'),
                     ]),
-                    'name' => new FormField_Text ([
-                        'dbfield' => 'groups.name',
+                    'groups.name' => new FormField_Text ([
                         'display' => lang($mode.'_NAME'),
                         'new_valid' => [
                             'action' => ($creating ? 'add' : 'update'),
                             'update_id' => $group_id,
                         ],
                     ]),
-                    'short_name' => new FormField_Text ([
-                        'dbfield' => 'groups.short_name',
+                    'groups.short_name' => new FormField_Text ([
                         'display' => lang($mode.'_SHORT_NAME'),
                         'new_valid' => [
                             'action' => ($creating ? 'add' : 'update'),
                             'update_id' => $group_id,
                         ],
                     ]),
-                    'grouptype_id' => new FormField_Select([
-                        'dbfield' => 'groups.grouptype_id',
-                        'repeat' => $grouptypesData,
+                    'groups.grouptype_id' => new FormField_Select([
+                        'sql' => "SELECT * FROM $T[grouptypes] ORDER BY name",
+                        #'repeat' => $grouptypesData,
                         'display' => lang($mode.'_GROUPTYPE'),
                         'placeholder_row' => ['id'=>null, 'name'=>lang('CHOOSE_FROM_LIST_BELOW')],
                         'new_valid' => [], // in case they make it required
-                        'keep_if' => (boolean)$grouptypesData,
+                        'delete_if_empty' => true, // don't show if no group types are set up
+                        #'debug' => 5,
                     ]),
                     'admin' => new FormField_Select([
-                        'field' => 'admin',
                         'repeat' => [
                             ['id'=>0, 'name'=>lang('GROUP_NOT_ADMIN')],
                             ['id'=>1, 'name'=>lang('GROUP_MEMBERS_ARE_ADMIN')],
                         ],
                         'display' => lang('GROUP_IS_ADMIN'),
+                    ]),
+                    'default_for_new_user' => new FormField_Select([
+                        'repeat' => [
+                            ['id'=>0, 'name'=>lang('GROUP_NOT_DEFAULT_NEW_USERS')],
+                            ['id'=>1, 'name'=>lang('GROUP_IS_DEFAULT_NEW_USERS')],
+                        ],
+                        'display' => lang('GROUP_DEFAULT_NEW_USERS'),
                     ]),
                     'deleteRolesWell' => new Form_Well([
                         'deleteRoles' => new FormField_Table ([
@@ -325,7 +322,7 @@ $myForm = new Form([
                     ],  ['Col_Class'=>'col-xs-12 col-sm-6 col-md-4']),
                 ], [
                     'tab_id' => 'groupAccess',
-                    'title' => lang('GROUP_ACCESS_TITLE'),
+                    'title' => lang('GROUP_PAGE_ACCESS_TITLE'),
                 ]),
             ]),
         ]),
@@ -346,8 +343,9 @@ $myForm = new Form([
                 ]),
             'deleteGroup' => new FormField_ButtonDelete([
                     'field' => 'deleteGroup',
-                    'display' => lang($mode.'_DELETE'),
+                    'display' => lang('DELETE_THIS_'.$mode),
                     'value' => $group_id,
+                    'delete_if' => $creating,
                 ]),
         ]),
     ]),
@@ -362,9 +360,6 @@ $myForm = new Form([
     'Keep_AdminDashBoard' => true,
     #'debug' => 5,
 ]);
-$myForm->getField('toc')->setRepData(
-    $myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true])
-);
 
 // Update data in the database for any changes on the form
 $need_reload = false;
@@ -386,7 +381,6 @@ if (Input::exists('post')) {
         if ($creating) {
             if ($group_id = $myForm->insertIfValid($errors)) {
                 $need_reload = true;
-                $reload_msg = 'GROUP_ADD_SUCCESSFUL';
                 $successes[] = lang('GROUP_ADD_SUCCESSFUL', $myForm->getField('name')->getNewValue());
             }
         } else {
@@ -394,12 +388,13 @@ if (Input::exists('post')) {
                 if (!Input::get('save')) {
                     // save-and-new or save-and-return
                     $need_reload = true;
-                    $reload_msg = 'GROUP_UPDATE_SUCCESSFUL';
+                    $successes[] = lang('GROUP_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
                 }
                 $successes[] = lang('GROUP_UPDATE_SUCCESSFUL', $myForm->getField('name')->getNewValue());
             }
         }
 
+// MOVE TO TOP
         //Add new roles
         if (($role_id = Input::get('newRole')) && ($roleuser_id = Input::get('newRoleUser'))) {
             # Add this user to this role for this group
@@ -484,12 +479,12 @@ if (Input::exists('post')) {
 # URL so that we have it preserved in a normal fashion
 if ($need_reload) {
     if (Input::get('save_and_return')) {
-        Redirect::to(getPageLocation($parentPage), "id=$group_id&msg=$reload_msg");
+        Redirect::to(getPageLocation($parentPage), "id=$group_id");
     } elseif (Input::get('save_and_new')) {
-        Redirect::to(getPageLocation($currentPage), "id=$group_id&msg=$reload_msg");
+        Redirect::to(getPageLocation($currentPage), "id=$group_id");
     } else {
         // assume it was just 'save' and we need to specify id=n in URL
-        Redirect::to(getPageLocation($currentPage), "id=$group_id&msg=$reload_msg");
+        Redirect::to(getPageLocation($currentPage), "id=$group_id");
     }
 }
 
