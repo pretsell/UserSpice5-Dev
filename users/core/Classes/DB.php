@@ -287,6 +287,17 @@ class US_DB {
 	public function error() {
 		return $this->_error;
 	}
+    # alias
+    public function errors() {
+        return $this->error();
+    }
+    public function errorSetMessage(&$errors) {
+        if ($this->error()) {
+            $errors[] = lang('SQL_ERROR');
+            $errors[] = $this->errorString();
+        }
+        return $this->error();
+    }
 
 	public function lastId() {
 		return $this->_lastId;
