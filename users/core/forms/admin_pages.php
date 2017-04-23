@@ -10,12 +10,19 @@ if (Input::exists()) {
 }
 
 //Get list of php files for each $path
-$paths=configGet('us_page_path', US_URL_ROOT);
+$paths=configGet('page_path', US_URL_ROOT);
 $pages=[];
 foreach ((array)$paths as $path){
     if (substr($path, -1, 1) != '/') {
-        $path .= '/';
+        $path .= '/'; // make sure we have a trailing slash
     }
+    if (strncmp($path, US_DOC_ROOT, strlen(US_DOC_ROOT)) === 0) {
+        $path = substr($path, strlen(US_DOC_ROOT));
+    }
+    if (substr($path, 0, 1) != '/') {
+        $path = '/'.$path; // ensure a leading slash
+    }
+    #dbg("path=$path, searching in '".US_DOC_ROOT.$path.'*.php'."'");
     $pages = array_merge($pages, glob(US_DOC_ROOT.$path.'*.php'));
 }
 $pages = str_replace(US_DOC_ROOT, '', $pages);
@@ -61,6 +68,8 @@ $createList = [];
 foreach ($creations as $k=>$v) {
     $createList[] = array('id'=>$k, 'page'=>$v, 'value'=>$v);
 }
+#dbg("CreateList");
+#pre_r($createList);
 
 $childForm = 'admin_page.php';
 $myForm = new Form ([
@@ -71,7 +80,7 @@ $myForm = new Form ([
                 '<th>'.lang('PAGE').'</th>',
             'table_data_cells' => '<td>{CHECKBOX_VALUE}</td>'.
                 '<td><a href="'.$childForm.'?id={ID}">{PAGE}</a></td>',
-            'repeat' => $createList,
+            'data' => $createList,
             'checkbox_label' => lang('MARK_TO_CREATE'),
             'nodata' => '<p>'.lang('NO_PAGES').'</p>',
             'table_class' => 'table table-sm table-condensed table-inverse table-hover',
@@ -91,7 +100,7 @@ $myForm = new Form ([
                 '<th>'.lang('PAGE').'</th>',
             'table_data_cells' => '<td>{CHECKBOX_ID}</td>'.
                 '<td>{IN_MENU}&nbsp;<a href="'.$childForm.'?id={ID}">{PAGE}</a></td>',
-            'repeat' => $deleteList,
+            'data' => $deleteList,
             'checkbox_label' => lang('MARK_TO_DELETE'),
             'nodata' => '<p>'.lang('NO_PAGES').'</p>',
             'table_class' => 'table table-sm table-condensed table-inverse table-hover',
@@ -115,7 +124,7 @@ $myForm = new Form ([
         'table_data_cells' =>
             '<td><a href="'.$childForm.'?id={ID}">{PAGE}</a></td>'.
             '<td>{ACCESS}</td>',
-        'repeat' => $dbpages,
+        'data' => $dbpages,
         'nodata' => '<p>'.lang('NO_PAGES').'</p>',
         'searchable' => true,
     ]),
