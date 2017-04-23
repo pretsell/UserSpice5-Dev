@@ -32,11 +32,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	<!-- Bootstrap Core CSS -->
 	<link href="<?= US_URL_ROOT.configGet('css1') ?>" rel="stylesheet">
 
+	<!-- SmartMenus 1.0.1 downloaded from http://www.smartmenus.org 2017-04-23 -plb -->
+	<link href="<?= US_URL_ROOT.'resources/css/sm-core-css.css' ?>" rel="stylesheet">
+	<link href="<?= US_URL_ROOT.'resources/css/jquery.smartmenus.bootstrap.css' ?>" rel="stylesheet">
+
 	<!-- Template CSS -->
 	<link href="<?= US_URL_ROOT.configGet('css2') ?>" rel="stylesheet">
 
 	<!-- Your Custom CSS Goes Here!-->
 	<link href="<?= US_URL_ROOT.configGet('css3') ?>" rel="stylesheet">
+
+    <?php
+    if (isset($headerSnippets)) {
+        echo '<!-- Snippets using $headerSnippets -->'."\n";
+        foreach ((array)$headerSnippets as $h) {
+            echo $h."\n";
+        }
+    }
+    ?>
 
 	<!-- Custom Fonts -->
 	<link href="<?= US_URL_ROOT."core/fonts/css/font-awesome.min.css" ?>" rel="stylesheet" type="text/css">
