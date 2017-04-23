@@ -49,14 +49,17 @@ foreach ($tmp as $x) {
 
 # Now look up the files in the language dir to allow that choice
 $tmp = array_merge(
+    configGet('language_files'),
     glob(US_ROOT_DIR.'core/language/*.php'),
     glob(US_ROOT_DIR.'local/language/*.php')
 );
 $langs = [];
-foreach ($tmp as $x) {
+$alreadySet = [];
+foreach ($tmp as $k=>$x) {
     $l = basename($x);
-    if ($l != 'language.php') {
-        $langs[] = ['id'=>$l, 'name'=>$l];
+    if ($l != 'language.php' && !isset($alreadySet[$l])) {
+        $langs[] = ['id'=>(is_numeric($k)?$l:$k), 'name'=>$l.(is_numeric($k)?'':" ($k)")];
+        $alreadySet[$l] = true;
     }
 }
 
