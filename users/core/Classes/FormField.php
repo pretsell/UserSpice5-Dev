@@ -34,6 +34,10 @@ abstract class US_FormField extends Element {
         $_fieldNewValue=null,
         $_fieldType=null, // should be set by inheriting classes
         $_isDBField=true, // whether this is from the primary table in the DB
+        $_postFunc=null,
+        $_postFuncArgs=[],
+        $_dataFunc=null,
+        $_dataFuncArgs=[],
         # for repeating elements, this class can control the SELECT
         # rather than setting it manually by setRepData(). This allows
         # things like pagination,
@@ -47,6 +51,8 @@ abstract class US_FormField extends Element {
         $_pageItems=0, // paginates if non-zero and isRepeating() (i.e., this is the flag to turn on paginating)
         $_curPage=0,   // current page
         $_pageVarName='page',
+        $_importSource='',
+        $_importField='',
         $_initOpts=[],
         $_processor=[],
         $_totalPages=0;// total number of pages
@@ -164,6 +170,22 @@ abstract class US_FormField extends Element {
             case 'fieldid':
                 $this->setFieldId($val);
                 return true;
+            case 'postfunc':
+            case 'postfunction':
+                $this->setPostFunc($val);
+                return true;
+            case 'postfuncargs':
+            case 'postfunctionargs':
+                $this->setPostFuncArgs($val);
+                return true;
+            case 'datafunc':
+            case 'datafunction':
+                $this->setDataFunc($val);
+                return true;
+            case 'datafuncargs':
+            case 'datafunctionargs':
+                $this->setDataFuncArgs($val);
+                return true;
             case 'sql':
                 $this->setSQL($val);
                 return true;
@@ -191,6 +213,13 @@ abstract class US_FormField extends Element {
                 return true;
             case 'pagevarname':
                 $this->setPageVarName($val);
+                return true;
+            case 'importfield':
+                $this->setImportField($val);
+                return true;
+            case 'importfile':
+            case 'importsource':
+                $this->setImportSource($val);
                 return true;
         }
         return parent::handle1Opt($name, $val);
@@ -223,14 +252,76 @@ abstract class US_FormField extends Element {
         return parent::getMacros($s, $opts);
     }
 
-    public function calcRepData($insist=false) {
+    public function calcRepData($recalc=false) {
         $this->debug(1, '::calcRepData(): Entering ('.$this->_fieldName.')');
-        if (!$this->isRepeating() || (!$this->repDataIsEmpty() && !$insist)) {
+        if (!$this->isRepeating() || (!$this->repDataIsEmpty() && !$recalc)) {
             # If it's not a repeating-data field or if the repeating data already
             # has something in it then get out...
             return false;
         }
         $this->debug(2, '::calcRepData(): Continuing');
+        $rtn = false;
+        $repData = [];
+        $setRep = false;
+        if ($func = $this->getDataFunc()) {
+            $setRep = true;
+            $repData = $func($this->getDataFuncArgs());
+        } elseif ($this->getSQL() || $this->getSQLCols() || $this->getSQLFrom()) {
+            $setRep = true;
+            $repData = $this->calcRepDataFromSQL();
+        } elseif ($this->getImportSource() || $this->getImportField()) {
+            $setRep = true;
+            $repData = $this->calcRepDataFromImport();
+        }
+        if ($setRep) {
+            $this->setRepData($repData);
+            if ($func = $this->getPostFunc()) {
+                $func($this->repData, $this->getPostFuncArgs());
+            }
+        }
+        return (boolean)$this->getRepData();
+    }
+    public function calcRepDataFromImport() {
+        $this->debug(2, "calcRepDataFromImport(): Entering");
+        if ($fn = $this->getImportField()) {
+            if ($uploadFld = $this->getField($fn)) {
+                $fileName = $uploadFld->getFieldValue();
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+        if (!$fileName) {
+            return false;
+        }
+        /*
+        $importSource = $this->getImportSource();
+        if (!$importSource || !file_exists($importSource)) {
+            return false;
+        }
+        */
+        $fh = fopen($fileName, "r");
+        $headers = fgetcsv($fh, 1024);
+        #var_dump($headers);
+        $rtn = [];
+        $lineNum = 1;
+        while ($line = fgetcsv($fh, 4096)) {
+            $lineNum++;
+            if (sizeof($headers) != sizeof($line)) {
+                $this->errors[] = "Import error: ".sizeof($headers)." fields in headers and ".sizeof($line)." fields in line #$lineNum";
+                continue;
+            }
+            for ($i=0; $i<sizeof($headers); $i++) {
+                $newRow[$headers[$i]] = $line[$i];
+            }
+            $rtn[] = $newRow;
+        }
+        #dbg("RepData: ".print_r($this->getRepData(),true));
+        return $rtn;
+    }
+    public function calcRepDataFromSQL() {
+        $this->debug(2, "calcRepDataFromSQL(): Entering");
         $fullSql = $this->getSQL();
         $cols = $this->getSQLCols();
         $from = $this->getSQLFrom();
@@ -256,7 +347,7 @@ abstract class US_FormField extends Element {
         $this->debug(5,"from=$from");
         $this->debug(5,"groupBy=$groupBy");
         $this->debug(5,"where=$where");
-        $this->debug(2, '::calcRepData(): Still Continuing 2');
+        $this->debug(2, '::calcRepDataFromSQL(): Still Continuing 2');
         if ($pageItems) {
             if ($fullSql) {
                 dbg("FATAL ERROR: Cannot do pagination specifying straight SQL");
@@ -293,10 +384,15 @@ abstract class US_FormField extends Element {
                 $sql .= " LIMIT $offset,$pageItems";
             }
         }
-        $this->debug(3, "::calcRepData(): sql=$sql");
-        $this->setRepData($this->_db->query($sql, $bindVals)->results());
+        $this->debug(3, "::calcRepDataFromSQL(): sql=$sql");
+        $rtn = $this->_db->query($sql, $bindVals)->results();
+        #pre_r($rtn);
+        if ($this->_db->error()) {
+            $this->errors[] = lang('SQL_ERROR');
+            $this->errors[] = $this->_db->errorString();
+        }
         #dbg("ERROR STRING: ".$this->_db->errorString());
-        return (boolean)$this->getRepData();
+        return $rtn;
     }
     public function setRepData($val) {
         $this->debug(1, '::setRepData(y): Entering');
@@ -332,8 +428,9 @@ abstract class US_FormField extends Element {
 
     // the key to the __construct hash handed to the field list (1st arg)
     // can initialize both the field name and the display labels
-    public function setDefaults(&$k, $reprocessFieldDef=false) {
+    public function setDefaults(&$k, $mainFormObj) {
         $this->debug(1, "::setDefaults($k): Entering");
+        parent::setDefaults($k, $mainFormObj);
         $k = $this->initFormField($k); // handle (late) initialization
         $langKey = strtoupper($k);
         if (hasLang($langKey)) {
@@ -355,6 +452,44 @@ abstract class US_FormField extends Element {
     public function getProcessor() {
         return $this->_processor;
     }
+    public function getImportField() {
+        #dbg("getImportField(): Returning: ".$this->_importField);
+        return $this->_importField;
+    }
+    public function setImportField($val) {
+        $this->_importField = $val;
+    }
+    public function getImportSource() {
+        #dbg("getImportSource(): Returning: ".$this->_importSource);
+        return $this->_importSource;
+    }
+    public function setImportSource($val) {
+        $this->_importSource = $val;
+    }
+	public function getPostFunc(){
+		return $this->_postFunc;
+	}
+	public function setPostFunc($val){
+		$this->_postFunc = $val;
+	}
+	public function getPostFuncArgs(){
+		return $this->_postFuncArgs;
+	}
+	public function setPostFuncArgs($val){
+		$this->_postFuncArgs = $val;
+	}
+	public function getDataFunc(){
+		return $this->_dataFunc;
+	}
+	public function setDataFunc($val){
+		$this->_dataFunc = $val;
+	}
+	public function getDataFuncArgs(){
+		return $this->_dataFuncArgs;
+	}
+	public function setDataFuncArgs($val){
+		$this->_dataFuncArgs = $val;
+	}
 	public function getSQL(){
 		return $this->_sql;
 	}
@@ -465,6 +600,9 @@ abstract class US_FormField extends Element {
     # <input ... id="THIS-IS-FIELD-ID" ...>
     public function setFieldId($id) {
         $this->_fieldId = $id;
+    }
+    public function getField($fieldName) {
+        return $this->_mainFormObj->getField($fieldName);
     }
     public function getFieldId() {
         # Often developers will not specify the ID since they will just
