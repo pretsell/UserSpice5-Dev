@@ -42,3 +42,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- Bootstrap Core JavaScript -->
 <script src="<?= US_URL_ROOT."resources/js/bootstrap.min.js" ?>"></script>
+
+<!-- SmartMenus 1.0.1 and bootstrap plugin -->
+<script src="<?= US_URL_ROOT."resources/js/jquery.smartmenus.js" ?>"></script>
+<script src="<?= US_URL_ROOT."resources/js/jquery.smartmenus.bootstrap.js" ?>"></script>
+
+<?php
+if (isset($footerSnippets)) {
+    echo '<!-- Snippets using $footerSnippets -->'."\n";
+    foreach ((array)$footerSnippets as $f) {
+        echo $f."\n";
+    }
+}
+?>
