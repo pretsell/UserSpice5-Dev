@@ -92,7 +92,7 @@ $myForm = new Form ([
                         'table_data_cells' => '<td>{CHECKBOX_ID}</td>'.
                             '<td><a href="admin_group.php?id={GROUP_ID}">{NAME}</a></td>',
                         #'checkbox_label' => lang('MARK_TO_DELETE'),
-                        'nodata' => '<p>'.lang('NO_GROUP_ACCESS').'</p>',
+                        'nodata' => '<p>'.lang('NO_GROUP_ACCESS_PAGE').'</p>',
                         'table_class' => 'table-condensed table-hover',
                         'isdbfield' => false,
                         # repeating data will be loaded below
@@ -109,7 +109,7 @@ $myForm = new Form ([
                         'table_data_cells' => '<td>{CHECKBOX_ID}</td>'.
                             '<td><a href="admin_group.php?id={ID}">{NAME}</a></td>',
                         #'checkbox_label' => lang('MARK_TO_ADD'),
-                        'nodata' => '<p>'.lang('NO_GROUP_WITHOUT_ACCESS').'</p>',
+                        'nodata' => '<p>'.lang('NO_GROUP_WITHOUT_ACCESS_PAGE').'</p>',
                         'table_class' => 'table-condensed table-hover',
                         'isdbfield' => false,
                         # repeating data will be loaded below
