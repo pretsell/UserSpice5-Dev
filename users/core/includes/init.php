@@ -119,7 +119,7 @@ require_once US_ROOT_DIR.'local/config.php';
  * the corresponding $init_commands there.)
  */
 $us_tables=['audit', 'field_defs', 'groups', 'groups_menus', 'groups_pages', 'groups_roles_users',
-    'groups_users', 'groups_users_raw', 'grouptypes', 'menus', 'pages', 'profiles',
+    'groups_users', 'groups_users_raw', 'grouptypes', 'lang', 'menus', 'pages', 'profiles',
     'settings', 'users', 'users_online', 'users_session', ];
 
 # Prepare $T[] for prefix operations (T=tableArray)
@@ -204,9 +204,9 @@ new_user_online($user_id);
  */
 if ($user->isLoggedIn()) {
     #dbg("Init: user IS logged in - checking if email verified<br />\n");
-	if($user->data()->email_verified == 0 && $currentPage != 'verify.php' && $currentPage != 'logout.php' && $currentPage != 'verify_thankyou.php'){
+	if($user->data()->email_verified == 0 && $formName != 'verify.php' && $formName != 'logout.php' && $formName != 'verify_thankyou.php') {
 		$user->logout();
-		Redirect::to(US_URL_ROOT.'users/verify_resend.php');
+		Redirect::to(US_URL_ROOT.'verify_resend.php');
 	}
 }
 
