@@ -343,14 +343,6 @@ function fetchGroupsByNotPage($page_id) {
 	return $db->query($sql, [$page_id])->results();
 }
 
-//Retrieve list of groups that can access a menu
-function fetchGroupsByMenu($menu_id) {
-    global $T;
-	$db = DB::getInstance();
-	$query = $db->query("SELECT id, group_id FROM $T[groups_menus] WHERE menu_id = ? ",array($menu_id));
-	return $query->results();
-}
-
 //Retrieve list of pages that a group can access
 function fetchPagesByGroup($group_id) {
     global $T;
@@ -724,19 +716,6 @@ function fetchAllGroups() {
 	return $db->query($sql)->results();
 }
 
-function fetchRolesByType($grouptype_id, $allow_null) {
-    global $T;
-	$db = DB::getInstance();
-    $sql = "SELECT id, name, short_name
-            FROM $T[groups] groups
-            WHERE is_role > 0
-            AND (grouptype_id = ?";
-    if ($allow_null) {
-        $sql .= " OR grouptype_id IS NULL";
-    }
-    $sql .= ")";
-	return $db->query($sql, [$grouptype_id])->results();
-}
 function fetchRolesByGroup($group_id) {
     global $T;
 	$db = DB::getInstance();
@@ -797,9 +776,31 @@ function hasLang($key) {
     return isset($lang[$key]);
 }
 //Inputs language strings from selected language.
-function lang($key,$markers = NULL) {
-	global $lang;
-	$str = isset($lang[$key]) ? $lang[$key] : "";
+function lang($key,$markers = NULL,$dflt='') {
+	global $lang, $T;
+    /* part 1 - getting from `lang` table in multiple small queries
+    $db = DB::getInstance();
+    #dbg('LANGUAGE: '.configGet('site_language')." key=$key");
+    $row = $db->query("SELECT message FROM $T[lang] WHERE lang = ? AND token = ?", [configGet('site_language'), $key])->first();
+    if ($db->count() > 0) {
+        #dbg("FOUND lang entry");
+        if ($row->message) {
+            $str = $row->message;
+        } else {
+            // this is separated for (slight) performance gains
+            $row = $db->query("SELECT long_message FROM $T[lang] WHERE lang = ? AND token = ?", [configGet('site_language'),  $key])->first();
+            $str = $row->long_message;
+        }
+    } else {
+    */
+        #dbg("NO lang entry");
+    	$str = isset($lang[$key]) ? $lang[$key] : "";
+        if (!$str && $dflt) {
+            $str = $dflt;
+        }
+    /* part 2...
+    }
+    */
 	if ($str && $markers !== NULL) {
         //Replace any dynamic markers
         $iteration = 1;
@@ -920,12 +921,18 @@ function deleteGroups($groups, &$errors) {
 
 // include a file and RETURN that value
 // This allows the contents of included scripts to be manipulated as strings
-function getInclude($fileName) {
+function getInclude($fileName, $vars=[]) {
     ob_start();
+    foreach ($vars as $var=>$val) {
+        $$var = $val;
+    }
     include($fileName);
     return ob_get_clean();
 }
 
+function pre_r($str) {
+    echo "<pre>".print_r($str,true)."</pre>\n";
+}
 function dbg($str, $level=1) {
     global $debugLevel;
     if (!isset($debugLevel)) $debugLevel = 3;
