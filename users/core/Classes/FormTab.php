@@ -37,9 +37,9 @@ class US_FormTab_Pane extends Form {
         }
         return parent::handle1Opt($name, $val);
     }
-    public function setDefaults($fn) {
+    public function setDefaults(&$fn, $mainFormObj) {
         #dbg("FormTab_Pane::setDefaults($fn): Entering");
-        parent::setDefaults($fn);
+        parent::setDefaults($fn, $mainFormObj);
         if (!$this->getMacro('Tab_Id')) {
             $this->setTabId($fn);
         }
