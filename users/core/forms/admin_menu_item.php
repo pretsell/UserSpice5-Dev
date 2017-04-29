@@ -104,6 +104,10 @@ $myForm = new Form([
                 ],
                 'value' => 0, // default on create, loaded from data on modify
             ]),
+            'config_key' => new FormField_Text([
+                'display' => lang('ADMIN_MENU_CONFIG_KEY'),
+                'hint_text' => lang('ADMIN_MENU_CONFIG_KEY_HINT'),
+            ]),
             'private' => new FormField_Select([
                 'display' => lang('ADMIN_MENU_ITEM_PRIVATE'),
                 'hint_text' => lang('ADMIN_MENU_ITEM_PRIVATE_HINT'),
