@@ -37,6 +37,10 @@ $myForm = new Form ([
                     ['id'=>0, 'name'=>lang('PUBLIC')],
                 ],
             ]),
+            'title_token' => new FormField_Text([
+                'display' => lang('ADMIN_PAGE_TITLE_TOKEN'),
+                'hint_text' => lang('ADMIN_PAGE_TITLE_TOKEN_HINT'),
+            ]),
             'breadcrumb_parent_page_id' => new FormField_Select([
                 'display' => lang('BREADCRUMB_PARENT'),
                 'hint_text' => lang('HINT_BREADCRUMB_PARENT'),
