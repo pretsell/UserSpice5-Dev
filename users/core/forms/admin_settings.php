@@ -21,6 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # Check CSRF token
 checkToken();
 
+$master = $db->query("SELECT * FROM $T[settings] WHERE (user_id IS NULL OR user_id <= 0) AND (group_id IS NULL OR group_id <= 0)")->first();
+$db->errorSetMessage($errors);
+} else {
+        $errors = 'DEV ERROR: UNKNOWN mode=$mode';
+        $master = new stdClass;
+    }
+    $_REQUEST['id'] = $_GET['id'];
+}
+
 # Calculate lists of CSS files for various selection fields
 $tmp = str_replace(US_ROOT_DIR, '', array_merge(
     glob(US_ROOT_DIR.'core/css/color_schemes/*.css'),
@@ -82,6 +91,14 @@ $singleRowEditOpts = [
     ['id'=>'2', 'name' => lang('RETURN_TO_BREADCRUMB_PARENT')],
     ['id'=>'4', 'name' => lang('CREATE_ANOTHER_ROW')], // weird... leave it in?
 ];
+$yesOrNo = [
+    ['id'=>1, 'name'=>lang('YES')],
+    ['id'=>0, 'name'=>lang('NO')],
+];
+$overrideOrNot = [
+    ['id'=>1, 'name'=>lang('YES')],
+    ['id'=>0, 'name'=>lang('NO')],
+];
 
 $myForm = new Form ([
     'toc' => new FormField_TabToc(['TocType'=>'tab']),
@@ -91,10 +108,8 @@ $myForm = new Form ([
                 new FormField_Select([
                     'dbfield' => 'settings.force_ssl',
                     'display' => lang('SETTINGS_FORCE_SSL'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('YES')],
-                        ['id'=>0, 'name'=>lang('NO')],
-                    ],
+                    'data' => $yesOrNo,
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'min_pw_score' =>
                 new FormField_Select([
@@ -107,6 +122,7 @@ $myForm = new Form ([
                         ['id'=>4, 'name'=>lang('PW_VERY_STRONG')],
                     ],
                     'hint_text' => lang('HINT_MIN_PW_SCORE'),
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'recaptcha' =>
                 new FormField_Select([
@@ -116,44 +132,42 @@ $myForm = new Form ([
                         ['id'=>1, 'name'=>lang('ENABLED')],
                         ['id'=>0, 'name'=>lang('DISABLED')],
                     ],
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'recaptcha_private' =>
                 new FormField_Text([
-                    'dbfield' => 'recaptcha_private',
                     'display' => lang('SETTINGS_RECAPTCHA_PRIVATE_KEY'),
                     'hint_text' => 'Available from Google',
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'recaptcha_public' =>
                 new FormField_Text([
-                    'dbfield' => 'recaptcha_public',
                     'display' => lang('SETTINGS_RECAPTCHA_PUBLIC_KEY'),
                     'hint_text' => 'Available from Google',
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'session_timeout' =>
                 new FormField_Text([
-                    'dbfield' => 'session_timeout',
                     'display' => lang('SETTINGS_SESSION_TIMEOUT'),
                     'new_valid' => [
                         'is_numeric' => true,
                     ],
                     'hint_text' => '3600 = 1 hour; 86400 = 1 day, 604800 = 1 week',
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'allow_remember_me' =>
                 new FormField_Select([
-                    'dbfield' => 'allow_remember_me',
                     'display' => lang('SETTINGS_ALLOW_REMEMBER_ME'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('YES')],
-                        ['id'=>0, 'name'=>lang('NO')],
-                    ],
+                    'data' => $yesOrNo,
+                    'keep_if' => $mode == 'SITE',
                 ]),
         ], [
             'title' => lang('SETTINGS_SECURITY_TITLE'),
+            'keep_if' => $mode == 'SITE',
         ]),
         'tab_css' => new FormTab_Pane ([
             'css_sample' =>
                 new FormField_Select([
-                    'dbfield' => 'css_sample',
                     'display' => lang('SETTINGS_SHOW_CSS_SAMPLES'),
                     'repeat' => [
                         ['id'=>1, 'name'=>lang('ENABLED')],
@@ -162,19 +176,16 @@ $myForm = new Form ([
                 ]),
             'css1' =>
                 new FormField_Select([
-                    'dbfield' => 'css1',
                     'display' => lang('SETTINGS_CSS1'),
                     'repeat' => $css1,
                 ]),
             'css2' =>
                 new FormField_Select([
-                    'dbfield' => 'css2',
                     'display' => lang('SETTINGS_CSS2'),
                     'repeat' => $css2,
                 ]),
             'css3' =>
                 new FormField_Select([
-                    'dbfield' => 'css3',
                     'display' => lang('SETTINGS_CSS3'),
                     'repeat' => $css3,
                 ]),
@@ -205,17 +216,37 @@ $myForm = new Form ([
                 ], ['delete_if' =>  !configGet('css_sample')]),
         ], [
             'title' => lang("SETTINGS_CSS_TITLE"),
+            'keep_if' => $mode == 'SITE',
         ]),
         'tab_general' => new FormTab_Pane ([
             'site_name' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_SITE_NAME'),
                     'hint_text' => lang('HINT_SITE_NAME'),
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'site_url' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_SITE_URL'),
                     'hint_text' => lang('HINT_SITE_URL'),
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'master_site_language' =>
+                new FormField_Select([
+                    'display' => lang('MASTER_SETTINGS_SITE_LANGUAGE'),
+                    'isdbfield' => false,
+                    'hint_text' => '',
+                    'value' => (isset($master->site_language) ? $master->site_language : 0),
+                    'repeat' => $langs,
+                    'disabled' => true,
+                    'keep_if' => $mode != 'SITE',
+                ]),
+            'override_site_language' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_OVERRIDE_SITE_LANGUAGE'),
+                    'data' => $overrideOrNot,
+                    'hint_text' => lang('HINT_OVERRIDE_SITE_LANGUAGE'),
+                    'keep_if' => $mode != 'SITE',
                 ]),
             'site_language' =>
                 new FormField_Select([
@@ -223,10 +254,42 @@ $myForm = new Form ([
                     'hint_text' => lang('HINT_SITE_LANGUAGE'),
                     'repeat' => $langs,
                 ]),
+            'master_date_fmt' =>
+                new FormField_Text([
+                    'display' => lang('MASTER_SETTINGS_DATE_FMT'),
+                    'isdbfield' => false,
+                    #'hint_text' => lang('HINT_SETTINGS_DATE_FMT'),
+                    'value' => (isset($master->date_fmt) ? $master->date_fmt : 0),
+                    'readonly' => true,
+                    'keep_if' => $mode != 'SITE',
+                ]),
+            'override_date_fmt' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_OVERRIDE_DATE_FMT'),
+                    'data' => $overrideOrNot,
+                    'hint_text' => lang('HINT_OVERRIDE_DATE_FMT'),
+                    'keep_if' => $mode != 'SITE',
+                ]),
             'date_fmt' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_DATE_FMT'),
                     'hint_text' => lang('HINT_SETTINGS_DATE_FMT'),
+                ]),
+            'master_time_fmt' =>
+                new FormField_Text([
+                    'display' => lang('MASTER_SETTINGS_TIME_FMT'),
+                    'isdbfield' => false,
+                    #'hint_text' => lang('HINT_SETTINGS_TIME_FMT'),
+                    'value' => (isset($master->time_fmt) ? $master->time_fmt : 0),
+                    'readonly' => true,
+                    'keep_if' => $mode != 'SITE',
+                ]),
+            'override_time_fmt' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_OVERRIDE_TIME_FMT'),
+                    'data' => $overrideOrNot,
+                    'hint_text' => lang('HINT_OVERRIDE_TIME_FMT'),
+                    'keep_if' => $mode != 'SITE',
                 ]),
             'time_fmt' =>
                 new FormField_Text([
@@ -238,6 +301,7 @@ $myForm = new Form ([
                     'dbfield' => 'install_location',
                     'display' => lang('SETTINGS_INSTALL_LOCATION'),
                     'hint_text' => lang('CURRENTLY_UNUSED'),
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'copyright_message' =>
                 new FormField_Textarea([
@@ -245,36 +309,69 @@ $myForm = new Form ([
                     'display' => lang('SETTINGS_COPYRIGHT_MESSAGE'),
                     'hint_text' => lang('HINT_COPYRIGHT_MESSAGE'),
                     'editable' => true,
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'site_offline' =>
                 new FormField_Select([
                     'dbfield' => 'site_offline',
                     'display' => lang('SETTINGS_SITE_OFFLINE'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('YES')],
-                        ['id'=>0, 'name'=>lang('NO')],
-                    ],
+                    'data' => $yesOrNo,
                     'hint_text' => lang('HINT_SITE_OFFLINE'),
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'master_debug_mode' =>
+                new FormField_Select([
+                    'display' => lang('MASTER_SETTINGS_DEBUG_MODE'),
+                    'isdbfield' => false,
+                    'data' => $yesOrNo,
+                    #'hint_text' => lang('HINT_DEBUG_MODE'),
+                    'value' => (isset($master->debug_mode) ? $master->debug_mode : 0),
+                    'disabled' => true,
+                    'keep_if' => $mode != 'SITE',
+                ]),
+            'override_debug_mode' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_OVERRIDE_DEBUG_MODE'),
+                    'data' => $overrideOrNot,
+                    'hint_text' => lang('HINT_OVERRIDE_DEBUG_MODE'),
+                    'keep_if' => $mode != 'SITE',
                 ]),
             'debug_mode' =>
                 new FormField_Select([
-                    'dbfield' => 'debug_mode',
                     'display' => lang('SETTINGS_DEBUG_MODE'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('YES')],
-                        ['id'=>0, 'name'=>lang('NO')],
-                    ],
+                    'data' => $yesOrNo,
                     'hint_text' => lang('HINT_DEBUG_MODE'),
                 ]),
             'track_guest' =>
                 new FormField_Select([
                     'dbfield' => 'track_guest',
                     'display' => lang('SETTINGS_TRACK_GUESTS'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('YES')],
-                        ['id'=>0, 'name'=>lang('NO')],
-                    ],
+                    'data' => $yesOrNo,
                     'hint_text' => lang('HINT_TRACK_GUESTS'),
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'master_enable_messages' =>
+                new FormField_Select([
+                    'display' => lang('MASTER_SETTINGS_ENABLE_MESSAGES'),
+                    'isdbfield' => false,
+                    'data' => $yesOrNo,
+                    #'hint_text' => lang('SETTINGS_ENABLE_MESSAGES_HINT'),
+                    'value' => (isset($master->enable_messages) ? $master->enable_messages : 0),
+                    'keep_if' => $mode != 'SITE',
+                    'disabled' => true,
+                ]),
+            'override_enable_messages' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_OVERRIDE_ENABLE_MESSAGES'),
+                    'data' => $overrideOrNot,
+                    'hint_text' => lang('HINT_OVERRIDE_ENABLE_MESSAGES'),
+                    'keep_if' => $mode != 'SITE',
+                ]),
+            'enable_messages' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_ENABLE_MESSAGES'),
+                    'data' => $yesOrNo,
+                    'hint_text' => lang('SETTINGS_ENABLE_MESSAGES_HINT'),
                 ]),
             'upload_dir' =>
                 new FormField_Text([
@@ -284,16 +381,19 @@ $myForm = new Form ([
                         'regex' => ':^$|\/$:',
                         'regex_display' => lang('REGEX_ENDS_WITH_SLASH'),
                     ],
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'upload_allowed_ext' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_UPLOAD_ALLOWED_EXT'),
                     'hint_text' => lang('HINT_UPLOAD_ALLOWED_EXT'),
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'upload_max_size' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_UPLOAD_MAX_SIZE'),
                     'hint_text' => lang('HINT_UPLOAD_MAX_SIZE'),
+                    'keep_if' => $mode == 'SITE',
                 ]),
         ], [
             'title'=>lang('SETTINGS_GENERAL_TITLE'),
@@ -303,36 +403,99 @@ $myForm = new Form ([
                 new FormField_Text([
                     'display' => lang('SETTINGS_TINYMCE_URL'),
                     'hint_text' => lang('HINT_TINYMCE_URL'),
+                    'keep_if' => $mode == 'SITE',
                 ]),
             'tinymce_apikey' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_TINYMCE_APIKEY'),
                     'hint_text' => lang('HINT_TINYMCE_APIKEY'),
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'override_tinymce' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_OVERRIDE_TINYMCE'),
+                    'data' => $overrideOrNot,
+                    'hint_text' => lang('HINT_OVERRIDE_TINYMCE'),
+                    'keep_if' => $mode != 'SITE',
+                ]),
+            'master_tinymce_plugins' =>
+                new FormField_Text([
+                    'display' => lang('MASTER_SETTINGS_TINYMCE_PLUGINS'),
+                    'isdbfield' => false,
+                    #'hint_text' => lang('HINT_TINYMCE_PLUGINS'),
+                    'value' => (isset($master->tinymce_plugins) ? $master->tinymce_plugins : 0),
+                    'keep_if' => $mode != 'SITE',
+                    'readonly' => true,
                 ]),
             'tinymce_plugins' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_TINYMCE_PLUGINS'),
                     'hint_text' => lang('HINT_TINYMCE_PLUGINS'),
                 ]),
+            'master_tinymce_height' =>
+                new FormField_Text([
+                    'display' => lang('MASTER_SETTINGS_TINYMCE_HEIGHT'),
+                    'isdbfield' => false,
+                    #'hint_text' => lang('HINT_TINYMCE_HEIGHT'),
+                    'value' => (isset($master->tinymce_height) ? $master->tinymce_height : 0),
+                    'keep_if' => $mode != 'SITE',
+                    'readonly' => true,
+                ]),
             'tinymce_height' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_TINYMCE_HEIGHT'),
                     'hint_text' => lang('HINT_TINYMCE_HEIGHT'),
+                ]),
+            'master_tinymce_menubar' =>
+                new FormField_Text([
+                    'display' => lang('MASTER_SETTINGS_TINYMCE_MENUBAR'),
+                    'isdbfield' => false,
+                    #'hint_text' => lang('HINT_TINYMCE_MENUBAR'),
+                    'value' => (isset($master->tinymce_menubar) ? $master->tinymce_menubar : 0),
+                    'keep_if' => $mode != 'SITE',
+                    'readonly' => true,
                 ]),
             'tinymce_menubar' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_TINYMCE_MENUBAR'),
                     'hint_text' => lang('HINT_TINYMCE_MENUBAR'),
                 ]),
+            'master_tinymce_toolbar' =>
+                new FormField_Text([
+                    'display' => lang('MASTER_SETTINGS_TINYMCE_TOOLBAR'),
+                    'isdbfield' => false,
+                    #'hint_text' => lang('HINT_TINYMCE_TOOLBAR'),
+                    'value' => (isset($master->tinymce_toolbar) ? $master->tinymce_toolbar : 0),
+                    'keep_if' => $mode != 'SITE',
+                    'readonly' => true,
+                ]),
             'tinymce_toolbar' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_TINYMCE_TOOLBAR'),
                     'hint_text' => lang('HINT_TINYMCE_TOOLBAR'),
                 ]),
+            'master_tinymce_skin' =>
+                new FormField_Text([
+                    'display' => lang('MASTER_SETTINGS_TINYMCE_SKIN'),
+                    'isdbfield' => false,
+                    #'hint_text' => lang('HINT_TINYMCE_SKIN'),
+                    'value' => (isset($master->tinymce_skin) ? $master->tinymce_skin : 0),
+                    'keep_if' => $mode != 'SITE',
+                    'readonly' => true,
+                ]),
             'tinymce_skin' =>
                 new FormField_Text([
                     'display' => lang('SETTINGS_TINYMCE_SKIN'),
                     'hint_text' => lang('HINT_TINYMCE_SKIN'),
+                ]),
+            'master_tinymce_theme' =>
+                new FormField_Text([
+                    'display' => lang('MASTER_SETTINGS_TINYMCE_THEME'),
+                    'isdbfield' => false,
+                    #'hint_text' => lang('HINT_TINYMCE_THEME'),
+                    'value' => (isset($master->tinymce_theme) ? $master->tinymce_theme : 0),
+                    'keep_if' => $mode != 'SITE',
+                    'readonly' => true,
                 ]),
             'tinymce_theme' =>
                 new FormField_Text([
@@ -408,42 +571,34 @@ $myForm = new Form ([
                 ]),
             'redirect_referrer_login' =>
                 new FormField_Select([
-                    'dbfield' => 'redirect_referrer_login',
                     'display' => lang('SETTINGS_REDIRECT_REFERRER_LOGIN'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('YES')],
-                        ['id'=>0, 'name'=>lang('NO')],
-                    ],
+                    'data' => $yesOrNo,
                     'hint_text' => lang('HINT_REDIRECT_REFERRER_LOGIN'),
                 ]),
         ], [
             'title'=>lang('SETTINGS_REDIRECTS_TITLE'),
+            'keep_if' => $mode == 'SITE',
         ]),
         'tab_registration' => new FormTab_Pane ([
             'email_act' =>
                 new FormField_Select([
-                    'dbfield' => 'email_act',
                     'display' => lang('SETTINGS_REQUIRE_EMAIL_VERIFY'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('YES')],
-                        ['id'=>0, 'name'=>lang('NO')],
-                    ],
+                    'data' => $yesOrNo,
                     'hint_text' => lang('HINT_REQUIRE_EMAIL_VERIFY'),
                 ]),
             'agreement' =>
                 new FormField_Textarea([
-                    'dbfield' => 'agreement',
                     'rows' => '10',
                     'display' => lang('SETTINGS_TERMS_AND_CONDITIONS'),
                     'hint_text' => lang('HINT_TERMS_AND_CONDITIONS'),
                 ]),
         ], [
             'title'=>lang('SETTINGS_REGISTRATION_TITLE'),
+            'keep_if' => $mode == 'SITE',
         ]),
         'tab_google' => new FormTab_Pane ([
             'glogin' =>
                 new FormField_Select([
-                    'dbfield' => 'glogin',
                     'display' => lang('SETTINGS_GLOGIN_STATE'),
                     'repeat' => [
                         ['id'=>1, 'name'=>lang('ENABLED')],
@@ -453,29 +608,26 @@ $myForm = new Form ([
                 ]),
             'gid' =>
                 new FormField_Text([
-                    'dbfield' => 'gid',
                     'display' => lang('SETTINGS_GLOGIN_CLIENT_ID'),
                     'hint_text' => lang('HINT_GLOGIN_CLIENT_ID'),
                 ]),
             'gsecret' =>
                 new FormField_Text([
-                    'dbfield' => 'gsecret',
                     'display' => lang('SETTINGS_GLOGIN_SECRET'),
                     'hint_text' => lang('HINT_GLOGIN_SECRET'),
                 ]),
             'gcallback' =>
                 new FormField_Text([
-                    'dbfield' => 'gcallback',
                     'display' => lang('SETTINGS_GLOGIN_CALLBACK'),
                     'hint_text' => lang('HINT_GLOGIN_CALLBACK'),
                 ]),
         ], [
             'title'=>lang('SETTINGS_GOOGLE_TITLE'),
+            'keep_if' => $mode == 'SITE',
         ]),
         'tab_facebook' => new FormTab_Pane ([
             'fblogin' =>
                 new FormField_Select([
-                    'dbfield' => 'fblogin',
                     'display' => lang('SETTINGS_FBLOGIN_STATE'),
                     'repeat' => [
                         ['id'=>1, 'name'=>lang('ENABLED')],
@@ -485,24 +637,22 @@ $myForm = new Form ([
                 ]),
             'fbid' =>
                 new FormField_Text([
-                    'dbfield' => 'fbid',
                     'display' => lang('SETTINGS_FBLOGIN_CLIENT_ID'),
                     'hint_text' => lang('HINT_FBLOGIN_CLIENT_ID'),
                 ]),
             'fbsecret' =>
                 new FormField_Text([
-                    'dbfield' => 'fbsecret',
                     'display' => lang('SETTINGS_FBLOGIN_SECRET'),
                     'hint_text' => lang('HINT_FBLOGIN_SECRET'),
                 ]),
             'fbcallback' =>
                 new FormField_Text([
-                    'dbfield' => 'fbcallback',
                     'display' => lang('SETTINGS_FBLOGIN_CALLBACK'),
                     'hint_text' => lang('HINT_FBLOGIN_CALLBACK'),
                 ]),
         ], [
             'title'=>lang('SETTINGS_FACEBOOK_TITLE'),
+            'keep_if' => $mode == 'SITE',
         ]),
     ]),
     'save' =>
@@ -512,9 +662,11 @@ $myForm = new Form ([
         ])
 ], [
     'table' => 'settings',
+    'default' => 'process',
     #'debug' => 3,
 ]);
 
+/*
 if (Input::exists()) {
     $settingsData = $db->queryById('settings', 1)->first();
     $myForm->setFieldValues($settingsData);
@@ -529,3 +681,4 @@ $myForm->setFieldValues($settingsData);
 $myForm->getField('toc')->setRepData($myForm->getAllFields([], ['class'=>'FormTab_Pane', 'not_only_fields'=>true]));
 
 echo $myForm->getHTML(['errors'=>$errors, 'successes'=>$successes]);
+*/
