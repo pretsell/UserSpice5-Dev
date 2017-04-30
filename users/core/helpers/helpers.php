@@ -97,50 +97,39 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 	$site_settings_results = $db->query("SELECT * FROM settings");
 	$site_settings = $site_settings_results->first();
 
+	$mail_method = configGet('mail_method');
 	$from = configGet('from_email');
 	$from_name=configGet('from_name');
-	$smtp_server=configGet('smtp_server');
-	$smtp_port=configGet('smtp_port');
-	$smtp_username=configGet('email_login');
-	$smtp_password=configGet('email_pass');
-	$smtp_transport=configGet('smtp_transport');
 
-	$mail = new PHPMailer;
-
-	if (configGet('mail_method')=='smtp'){
-		$mail->SMTPDebug = $debug_level;                               // Enable verbose debug output
-        if ($debug_level)
-            $mail->Debugoutput = 'html';
-		$mail->isSMTP();                                      // Set mailer to use SMTP
-		$mail->Host = $smtp_server;  // Specify main and backup SMTP servers
-		$mail->SMTPAuth = true;                               // Enable SMTP authentication
-		$mail->Username = $smtp_username;                 // SMTP username
-		$mail->Password = $smtp_password;                           // SMTP password
-		$mail->SMTPSecure = $smtp_transport;                            // Enable TLS encryption, `ssl` also accepted
-		$mail->Port = $smtp_port;                                    // TCP port to connect to
+	if (in_array($mail_method, ['smtp', 'sendmail'])) {
+        # Both of these methods use PHPMailer
+    	$mail = new PHPMailer;
 		$mail->setFrom($from, $from_name);
-		$mail->addAddress($to);     // Add a recipient, name is optional
-		$mail->isHTML(true);                                  // Set email format to HTML
+		$mail->addAddress($to);                // Add a recipient, name is optional
+		$mail->isHTML(true);                   // Set email format to HTML
 		$mail->Subject = $subject;
 		$mail->Body    = $body;
-
+        # Set up special settings for smtp or sendmail
+    	if ($mail_method == 'smtp') {
+    		$mail->isSMTP();                                 // Set mailer to use SMTP
+    		$mail->Host = configGet('smtp_server');          // Specify main and backup SMTP servers
+    		$mail->SMTPAuth = true;                          // Enable SMTP authentication
+    		$mail->Username = configGet('email_login');      // SMTP username
+    		$mail->Password = configGet('email_pass');       // SMTP password
+    		$mail->SMTPSecure = configGet('smtp_transport'); // Enable TLS encryption, `ssl` also accepted
+    		$mail->Port = configGet('smtp_port');            // TCP port to connect to
+            if ($debug_level) {
+        		$mail->SMTPDebug = $debug_level;             // Set verbosity of debug output 0=nothing, 4=max
+                $mail->Debugoutput = 'html';
+            }
+            #var_dump($mail);
+    	} elseif ($mail_method == 'sendmail') {
+    		$mail->isSendmail();
+        }
 		ob_start();
 		$result = $mail->send();
 		$debug = ob_get_clean();
-
-	}elseif(configGet('mail_method')=='sendmail'){
-		$mail->isSendmail();
-		$mail->setFrom($from, $from_name);
-		$mail->addAddress($to);
-		$mail->isHTML(true);
-		$mail->Subject = $subject;
-		$mail->Body = $body;
-
-		ob_start();
-		$result = $mail->send();
-		$debug = ob_get_clean();
-
-	}elseif(configGet('mail_method')=='phpmail'){
+	} elseif ($mail_method == 'phpmail') {
 		$headers   = array();
 		$headers[] = "MIME-Version: 1.0";
 		$headers[] = "Content-type: text/plain; charset=iso-8859-1";
@@ -149,16 +138,12 @@ function email($to,$subject,$body,$attachment=false, $debug_level=0){
 		$headers[] = "X-Mailer: PHP/".phpversion();
 		$result=mail($to, $subject, $body, implode("\r\n", $headers));
 		$debug="";
-	}else{
-		/*
-		Do nothing since not a recognized option
-		*/
+	} else {
+        return [false, "DEV ERROR: Unknown mail_method=$mail_method"];
 	}
 
-	/*
-	Return the result as well as the output buffer containing the PHPMailer connection summary
-	*/
-	return [$result,$debug];
+	# Return the result as well as the output buffer containing the PHPMailer connection summary
+	return [$result, $debug];
 }
 
 function email_body($templateString,$options = array()){
