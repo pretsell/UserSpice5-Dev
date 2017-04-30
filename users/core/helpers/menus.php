@@ -49,7 +49,8 @@ function menuSQL($menuTitle, &$bindVals, $forceAll=false) {
             $where .= " AND (active <= 0)";
         }
     }
-    $sql = "SELECT menus.id, menu_title, label_token, parent, logged_in,
+    $sql = "SELECT menus.id, menu_title, label_token, parent,
+                logged_in, config_key,
                 display_order, icon_class,
                 CONCAT(IF(link <> '', link, pages.page), link_args) AS link
               FROM $T[menus] menus
@@ -78,7 +79,8 @@ function menuSQL($menuTitle, &$bindVals, $forceAll=false) {
     }
     $sql .= " $where
             UNION
-            SELECT menus.id, menu_title, label_token, parent, logged_in,
+            SELECT menus.id, menu_title, label_token, parent,
+                logged_in, config_key,
                 display_order, icon_class,
                 CONCAT(link, link_args) AS link
               FROM $T[menus] menus
@@ -98,7 +100,16 @@ function prepMenu($menuSQL, $bindVals) {
         throw new Exception("ERROR: ".$db->errorString());
         die;
     }
+    /*
+     * check if config_key removes any menu Items
+     */
+    $rows = [];
     foreach ($db->results(true) as $row) {
+        if (empty($row['config_key']) || configGet($row['config_key'])) {
+            $rows[] = $row;
+        }
+    }
+    foreach ($rows as $row) {
         #dbg("LABEL: ".$row['label_token']);
         $row['children'] = []; // default
         $subs[$row['parent']][] = $row;
