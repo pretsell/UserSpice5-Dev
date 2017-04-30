@@ -114,12 +114,15 @@ function fetchUserGroups($user_id) {
 
 
 //Retrieve list of users/groups who are members of a given group (NO NESTING)
-function fetchGroupMembers_raw($group_id, $include_groups=true, $include_users=true) {
+function fetchGroupMembers_raw($opts) {
     global $T;
+    if (!$group_id = $opts['group_id']) {
+        return false;
+    }
 	$db = DB::getInstance();
     $sql = '';
     $bindvals = [];
-    if ($include_users) {
+    if (@$opts['users']) {
 		$sql .= "SELECT user_id as id, CONCAT(fname, ' ', lname, ' (', username, ')') AS name, 'user' AS group_or_user
     			 FROM $T[groups_users_raw]
     			 JOIN $T[users] users ON (user_id = users.id)
@@ -127,10 +130,10 @@ function fetchGroupMembers_raw($group_id, $include_groups=true, $include_users=t
     			 AND group_id = ?";
         $bindvals[] = $group_id;
     }
-    if ($include_groups && $include_users) {
+    if (@$opts['users'] && @$opts['groups']) {
         $sql .= " UNION ";
     }
-    if ($include_groups) {
+    if (@$opts['groups']) {
 		$sql .= "SELECT user_id AS id, `name` AS `name`, 'group' AS group_or_user
 			     FROM $T[groups_users_raw]
 			     JOIN $T[groups] groups ON (user_id = groups.id)
@@ -247,7 +250,7 @@ function fetchAllPages($queryType=0) {
     global $T;
     return fetchResults("SELECT id, page, private FROM $T[pages] ORDER BY page ASC", [], $queryType);
 }
-function fetchPublicPages() {
+function fetchPublicPages($junk=false) {
     global $T;
     return fetchResults("SELECT id, page FROM $T[pages] WHERE private = 0 ORDER BY page ASC");
 }
@@ -352,22 +355,6 @@ function fetchPagesByGroup($group_id) {
          FROM $T[groups_pages] gp
          INNER JOIN $T[pages] p ON (gp.page_id = p.id)
          WHERE gp.group_id = ?",[$group_id]);
-	return $query->results();
-}
-//Retrieve list of pages that a group can NOT access
-function fetchPagesNotByGroup($group_id, $onlyPrivate=false) {
-    global $T;
-	$db = DB::getInstance();
-    $sql = "SELECT id, page, private
-            FROM $T[pages] p
-            WHERE NOT EXISTS
-              (SELECT * FROM $T[groups_pages] gp
-               WHERE gp.group_id = ?
-               AND p.id = gp.page_id)";
-    if ($onlyPrivate) {
-        $sql .= ' AND p.private != 0';
-    }
-	$query = $db->query($sql,[$group_id]);
 	return $query->results();
 }
 
