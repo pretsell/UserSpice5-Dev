@@ -276,7 +276,7 @@ $myForm = new Form ([
                     'display' => lang('SETTINGS_UPLOAD_DIR'),
                     'hint_text' => lang('HINT_UPLOAD_DIR'),
                     'valid' => [
-                        'regex' => ':^$|\/$:',
+                        'regex' => ':^$|\/$:', // either blank or must end with slash
                         'regex_display' => lang('REGEX_ENDS_WITH_SLASH'),
                     ],
                     'keep_if' => $mode == 'SITE',
@@ -291,6 +291,19 @@ $myForm = new Form ([
                 new FormField_Text([
                     'display' => lang('SETTINGS_UPLOAD_MAX_SIZE'),
                     'hint_text' => lang('HINT_UPLOAD_MAX_SIZE'),
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'backup_dest' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_BACKUP_DEST'),
+                    'hint_text' => lang('SETTINGS_BACKUP_DEST_HINT'),
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'allow_username_change' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_ALLOW_USERNAME_CHANGE'),
+                    'hint_text' => lang('SETTINGS_ALLOW_USERNAME_CHANGE_HINT'),
+                    'data' => $yesOrNo,
                     'keep_if' => $mode == 'SITE',
                 ]),
         ], [
@@ -308,11 +321,11 @@ $myForm = new Form ([
                 new FormField_Select([
                     'display' => lang('SETTINGS_MIN_PW_SCORE'),
                     'repeat' => [
-                        ['id'=>0, 'name'=>lang('PW_VERY_WEAK')],
-                        ['id'=>1, 'name'=>lang('PW_WEAK')],
-                        ['id'=>2, 'name'=>lang('PW_OK')],
-                        ['id'=>3, 'name'=>lang('PW_STRONG')],
-                        ['id'=>4, 'name'=>lang('PW_VERY_STRONG')],
+                        ['id'=>0, 'name'=>lang('SETTINGS_MIN_PW_VERY_WEAK')],
+                        ['id'=>1, 'name'=>lang('SETTINGS_MIN_PW_WEAK')],
+                        ['id'=>2, 'name'=>lang('SETTINGS_MIN_PW_OK')],
+                        ['id'=>3, 'name'=>lang('SETTINGS_MIN_PW_STRONG')],
+                        ['id'=>4, 'name'=>lang('SETTINGS_MIN_PW_VERY_STRONG')],
                     ],
                     'hint_text' => lang('HINT_MIN_PW_SCORE'),
                     'keep_if' => $mode == 'SITE',
@@ -701,6 +714,12 @@ $myForm = new Form ([
                     'rows' => '10',
                     'display' => lang('SETTINGS_VERIFY_TEMPLATE'),
                     'hint_text' => lang('SETTINGS_VERIFY_TEMPLATE_HINT'),
+                ]),
+            'forgot_password_template' =>
+                new FormField_Textarea([
+                    'rows' => '10',
+                    'display' => lang('SETTINGS_FORGOT_PASSWD_TEMPLATE'),
+                    'hint_text' => lang('SETTINGS_FORGOT_PASSWD_TEMPLATE_HINT'),
                 ]),
             'agreement' =>
                 new FormField_Textarea([
