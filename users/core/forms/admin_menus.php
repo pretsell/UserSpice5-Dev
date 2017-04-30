@@ -19,6 +19,7 @@ $myForm = new Form([
         'title' => lang('ADMIN_MENUS_CREATE_MENU_TITLE'),
     ])
 ], [
+    'autoload' => true,
     'autoshow' => true,
     'Keep_AdminDashBoard' => true,
 ]);
