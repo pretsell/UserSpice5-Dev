@@ -130,10 +130,12 @@ $cfgContents = <<<EOF
         #'site_language' => 'english',
         #'us_script_path' => array('local/', 'core/'),
         'alt_dev_path' => '$alt_dev_path',
-        'forms_path' => [$forms_path],
+        'forms_path' => [$forms_path
+        ],
         #'us_page_path' = US_ROOT_DIR,
         // page_paths should start from US_DOC_ROOT, starting with /
         'page_paths' => [US_URL_ROOT],
+        'language_files' => ['en' => 'english.php',],
     )
 );
 EOF;
