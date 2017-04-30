@@ -48,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <script src="<?= US_URL_ROOT."resources/js/jquery.smartmenus.bootstrap.js" ?>"></script>
 
 <?php
-if (isset($footerSnippets)) {
+if (isset($footerSnippets) && $footerSnippets) {
     echo '<!-- Snippets using $footerSnippets -->'."\n";
     foreach ((array)$footerSnippets as $f) {
         echo $f."\n";
