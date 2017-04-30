@@ -84,7 +84,7 @@ $myForm = new Form([
     'menuDisplay' => new FormField_HTML([
         'display' => 'Example Menu',
         'hint_text' => lang('ADMIN_MENU_GOES_NOWHERE'),
-        'value' => getMenu($menuTitle, null, true),
+        #'value' => getMenu($menuTitle, null, true),
     ]),
     'menus' => new FormField_Table([
         'th_row' => [
@@ -150,6 +150,7 @@ $myForm = new Form([
 ], [
     'dbtable' => $T['menus'],
     'default' => 'process',
+    'autoshow' => false, // we need to load the example menu after processing but before displaying
     'multirow' => true, // redirect as a multi-row form
     'multiDelete' => [
         'idfield' => 'menus2Delete',
@@ -160,6 +161,10 @@ $myForm = new Form([
     # Make the tooltip wider by custom CSS in the header
     'headercode' => '<style>.tooltip-inner { max-width:350px !important; }</style>',
 ]);
+
+$myForm->getField('menuDisplay')->setFieldValue(getMenu($menuTitle, null, true));
+
+echo $myForm->getHTML();
 
 /*
  * fixMenu() - this function is called via 'postfunc' in the form above
