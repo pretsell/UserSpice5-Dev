@@ -22,12 +22,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 checkToken();
 
 $master = $db->query("SELECT * FROM $T[settings] WHERE (user_id IS NULL OR user_id <= 0) AND (group_id IS NULL OR group_id <= 0)")->first();
-$db->errorSetMessage($errors);
-} else {
-        $errors = 'DEV ERROR: UNKNOWN mode=$mode';
-        $master = new stdClass;
-    }
+if ($mode == 'SITE' && !Input::get('id')) {
+    $_GET['id'] = $master->id;
     $_REQUEST['id'] = $_GET['id'];
+}
+$db->errorSetMessage($errors);
+if (!isset($mode) || !in_array($mode, ['USER', 'GROUP', 'SITE'])) {
+    $errors[] = 'DEV ERROR: UNKNOWN mode='.@$mode;
+    Redirect::to("Some Other Place - gotta look up the appropriate redirect facility");
 }
 
 # Calculate lists of CSS files for various selection fields
@@ -72,6 +74,17 @@ foreach ($tmp as $k=>$x) {
     }
 }
 
+# Test email if requested
+if (Input::get('test_email')) {
+	$email = Input::get('email');
+	$subject = 'Testing Your Email Settings!';
+	$body = 'This is the body of your test email';
+    $emailDebugVerbose = Input::get('emailDebugVerbose');
+	list($email_results, $email_debug) = email($email,$subject,$body,false,$emailDebugVerbose);
+} else {
+    $email_results = $email_debug = false;
+}
+
 # Now set up the possible options for the actions to take upon successful save
 $multiRowSaveOpts = [
     ['id'=>'1', 'name' => lang('CONTINUE_IN_SAME_PAGE')],
@@ -103,121 +116,6 @@ $overrideOrNot = [
 $myForm = new Form ([
     'toc' => new FormField_TabToc(['TocType'=>'tab']),
     'tabs' => new FormTab_Contents([
-        'tab_security' => new FormTab_Pane([
-            'force_ssl' =>
-                new FormField_Select([
-                    'dbfield' => 'settings.force_ssl',
-                    'display' => lang('SETTINGS_FORCE_SSL'),
-                    'data' => $yesOrNo,
-                    'keep_if' => $mode == 'SITE',
-                ]),
-            'min_pw_score' =>
-                new FormField_Select([
-                    'display' => lang('SETTINGS_MIN_PW_SCORE'),
-                    'repeat' => [
-                        ['id'=>0, 'name'=>lang('PW_VERY_WEAK')],
-                        ['id'=>1, 'name'=>lang('PW_WEAK')],
-                        ['id'=>2, 'name'=>lang('PW_OK')],
-                        ['id'=>3, 'name'=>lang('PW_STRONG')],
-                        ['id'=>4, 'name'=>lang('PW_VERY_STRONG')],
-                    ],
-                    'hint_text' => lang('HINT_MIN_PW_SCORE'),
-                    'keep_if' => $mode == 'SITE',
-                ]),
-            'recaptcha' =>
-                new FormField_Select([
-                    'dbfield' => 'settings.recaptcha',
-                    'display' => lang('SETTINGS_RECAPTCHA'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('ENABLED')],
-                        ['id'=>0, 'name'=>lang('DISABLED')],
-                    ],
-                    'keep_if' => $mode == 'SITE',
-                ]),
-            'recaptcha_private' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_RECAPTCHA_PRIVATE_KEY'),
-                    'hint_text' => 'Available from Google',
-                    'keep_if' => $mode == 'SITE',
-                ]),
-            'recaptcha_public' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_RECAPTCHA_PUBLIC_KEY'),
-                    'hint_text' => 'Available from Google',
-                    'keep_if' => $mode == 'SITE',
-                ]),
-            'session_timeout' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_SESSION_TIMEOUT'),
-                    'new_valid' => [
-                        'is_numeric' => true,
-                    ],
-                    'hint_text' => '3600 = 1 hour; 86400 = 1 day, 604800 = 1 week',
-                    'keep_if' => $mode == 'SITE',
-                ]),
-            'allow_remember_me' =>
-                new FormField_Select([
-                    'display' => lang('SETTINGS_ALLOW_REMEMBER_ME'),
-                    'data' => $yesOrNo,
-                    'keep_if' => $mode == 'SITE',
-                ]),
-        ], [
-            'title' => lang('SETTINGS_SECURITY_TITLE'),
-            'keep_if' => $mode == 'SITE',
-        ]),
-        'tab_css' => new FormTab_Pane ([
-            'css_sample' =>
-                new FormField_Select([
-                    'display' => lang('SETTINGS_SHOW_CSS_SAMPLES'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('ENABLED')],
-                        ['id'=>0, 'name'=>lang('DISABLED')],
-                    ],
-                ]),
-            'css1' =>
-                new FormField_Select([
-                    'display' => lang('SETTINGS_CSS1'),
-                    'repeat' => $css1,
-                ]),
-            'css2' =>
-                new FormField_Select([
-                    'display' => lang('SETTINGS_CSS2'),
-                    'repeat' => $css2,
-                ]),
-            'css3' =>
-                new FormField_Select([
-                    'display' => lang('SETTINGS_CSS3'),
-                    'repeat' => $css3,
-                ]),
-            'sampleRow' =>
-                new Form_Row([
-                    'sampleCol' =>
-                        new Form_Col([
-                        	'<h2>Bootstrap Class Examples (for SAVED settings)</h2>',
-                        	'<hr />',
-                        	'<button type="button" name="button" class="btn btn-primary">primary</button>',
-                        	'<button type="button" name="button" class="btn btn-info">info</button>',
-                        	'<button type="button" name="button" class="btn btn-warning">warning</button>',
-                        	'<button type="button" name="button" class="btn btn-danger">danger</button>',
-                        	'<button type="button" name="button" class="btn btn-success">success</button>',
-                        	'<button type="button" name="button" class="btn btn-default">default</button>',
-                        	'<hr />',
-                        	'<div class="jumbotron"><h1>Jumbotron</h1></div>',
-                        	'<div class="well"><p>well</p></div>',
-                        	'<h1>This is H1</h1>',
-                        	'<h2>This is H2</h2>',
-                        	'<h3>This is H3</h3>',
-                        	'<h4>This is H4</h4>',
-                        	'<h5>This is H5</h5>',
-                        	'<h6>This is H6</h6>',
-                        	'<p>This is paragraph</p>',
-                        	'<a href="#">This is a link</a><br><br>',
-                        ], ['col_class' => 'text-center']),
-                ], ['delete_if' =>  !configGet('css_sample')]),
-        ], [
-            'title' => lang("SETTINGS_CSS_TITLE"),
-            'keep_if' => $mode == 'SITE',
-        ]),
         'tab_general' => new FormTab_Pane ([
             'site_name' =>
                 new FormField_Text([
@@ -397,6 +295,121 @@ $myForm = new Form ([
                 ]),
         ], [
             'title'=>lang('SETTINGS_GENERAL_TITLE'),
+        ]),
+        'tab_security' => new FormTab_Pane([
+            'force_ssl' =>
+                new FormField_Select([
+                    'dbfield' => 'settings.force_ssl',
+                    'display' => lang('SETTINGS_FORCE_SSL'),
+                    'data' => $yesOrNo,
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'min_pw_score' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_MIN_PW_SCORE'),
+                    'repeat' => [
+                        ['id'=>0, 'name'=>lang('PW_VERY_WEAK')],
+                        ['id'=>1, 'name'=>lang('PW_WEAK')],
+                        ['id'=>2, 'name'=>lang('PW_OK')],
+                        ['id'=>3, 'name'=>lang('PW_STRONG')],
+                        ['id'=>4, 'name'=>lang('PW_VERY_STRONG')],
+                    ],
+                    'hint_text' => lang('HINT_MIN_PW_SCORE'),
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'recaptcha' =>
+                new FormField_Select([
+                    'dbfield' => 'settings.recaptcha',
+                    'display' => lang('SETTINGS_RECAPTCHA'),
+                    'repeat' => [
+                        ['id'=>1, 'name'=>lang('ENABLED')],
+                        ['id'=>0, 'name'=>lang('DISABLED')],
+                    ],
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'recaptcha_private' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_RECAPTCHA_PRIVATE_KEY'),
+                    'hint_text' => 'Available from Google',
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'recaptcha_public' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_RECAPTCHA_PUBLIC_KEY'),
+                    'hint_text' => 'Available from Google',
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'session_timeout' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_SESSION_TIMEOUT'),
+                    'new_valid' => [
+                        'is_numeric' => true,
+                    ],
+                    'hint_text' => '3600 = 1 hour; 86400 = 1 day, 604800 = 1 week',
+                    'keep_if' => $mode == 'SITE',
+                ]),
+            'allow_remember_me' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_ALLOW_REMEMBER_ME'),
+                    'data' => $yesOrNo,
+                    'keep_if' => $mode == 'SITE',
+                ]),
+        ], [
+            'title' => lang('SETTINGS_SECURITY_TITLE'),
+            'keep_if' => $mode == 'SITE',
+        ]),
+        'tab_css' => new FormTab_Pane ([
+            'css_sample' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_SHOW_CSS_SAMPLES'),
+                    'repeat' => [
+                        ['id'=>1, 'name'=>lang('ENABLED')],
+                        ['id'=>0, 'name'=>lang('DISABLED')],
+                    ],
+                ]),
+            'css1' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_CSS1'),
+                    'repeat' => $css1,
+                ]),
+            'css2' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_CSS2'),
+                    'repeat' => $css2,
+                ]),
+            'css3' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_CSS3'),
+                    'repeat' => $css3,
+                ]),
+            'sampleRow' =>
+                new Form_Row([
+                    'sampleCol' =>
+                        new Form_Col([
+                        	'<h2>Bootstrap Class Examples (for SAVED settings)</h2>',
+                        	'<hr />',
+                        	'<button type="button" name="button" class="btn btn-primary">primary</button>',
+                        	'<button type="button" name="button" class="btn btn-info">info</button>',
+                        	'<button type="button" name="button" class="btn btn-warning">warning</button>',
+                        	'<button type="button" name="button" class="btn btn-danger">danger</button>',
+                        	'<button type="button" name="button" class="btn btn-success">success</button>',
+                        	'<button type="button" name="button" class="btn btn-default">default</button>',
+                        	'<hr />',
+                        	'<div class="jumbotron"><h1>Jumbotron</h1></div>',
+                        	'<div class="well"><p>well</p></div>',
+                        	'<h1>This is H1</h1>',
+                        	'<h2>This is H2</h2>',
+                        	'<h3>This is H3</h3>',
+                        	'<h4>This is H4</h4>',
+                        	'<h5>This is H5</h5>',
+                        	'<h6>This is H6</h6>',
+                        	'<p>This is paragraph</p>',
+                        	'<a href="#">This is a link</a><br><br>',
+                        ], ['col_class' => 'text-center']),
+                ], ['delete_if' =>  !configGet('css_sample')]),
+        ], [
+            'title' => lang("SETTINGS_CSS_TITLE"),
+            'keep_if' => $mode == 'SITE',
         ]),
         'tab_editor' => new FormTab_Pane ([
             'tinymce_url' =>
@@ -579,12 +592,115 @@ $myForm = new Form ([
             'title'=>lang('SETTINGS_REDIRECTS_TITLE'),
             'keep_if' => $mode == 'SITE',
         ]),
+        'tab_email' => new FormTab_Pane ([
+            'mail_method' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_MAIL_METHOD'),
+                    'data' => [
+                        [ 'id'=>'smtp', lang('SETTINGS_SMTP_SERVER_OPT') ],
+                        [ 'id'=>'sendmail', lang('SETTINGS_SENDMAIL_OPT') ],
+                        [ 'id'=>'phpmail', lang('SETTINGS_PHP_MAIL_OPT') ],
+                    ],
+                    'hint_text' => lang('SETTINGS_MAIL_METHOD_HINT'),
+                ]),
+            'smtp_server' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_SMTP_SERVER'),
+                    'hint_text' => lang('SETTINGS_SMTP_SERVER_HINT'),
+                ]),
+            'smtp_port' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_SMTP_PORT'),
+                    'hint_text' => lang('SETTINGS_SMTP_PORT_HINT'),
+                ]),
+            'smtp_transport' =>
+                new FormField_Select([
+                    'display' => lang('SETTINGS_SMTP_TRANSPORT'),
+                    'data' => [
+                        [ 'id'=>'tls', lang('SETTINGS_SMTP_TRANSPORT_TLS') ],
+                        [ 'id'=>'ssl', lang('SETTINGS_SMTP_TRANSPORT_SSL') ],
+                    ],
+                    'hint_text' => (extension_loaded('openssl')?lang('SETTINGS_SSL_AVAILABLE'):lang('SETTINGS_SSL_NOT_AVAILABLE')),
+                ]),
+            'email_login' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_SMTP_EMAIL_LOGIN'),
+                    'hint_text' => lang('SETTINGS_SMTP_EMAIL_LOGIN_HINT'),
+                ]),
+            'email_pass' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_SMTP_EMAIL_PASSWD'),
+                    'hint_text' => lang('SETTINGS_SMTP_EMAIL_PASSWD_HINT'),
+                ]),
+            'from_name' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_FROM_NAME'),
+                    'hint_text' => lang('SETTINGS_FROM_NAME_HINT'),
+                ]),
+            'from_email' =>
+                new FormField_Text([
+                    'display' => lang('SETTINGS_FROM_EMAIL'),
+                    'hint_text' => lang('SETTINGS_FROM_EMAIL_HINT'),
+                ]),
+            'test_panel' => new Form_Panel([
+                'test_email_explain' => lang('SETTINGS_TEST_EMAIL_EXPLAIN'),
+                'email' =>
+                    new FormField_Text([
+                        'isdbfield' => false,
+                        'value' => Input::get('email'),
+                        'display' => lang('SETTINGS_TEST_EMAIL_ADDRESS'),
+                        'hint_text' => lang('SETTINGS_TEST_EMAIL_ADDRESS_HINT'),
+                    ]),
+                'emailDebugVerbose' =>
+                    new FormField_Select([
+                        'isdbfield' => false,
+                        'display' => lang('SETTINGS_TEST_EMAIL_DEBUG'),
+                        'value' => Input::get('emailDebugVerbose'),
+                        'data' => [
+                            [ 'id'=>'0', lang('SETTINGS_TEST_EMAIL_DEBUG_0') ],
+                            [ 'id'=>'1', lang('SETTINGS_TEST_EMAIL_DEBUG_1') ],
+                            [ 'id'=>'2', lang('SETTINGS_TEST_EMAIL_DEBUG_2') ],
+                            [ 'id'=>'3', lang('SETTINGS_TEST_EMAIL_DEBUG_3') ],
+                            [ 'id'=>'4', lang('SETTINGS_TEST_EMAIL_DEBUG_4') ],
+                        ],
+                        'hint_text' => lang('SETTINGS_TEST_EMAIL_DEBUG_HINT'),
+                    ]),
+                'test_email' =>
+                    new FormField_ButtonSubmit([
+                        'display' => lang('SETTINGS_TEST_EMAIL_BUTTON'),
+                    ]),
+                'email_results' =>
+                    new FormField_HTML([
+                        'display' => lang('SETTINGS_EMAIL_TEST_RESULTS'),
+                        'value' => $email_results ? lang('SETTINGS_EMAIL_TEST_SUCCESS') : lang('SETTINGS_EMAIL_TEST_FAILURE'),
+                        'keep_if' => Input::get('test_email'),
+                    ]),
+                'email_debug' =>
+                    new FormField_HTML([
+                        'display' => lang('SETTINGS_EMAIL_TEST_DEBUG'),
+                        'value' => $email_debug,
+                        'keep_if' => Input::get('test_email'),
+                    ]),
+            ], [
+                'head' => lang('SETTINGS_TEST_EMAIL_TITLE'),
+                #'foot' => ???,
+            ]),
+        ], [
+            'title'=>lang('SETTINGS_EMAIL_TITLE'),
+            'keep_if' => $mode == 'SITE',
+        ]),
         'tab_registration' => new FormTab_Pane ([
             'email_act' =>
                 new FormField_Select([
                     'display' => lang('SETTINGS_REQUIRE_EMAIL_VERIFY'),
                     'data' => $yesOrNo,
                     'hint_text' => lang('HINT_REQUIRE_EMAIL_VERIFY'),
+                ]),
+            'email_verify_template' =>
+                new FormField_Textarea([
+                    'rows' => '10',
+                    'display' => lang('SETTINGS_VERIFY_TEMPLATE'),
+                    'hint_text' => lang('SETTINGS_VERIFY_TEMPLATE_HINT'),
                 ]),
             'agreement' =>
                 new FormField_Textarea([
@@ -596,62 +712,65 @@ $myForm = new Form ([
             'title'=>lang('SETTINGS_REGISTRATION_TITLE'),
             'keep_if' => $mode == 'SITE',
         ]),
-        'tab_google' => new FormTab_Pane ([
-            'glogin' =>
-                new FormField_Select([
-                    'display' => lang('SETTINGS_GLOGIN_STATE'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('ENABLED')],
-                        ['id'=>0, 'name'=>lang('DISABLED')],
-                    ],
-                    'hint_text' => lang('HINT_GLOGIN_STATE'),
-                ]),
-            'gid' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_GLOGIN_CLIENT_ID'),
-                    'hint_text' => lang('HINT_GLOGIN_CLIENT_ID'),
-                ]),
-            'gsecret' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_GLOGIN_SECRET'),
-                    'hint_text' => lang('HINT_GLOGIN_SECRET'),
-                ]),
-            'gcallback' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_GLOGIN_CALLBACK'),
-                    'hint_text' => lang('HINT_GLOGIN_CALLBACK'),
-                ]),
+        'tab_social' => new FormTab_Pane ([
+            'google_panel' => new Form_Panel([
+                'glogin' =>
+                    new FormField_Select([
+                        'display' => lang('SETTINGS_GLOGIN_STATE'),
+                        'repeat' => [
+                            ['id'=>1, 'name'=>lang('ENABLED')],
+                            ['id'=>0, 'name'=>lang('DISABLED')],
+                        ],
+                        'hint_text' => lang('HINT_GLOGIN_STATE'),
+                    ]),
+                'gid' =>
+                    new FormField_Text([
+                        'display' => lang('SETTINGS_GLOGIN_CLIENT_ID'),
+                        'hint_text' => lang('HINT_GLOGIN_CLIENT_ID'),
+                    ]),
+                'gsecret' =>
+                    new FormField_Text([
+                        'display' => lang('SETTINGS_GLOGIN_SECRET'),
+                        'hint_text' => lang('HINT_GLOGIN_SECRET'),
+                    ]),
+                'gcallback' =>
+                    new FormField_Text([
+                        'display' => lang('SETTINGS_GLOGIN_CALLBACK'),
+                        'hint_text' => lang('HINT_GLOGIN_CALLBACK'),
+                    ]),
+            ], [
+                'title'=>lang('SETTINGS_GOOGLE_TITLE'),
+            ]),
+            'facebook_panel' => new Form_Panel ([
+                'fblogin' =>
+                    new FormField_Select([
+                        'display' => lang('SETTINGS_FBLOGIN_STATE'),
+                        'repeat' => [
+                            ['id'=>1, 'name'=>lang('ENABLED')],
+                            ['id'=>0, 'name'=>lang('DISABLED')],
+                        ],
+                        'hint_text' => lang('HINT_FBLOGIN_STATE'),
+                    ]),
+                'fbid' =>
+                    new FormField_Text([
+                        'display' => lang('SETTINGS_FBLOGIN_CLIENT_ID'),
+                        'hint_text' => lang('HINT_FBLOGIN_CLIENT_ID'),
+                    ]),
+                'fbsecret' =>
+                    new FormField_Text([
+                        'display' => lang('SETTINGS_FBLOGIN_SECRET'),
+                        'hint_text' => lang('HINT_FBLOGIN_SECRET'),
+                    ]),
+                'fbcallback' =>
+                    new FormField_Text([
+                        'display' => lang('SETTINGS_FBLOGIN_CALLBACK'),
+                        'hint_text' => lang('HINT_FBLOGIN_CALLBACK'),
+                    ]),
+            ], [
+                'title' => lang('SETTINGS_FACEBOOK_TITLE'),
+            ]),
         ], [
-            'title'=>lang('SETTINGS_GOOGLE_TITLE'),
-            'keep_if' => $mode == 'SITE',
-        ]),
-        'tab_facebook' => new FormTab_Pane ([
-            'fblogin' =>
-                new FormField_Select([
-                    'display' => lang('SETTINGS_FBLOGIN_STATE'),
-                    'repeat' => [
-                        ['id'=>1, 'name'=>lang('ENABLED')],
-                        ['id'=>0, 'name'=>lang('DISABLED')],
-                    ],
-                    'hint_text' => lang('HINT_FBLOGIN_STATE'),
-                ]),
-            'fbid' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_FBLOGIN_CLIENT_ID'),
-                    'hint_text' => lang('HINT_FBLOGIN_CLIENT_ID'),
-                ]),
-            'fbsecret' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_FBLOGIN_SECRET'),
-                    'hint_text' => lang('HINT_FBLOGIN_SECRET'),
-                ]),
-            'fbcallback' =>
-                new FormField_Text([
-                    'display' => lang('SETTINGS_FBLOGIN_CALLBACK'),
-                    'hint_text' => lang('HINT_FBLOGIN_CALLBACK'),
-                ]),
-        ], [
-            'title'=>lang('SETTINGS_FACEBOOK_TITLE'),
+            'title' => lang('SETTINGS_SOCIAL_TITLE'),
             'keep_if' => $mode == 'SITE',
         ]),
     ]),
