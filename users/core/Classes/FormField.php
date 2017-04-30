@@ -69,7 +69,6 @@ abstract class US_FormField extends Element {
             .'{REQUIRED_ATTRIB} {EXTRA_ATTRIB} {DISABLED} {READONLY}>',
         $HTML_Post = '
             </div> <!-- {DIV_CLASS} (type={TYPE} id={FIELD_ID}, name={FIELD_NAME}) -->',
-        $HTML_Script = '',
         $HTML_Page_Index = '<a href="?{PAGE_VAR_NAME}={PAGE_NUM}">{PAGE_NUM}</a>&nbsp;',
         $HTML_CurPage_Index = '<strong>{PAGE_NUM}</strong>&nbsp;',
         $elementList = ['Pre', 'Input', 'Post'];
@@ -253,13 +252,14 @@ abstract class US_FormField extends Element {
     }
 
     public function calcRepData($recalc=false) {
+        static $cnt=1;
         $this->debug(1, '::calcRepData(): Entering ('.$this->_fieldName.')');
         if (!$this->isRepeating() || (!$this->repDataIsEmpty() && !$recalc)) {
             # If it's not a repeating-data field or if the repeating data already
             # has something in it then get out...
             return false;
         }
-        $this->debug(2, '::calcRepData(): Continuing');
+        $this->debug(2, '::calcRepData(): Continuing '.$this->_fieldName.', count='.$cnt++);
         $rtn = false;
         $repData = [];
         $setRep = false;
@@ -727,12 +727,6 @@ abstract class US_FormField extends Element {
         #dbg("FormField::getHTML() Entering, calling calcRepData()");
         #$this->calcRepData();
         return parent::getHTML($opts);
-    }
-    public function getHTMLScripts($opts=[]) {
-        #dbg("::getHTMLScripts - ".$this->HTML_Script);
-        $html = $this->HTML_Script;
-        $macros = $this->getMacros($html, $opts);
-        return $this->processMacros($macros, $html, $opts);
     }
     // if an inheriting class needs to adjust the snippets
     // they can do it by setting any of ...
