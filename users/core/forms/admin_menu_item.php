@@ -81,6 +81,17 @@ $myForm = new Form([
             'link' => new FormField_Text([
                 'display' => lang('ADMIN_MENU_LINK'),
             ]),
+            'link_target' => new FormField_Select([
+                'display' => lang('ADMIN_MENU_LINK_TARGET'),
+                'hint_text' => lang('ADMIN_MENU_LINK_TARGET_HINT'),
+                'data' => [
+                    ['id' => '_self',  'name' => lang('ADMIN_MENU_LINK_TARGET_SELF')],
+                    ['id' => '_blank', 'name' => lang('ADMIN_MENU_LINK_TARGET_BLANK')],
+                    ['id' => '_parent','name' => lang('ADMIN_MENU_LINK_TARGET_PARENT')],
+                    ['id' => '_top',   'name' => lang('ADMIN_MENU_LINK_TARGET_TOP')],
+                ],
+                'value' => '_self', // default on create, loaded from data on modify
+            ]),
         ]),
         'accessPane' => new FormTab_Pane([
             'logged_in' => new FormField_Select([
