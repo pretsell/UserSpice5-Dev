@@ -31,7 +31,7 @@ function new_user_online($user_id=0) {
 	$db = DB::getInstance();
 	$ip = ipCheck();
 	$timestamp = time();
-	$checkUserId = $db->query("SELECT * FROM $T[users_online] WHERE user_id = ?",array($user_id));
+	$checkUserId = $db->query("SELECT id FROM $T[users_online] WHERE user_id = ?",array($user_id));
 	$countUserId = $checkUserId->count();
 
 	if($countUserId == 0){
@@ -52,8 +52,8 @@ function new_user_online($user_id=0) {
 			//$db->update('users_online',$to_update->id,$fields);
 		}else{
 			$fields =array('timestamp'=>$timestamp, 'ip'=>$ip,'user_id'=>$user_id);
-			$checkQ = $db->query("SELECT id FROM $T[users_online] WHERE user_id = ?",array($user_id));
-			$to_update = $checkQ->first();
+			#$checkQ = $db->query("SELECT id FROM $T[users_online] WHERE user_id = ?",array($user_id));
+			$to_update = $checkUserId->first();
 			$db->update('users_online',$to_update->id,$fields);
 		}
 	}
