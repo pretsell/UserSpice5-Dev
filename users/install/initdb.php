@@ -78,30 +78,30 @@ $init_commands = [
           `menu_id` int(11) NOT NULL
       ) ENGINE=$engine DEFAULT CHARSET=$charset COLLATE=$collate",
     "INSERT INTO `{$prefix}groups_menus` (`id`, `group_id`, `menu_id`) VALUES
-        (22, 2, 37),
-        (20, 1, 4),
-        (19, 0, 4),
-        (14, 0, 5),
-        (15, 0, 3),
-        (16, 0, 1),
-        (17, 0, 6),
-        (18, 2, 2),
-        (31, 2, 38),
-        (27, 2, 39),
-        (30, 2, 40),
-        (29, 2, 41),
-        (32, 2, 18),
-        (33, 2, 16),
-        (34, 2, 12),
-        (35, 2, 13),
-        (36, 2, 24),
-        (37, 2, 25),
-        (38, 2, 14),
-        (39, 2, 20),
-        (40, 2, 17),
-        (41, 2, 27),
-        (42, 2, 26),
-        (43, 2, 33)",
+        ( 1, 2, 37),
+        ( 2, 1,  4),
+        ( 3, 0,  4),
+        ( 4, 0,  5),
+        ( 5, 0,  3),
+        ( 6, 0,  1),
+        ( 7, 0,  6),
+        ( 8, 2,  2),
+        ( 9, 2, 38),
+        (10, 2, 39),
+        (11, 2, 40),
+        (12, 2, 41),
+        (13, 2, 18),
+        (14, 2, 16),
+        (15, 2, 12),
+        (16, 2, 13),
+        (17, 2, 24),
+        (18, 2, 25),
+        (19, 2, 14),
+        (20, 2, 20),
+        (21, 2, 17),
+        (22, 2, 27),
+        (23, 2, 26),
+        (24, 2, 33)",
     "CREATE TABLE `{$prefix}groups_pages` (
           `id` int(11) NOT NULL,
           `allow_deny` char(1) NOT NULL DEFAULT 'A',
@@ -125,13 +125,12 @@ $init_commands = [
         (13, 'A', 2, NULL, 5, ''),
         (14, 'A', 2, NULL, 4, ''),
         (15, 'A', 1, NULL, 3, ''),
-        (21, 'A', 2, NULL, 36, ''),
         (22, 'A', 1, NULL, 50, ''),
         (23, 'A', 1, NULL, 56, ''),
         (26, 'A', 2, NULL, 60, ''),
         (27, 'A', 1, NULL, 55, ''),
-        (53, 'A', 57, NULL, 93, ''),
-        (60, 'A', 56, NULL, 93, '')",
+        (53, 'A', 57, NULL, 4, ''),
+        (60, 'A', 56, NULL, 4, '')",
     "CREATE TABLE `{$prefix}groups_roles_users` (
           `id` int(11) NOT NULL,
           `group_id` int(11) DEFAULT NULL,
@@ -170,55 +169,73 @@ $init_commands = [
           `name` varchar(150) NOT NULL,
           `short_name` varchar(15) NOT NULL
       ) ENGINE=$engine DEFAULT CHARSET=$charset COLLATE=$collate",
+    /*
     "INSERT INTO `{$prefix}grouptypes` (`id`, `name`, `short_name`) VALUES
-        (8, 'International Division', 'ID'),
-        (9, 'Region', 'Region'),
-        (10, 'Team', 'Team'),
-        (11, 'Department', 'Dept')",
+        ( 1, 'International Division', 'ID'),
+        ( 2, 'Region', 'Region'),
+        ( 3, 'Team', 'Team'),
+        ( 4, 'Department', 'Dept')",
+    */
+    "CREATE TABLE `{$prefix}lang` (
+          `id` int(11) NOT NULL,
+          `token` varchar(100) NOT NULL,
+          `lang` char(25) NOT NULL,
+          `message` varchar(255)
+      ) ENGINE=$engine DEFAULT CHARSET=$charset COLLATE=$collate",
     "CREATE TABLE `{$prefix}menus` (
           `id` int(10) NOT NULL,
           `menu_title` varchar(255) NOT NULL,
           `parent` int(10) NOT NULL,
-          `dropdown` tinyint(1) NOT NULL,
-          `logged_in` tinyint(1) NOT NULL,
+          `private` tinyint(1) NULL,
+          `logged_in` tinyint(1) NULL,
+          `admin` tinyint(1) NULL,
+          `email_verified` tinyint(1) NULL,
+          `active` tinyint(1) NULL,
+          `config_key` varchar(100) NOT NULL,
           `display_order` int(10) NOT NULL,
-          `label` varchar(255) NOT NULL,
+          `label_token` varchar(100) NOT NULL,
           `link` varchar(255) NOT NULL,
           `link_args` varchar(500) NOT NULL DEFAULT '',
           `page_id` int(11) DEFAULT NULL,
           `icon_class` varchar(255) NOT NULL
       ) ENGINE=$engine DEFAULT CHARSET=$charset",
-    "INSERT INTO `{$prefix}menus` (`id`, `menu_title`, `parent`, `dropdown`, `logged_in`, `display_order`, `label`, `link`, `link_args`, `page_id`, `icon_class`) VALUES
-        (1,  'main',  -1, 0, 1, 0,     'Home',                     '', '',             NULL, 'fa fa-fw fa-home'),
-        (2,  'main',  -1, 0, 1, 2,     'Dashboard',                '', '',             4,    'fa fa-fw fa-cogs'),
-        (3,  'main',  -1, 1, 1, 1,     '{{username}}',             '', '',             NULL, 'fa fa-fw fa-user'),
-        (4,  'main',   3, 0, 1, 1,     'Profile',                  '', '',             22,   'fa fa-fw fa-home'),
-        (5,  'main',   3, 0, 1, 1,     'Logout',                   '', '',             21,   'fa fa-fw fa-home'),
-        (6,  'main',  -1, 1, 1, 3,     'Help',                     '', '',             NULL, 'fa fa-fw fa-life-ring'),
-        (8,  'main',  -1, 0, 0, 1,     'Register',                 '', '',             18,   'fa fa-fw fa-plus-square'),
-        (9,  'main',  -1, 0, 0, 2,     'Log In',                   '', '',             20,   'fa fa-fw fa-sign-in'),
-        (10, 'admin', -1, 0, 1, 10,    'Info',                     '', '',             4,    ''),
-        (11, 'admin', -1, 0, 1, 20,    'Settings',                 '', '',             32,   ''),
-        (14, 'admin', -1, 0, 1, 30,    'Users',                    '', '',             40,   ''),
-        (16, 'admin', -1, 0, 1, 50,    'Pages',                    '', '',             6,    ''),
-        (17, 'admin', 20, 0, 1, 10,    'Settings',                 '', '',             30,   ''),
-        (18, 'admin', -1, 0, 1, 60,    'Menus',                    '', '',             43,   ''),
-        (20, 'admin', -1, 1, 1, 70,    'Email',                    '', '',             NULL, ''),
-        (21, 'admin', 20, 0, 1, 20,    'Email Verify Template',    '', '?type=verify', 46,   ''),
-        (22, 'admin', 20, 0, 1, 30,    'Forgot Password Template', '', '?type=forgot', 46,   ''),
-        (23, 'main',   6, 0, 0, 99999, 'Verify Resend',            '', '',             26,   ''),
-        (26, 'admin', -1, 0, 1, 80,    'Add User(s)',              '', '',             59,   ''),
-        (27, 'admin', 20, 0, 1, 40,    'Test',                     '', '',             33,   ''),
-        (28, 'admin', -1, 1, 1, 90,    'System',                   '', '',             NULL, ''),
-        (29, 'admin', 28, 0, 1, 10,    'Updates',                  '', '',             66,   ''),
-        (30, 'admin', 28, 0, 1, 20,    'Backup',                   '', '',             68,   ''),
-        (31, 'admin', 28, 0, 1, 30,    'Restore',                  '', '',             69,   ''),
-        (32, 'admin', 28, 0, 1, 40,    'Status',                   '', '',             70,   ''),
-        (33, 'admin', 28, 0, 1, 50,    'PHP Info',                 '', '',             71,   ''),
-        (38, 'admin', -1, 1, 1, 40,    'Groups',                   '', '',             NULL, ''),
-        (39, 'admin', 38, 0, 1, 10,    'Groups',                   '', '',             74,   ''),
-        (40, 'admin', 38, 0, 1, 20,    'Group Roles',              '', '',             84,   ''),
-        (41, 'admin', 38, 0, 1, 30,    'Group Types',              '', '',             85,   '')",
+    "INSERT INTO `{$prefix}menus` (`id`, `menu_title`, `parent`, `logged_in`, `admin`, `email_verified`, `active`, `config_key`,
+            `display_order`, `label_token`, `link`, `link_args`, `page_id`, `icon_class`) VALUES
+        (  1, 'main',   -1, 1, NULL, NULL, NULL, '', 10,    'MENU_MAIN_HOME',                      '', '',             NULL, 'fa fa-fw fa-home'),
+        (  2, 'main',   -1, 1, NULL, NULL, NULL, '', 20,    'MENU_MAIN_MESSAGE_ITEMS',             '', '',             4,    'fa fa-fw fa-envelope'),
+        (  3, 'main',    2, 1, NULL, NULL, NULL, '', 10,    'MENU_MAIN_INBOX',                     '', '',             4,    'fa fa-fw fa-envelope'),
+        (  4, 'main',    2, 1, NULL, NULL, NULL, '', 20,    'MENU_MAIN_NEW_MESSAGE',               '', '',             4,    'fa fa-fw fa-paper-plane'),
+        (  5, 'main',    2, 1, NULL, NULL, NULL, '', 30,    'MENU_MAIN_SENTMAIL',                  '', '',             4,    'fa fa-fw fa-envelope-o'),
+        ( 10, 'main',   -1, 1, NULL, NULL, NULL, '', 30,    'MENU_MAIN_DASHBOARD',                 '', '',             4,    'fa fa-fw fa-cogs'),
+        ( 11, 'main',   -1, 1, NULL, NULL, NULL, '', 40,    'MENU_MAIN_USERNAME_MACRO',            '', '',             NULL, 'fa fa-fw fa-user'),
+        ( 12, 'main',    3, 1, NULL, NULL, NULL, '', 10,    'MENU_MAIN_PROFILE',                   '', '',             22,   'fa fa-fw fa-home'),
+        ( 13, 'main',    3, 1, NULL, NULL, NULL, '', 20,    'MENU_MAIN_LOGOUT',                    '', '',             21,   'fa fa-fw fa-home'),
+        ( 14, 'main',   -1, 1, NULL, NULL, NULL, '', 40,    'MENU_MAIN_HELP',                      '', '',             NULL, 'fa fa-fw fa-life-ring'),
+        ( 15, 'main',   -1, 0, NULL, NULL, NULL, '', 50,    'MENU_MAIN_LOG_IN',                    '', '',             20,   'fa fa-fw fa-sign-in'),
+        ( 16, 'main',   -1, 0, NULL, NULL, NULL, '', 60,    'MENU_MAIN_REGISTER',                  '', '',             18,   'fa fa-fw fa-plus-square'),
+        ( 18, 'main',   14, 0, NULL, NULL, NULL, '', 9999,  'MENU_MAIN_VERIFY_RESEND',             '', '',             26,   ''),
+        (100, 'admin',  -1, 1, NULL, NULL, NULL, '', 10,    'MENU_ADMIN_INFO',                     '', '',             4,    ''),
+        (101, 'admin',  -1, 1, NULL, NULL, NULL, '', 20,    'MENU_ADMIN_SETTINGS',                 '', '',             32,   ''),
+        (110, 'admin',  -1, 1, NULL, NULL, NULL, '', 30,    'MENU_ADMIN_USERS',                    '', '',             10,   ''),
+        (111, 'admin', 110, 1, NULL, NULL, NULL, '', 10,    'MENU_ADMIN_MANAGE_USERS',             '', '',             10,   ''),
+        (112, 'admin', 110, 1, NULL, NULL, NULL, '', 20,    'MENU_ADMIN_IMPORT_USERS',             '', '',             59,   ''),
+        (120, 'admin',  -1, 1, NULL, NULL, NULL, '', 40,    'MENU_ADMIN_GROUPS',                   '', '',             NULL, ''),
+        (121, 'admin', 160, 1, NULL, NULL, NULL, '', 10,    'MENU_ADMIN_GROUPS',                   '', '',             8,    ''),
+        (122, 'admin', 160, 1, NULL, NULL, NULL, '', 20,    'MENU_ADMIN_GROUP_ROLES',              '', '',             84,   ''),
+        (123, 'admin', 160, 1, NULL, NULL, NULL, '', 30,    'MENU_ADMIN_GROUP_TYPES',              '', '',             85,   ''),
+        (130, 'admin',  -1, 1, NULL, NULL, NULL, '', 50,    'MENU_ADMIN_PAGES',                    '', '',             6,    ''),
+        (140, 'admin',  -1, 1, NULL, NULL, NULL, '', 60,    'MENU_ADMIN_MENUS',                    '', '',             43,   ''),
+        (150, 'admin',  -1, 1, NULL, NULL, NULL, '', 70,    'MENU_ADMIN_EMAIL',                    '', '',             NULL, ''),
+        (151, 'admin', 140, 1, NULL, NULL, NULL, '', 10,    'MENU_ADMIN_EMAIL_SETTINGS',           '', '',             30,   ''),
+        (152, 'admin', 140, 1, NULL, NULL, NULL, '', 20,    'MENU_ADMIN_EMAIL_VERIFY_TEMPLATE',    '', '?type=verify', 46,   ''),
+        (153, 'admin', 140, 1, NULL, NULL, NULL, '', 30,    'MENU_ADMIN_FORGOT_PASSWORD_TEMPLATE', '', '?type=forgot', 46,   ''),
+        (154, 'admin', 140, 1, NULL, NULL, NULL, '', 40,    'MENU_ADMIN_EMAIL_TEST',               '', '',             33,   ''),
+        (160, 'admin',  -1, 1, NULL, NULL, NULL, '', 90,    'MENU_ADMIN_SYSTEM',                   '', '',             NULL, ''),
+        (161, 'admin', 150, 1, NULL, NULL, NULL, '', 10,    'MENU_ADMIN_UPDATES',                  '', '',             66,   ''),
+        (162, 'admin', 150, 1, NULL, NULL, NULL, '', 20,    'MENU_ADMIN_BACKUP',                   '', '',             68,   ''),
+        (163, 'admin', 150, 1, NULL, NULL, NULL, '', 30,    'MENU_ADMIN_RESTORE',                  '', '',             69,   ''),
+        (164, 'admin', 150, 1, NULL, NULL, NULL, '', 40,    'MENU_ADMIN_STATUS',                   '', '',             70,   ''),
+        (165, 'admin', 150, 1, NULL, NULL, NULL, '', 50,    'MENU_ADMIN_PHP_INFO',                 '', '',             71,   '')",
     "CREATE TABLE `{$prefix}pages` (
           `id` int(11) NOT NULL,
           `page` varchar(100) NOT NULL,
@@ -231,63 +248,63 @@ $init_commands = [
           `after_create_redirect` varchar(255) DEFAULT NULL,
           `after_edit_redirect` varchar(255) DEFAULT NULL,
           `after_delete_redirect` varchar(255) DEFAULT NULL,
-          `site_offline_access` tinyint(1) NOT NULL DEFAULT '0',
+          `site_offline_access` tinyint(1) NOT NULL DEFAULT '0'
       ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}pages` (`id`, `page`, `private`, `title_token`, `breadcrumb_parent_page_id`, `site_offline_access`) VALUES
-        (1, '{$US_PAGE_PATH}/index.php',                 0, 'INDEX_TITLE',                NULL, 0),
-        (6, '{$US_PAGE_PATH}/admin_pages.php',           1, 'ADMIN_PAGES_TITLE',          14,   0),
+        (16, '/index.php',                               0, 'INDEX_TITLE',                NULL, 0),
+        #( 2, '{$US_PAGE_PATH}/z_us_root.php',            1, 'ADMIN_TITLE',                NULL, 0),
+        ( 4, '{$US_PAGE_PATH}/admin.php',                1, 'ADMIN_TITLE',                NULL, 0),
+        ( 5, '{$US_PAGE_PATH}/admin_pages.php',          1, 'ADMIN_PAGES_TITLE',          14,   0),
+        ( 6, '{$US_PAGE_PATH}/admin_page.php',           1, 'ADMIN_PAGE_TITLE',           4,    0),
+        ( 7, '{$US_PAGE_PATH}/admin_groups.php',         1, 'ADMIN_GROUPS_TITLE',         4,    0),
+        ( 8, '{$US_PAGE_PATH}/admin_group.php',          1, 'ADMIN_GROUP_TITLE',          7,    0),
+        ( 9, '{$US_PAGE_PATH}/admin_users.php',          1, 'ADMIN_USERS_TITLE',          4,    0),
+        (10, '{$US_PAGE_PATH}/admin_user.php',           1, 'ADMIN_USER_TITLE',           10,   0),
+        (13, '{$US_PAGE_PATH}/admin_email_test.php',     1, 'ADMIN_EMAIL_TEST_TITLE',     30,   0),
         (14, '{$US_PAGE_PATH}/forgot_password.php',      0, 'FORGOT_PASSWORD_TITLE',      15,   0),
         (15, '{$US_PAGE_PATH}/password_reset.php',       0, 'PASSWORD_RESET_TITLE',       NULL, 0),
+        (16, '{$US_PAGE_PATH}/index.php',                0, 'INDEX_TITLE',                NULL, 0),
         (18, '{$US_PAGE_PATH}/join.php',                 0, 'JOIN_TITLE',                 NULL, 0),
+        (19, '{$US_PAGE_PATH}/nologin.php',              0, 'NOLOGIN_TITLE',              NULL, 0),
         (20, '{$US_PAGE_PATH}/login.php',                0, 'LOGIN_TITLE',                NULL, 1),
         (21, '{$US_PAGE_PATH}/logout.php',               0, 'LOGOUT_TITLE',               NULL, 0),
         (22, '{$US_PAGE_PATH}/profile.php',              1, 'PROFILE_TITLE',              NULL, 0),
+        (25, '{$US_PAGE_PATH}/verify.php',               0, 'VERIFY_TITLE',               NULL, 0),
         (26, '{$US_PAGE_PATH}/verify_resend.php',        0, 'VERIFY_RESEND_TITLE',        NULL, 0),
-        (30, '{$US_PAGE_PATH}/admin_email.php',          1, 'ADMIN_EMAIL_TITLE',          93,   0),
-        (32, '{$US_PAGE_PATH}/admin_settings.php',       1, 'ADMIN_SETTINGS_TITLE',       93,   0),
-        (33, '{$US_PAGE_PATH}/admin_email_test.php',     1, 'ADMIN_EMAIL_TEST_TITLE',     30,   0),
-        (36, '{$US_PAGE_PATH}/admin_page.php',           1, 'ADMIN_PAGE_TITLE',           93,   0),
-        (39, '{$US_PAGE_PATH}/admin_user.php',           1, 'ADMIN_USER_TITLE',           40,   0),
-        (40, '{$US_PAGE_PATH}/admin_users.php',          1, 'ADMIN_USERS_TITLE',          93,   0),
-        (43, '{$US_PAGE_PATH}/admin_menus.php',          0, 'ADMIN_MENUS_TITLE',          93,   0),
-        (44, '{$US_PAGE_PATH}/admin_menu.php',           0, 'ADMIN_MENU_TITLE',           43,   0),
-        (45, '{$US_PAGE_PATH}/admin_menu_item.php',      0, 'ADMIN_MENU_ITEM_TITLE',      44,   0),
-        (46, '{$US_PAGE_PATH}/admin_email_template.php', 1, 'ADMIN_EMAIL_TEMPLATE_TITLE', 93,   0),
+        (30, '{$US_PAGE_PATH}/admin_email.php',          1, 'ADMIN_EMAIL_TITLE',          4,   0),
+        (31, '{$US_PAGE_PATH}/admin_settings.php',       1, 'ADMIN_SETTINGS_TITLE',       4,   0),
+        (32, '{$US_PAGE_PATH}/admin_menus.php',          0, 'ADMIN_MENUS_TITLE',          4,   0),
+        (33, '{$US_PAGE_PATH}/admin_menu.php',           0, 'ADMIN_MENU_TITLE',           43,   0),
+        (34, '{$US_PAGE_PATH}/admin_menu_item.php',      0, 'ADMIN_MENU_ITEM_TITLE',      44,   0),
+        (35, '{$US_PAGE_PATH}/admin_email_template.php', 1, 'ADMIN_EMAIL_TEMPLATE_TITLE', 4,   0),
+        (36, '{$US_PAGE_PATH}/admin_roles.php',          1, 'ADMIN_ROLES_TITLE',          4,   0),
+        (37, '{$US_PAGE_PATH}/admin_role.php',           1, 'ADMIN_ROLE_TITLE',           83,   0),
+        (38, '{$US_PAGE_PATH}/admin_grouptypes.php',     1, 'ADMIN_GROUPTYPES_TITLE',     4,   0),
+        (39, '{$US_PAGE_PATH}/admin_grouptype.php',      1, 'ADMIN_GROUPTYPE_TITLE',      85,   0),
         (49, '{$US_PAGE_PATH}/contact.php',              0, 'CONTACT_TITLE',              NULL, 0),
         (50, '{$US_PAGE_PATH}/gallery.php',              1, 'GALLERY_TITLE',              NULL, 0),
-        (59, '{$US_PAGE_PATH}/admin_users_add.php',      1, 'ADMIN_USERS_ADD_TITLE',      40,   0),
+        (59, '{$US_PAGE_PATH}/admin_users_add.php',      1, 'ADMIN_USERS_ADD_TITLE',      10,   0),
         (62, '{$US_PAGE_PATH}/blocked.php',              0, 'BLOCKED_TITLE',              NULL, 0),
-        (66, '{$US_PAGE_PATH}/admin_updates.php',        1, 'ADMIN_UPDATES_TITLE',        93,   0),
-        (68, '{$US_PAGE_PATH}/admin_backup.php',         1, 'ADMIN_BACKUP_TITLE',         93,   0),
-        (69, '{$US_PAGE_PATH}/admin_restore.php',        1, 'ADMIN_RESTORE_TITLE',        93,   0),
-        (70, '{$US_PAGE_PATH}/admin_status.php',         1, 'ADMIN_STATUS_TITLE',         93,   0),
-        (71, '{$US_PAGE_PATH}/admin_phpinfo.php',        1, 'ADMIN_PHPINFO_TITLE',        93,   0),
-        (74, '{$US_PAGE_PATH}/admin_groups.php',         1, 'ADMIN_GROUPS_TITLE',         93,   0),
-        (80, '{$US_PAGE_PATH}/admin_group.php',          1, 'ADMIN_GROUP_TITLE',          74,   0),
+        (66, '{$US_PAGE_PATH}/admin_updates.php',        1, 'ADMIN_UPDATES_TITLE',        4,   0),
+        (68, '{$US_PAGE_PATH}/admin_backup.php',         1, 'ADMIN_BACKUP_TITLE',         4,   0),
+        (69, '{$US_PAGE_PATH}/admin_restore.php',        1, 'ADMIN_RESTORE_TITLE',        4,   0),
+        (70, '{$US_PAGE_PATH}/admin_status.php',         1, 'ADMIN_STATUS_TITLE',         4,   0),
+        (71, '{$US_PAGE_PATH}/admin_phpinfo.php',        1, 'ADMIN_PHPINFO_TITLE',        4,   0),
         (82, '{$US_PAGE_PATH}/oauth_denied.php',         0, 'OAUTH_DENIED_TITLE',         NULL, 0),
-        (83, '{$US_PAGE_PATH}/admin_role.php',           1, 'ADMIN_ROLE_TITLE',           84,   0),
-        (84, '{$US_PAGE_PATH}/admin_roles.php',          1, 'ADMIN_ROLES_TITLE',          93,   0),
-        (85, '{$US_PAGE_PATH}/admin_grouptypes.php',     1, 'ADMIN_GROUPTYPES_TITLE',     93,   0),
-        (86, '{$US_PAGE_PATH}/admin_grouptype.php',      1, 'ADMIN_GROUPTYPE_TITLE',      85,   0),
-        (87, '{$US_PAGE_PATH}/nologin.php',              0, 'NOLOGIN_TITLE',              NULL, 0),
-        (93, '{$US_PAGE_PATH}/admin.php',                1, 'ADMIN_TITLE',                NULL, 0),
-        (94, '{$US_PAGE_PATH}/admin_general.php',        0, 'ADMIN_GENERAL_TITLE',        93,   0),
-        (95, '{$US_PAGE_PATH}/verify.php',               0, 'VERIFY_TITLE',               NULL, 0),
-        (96, '{$US_PAGE_PATH}/admin_pages_old.php',      0, 'ADMIN_PAGES_OLD_TITLE',      93,   0),
-        (97, '{$US_PAGE_PATH}/admin_page_old.php',       0, 'ADMIN_PAGE_OLD_TITLE',       96,   0),
-        (98, '{$US_PAGE_PATH}/offline.php',              0, 'OFFLINE_TITLE',              NULL, 0),",
+        (94, '{$US_PAGE_PATH}/admin_general.php',        0, 'ADMIN_GENERAL_TITLE',        4,   0),
+        (98, '{$US_PAGE_PATH}/offline.php',              0, 'OFFLINE_TITLE',              NULL, 0)",
     "CREATE TABLE `{$prefix}profiles` (
           `id` int(11) NOT NULL,
           `user_id` int(11) NOT NULL,
           `bio` text NOT NULL
       ) ENGINE=$engine DEFAULT CHARSET=$charset",
     "INSERT INTO `{$prefix}profiles` (`id`, `user_id`, `bio`) VALUES
-        (1, 3, 'This is your bio'),
-        (2, 4, 'This is your bio'),
-        (3, 5, 'This is your bio'),
-        (4, 6, 'This is your bio')",
+        (1, 1, 'This is your bio'),
+        (2, 2, 'This is your bio')",
     "CREATE TABLE `{$prefix}settings` (
-          `id` int(50) NOT NULL,
+          `id` int(11) NOT NULL,
+          `user_id` int(11),
+          `group_id` int(11),
           `site_name` varchar(100) NOT NULL,
           `site_url` varchar(255) NOT NULL,
           `install_location` varchar(255) NOT NULL,
@@ -342,12 +359,6 @@ $init_commands = [
           `gcallback` varchar(255) NOT NULL,
           `fbcallback` varchar(255) NOT NULL,
           `allow_username_change` tinyint(1) NOT NULL DEFAULT '1',
-          `multi_row_after_delete` tinyint(4) NOT NULL,
-          `multi_row_after_create` tinyint(4) NOT NULL,
-          `multi_row_after_edit` tinyint(4) NOT NULL,
-          `single_row_after_delete` tinyint(4) NOT NULL,
-          `single_row_after_create` tinyint(4) NOT NULL,
-          `single_row_after_edit` tinyint(4) NOT NULL,
           `tinymce_url` varchar(255) NOT NULL,
           `tinymce_apikey` varchar(100) NOT NULL,
           `tinymce_plugins` varchar(255) NOT NULL,
@@ -362,8 +373,15 @@ $init_commands = [
           `upload_dir` varchar(255),
           `upload_max_size` int(11),
           `upload_allowed_ext` varchar(255),
+          `override_site_language` tinyint(1) NOT NULL,
+          `override_debug_mode` tinyint(1) NOT NULL,
+          `override_enable_messages` tinyint(1) NOT NULL,
+          `override_after_actions` tinyint(1) NOT NULL,
+          `override_tinymce` tinyint(1) NOT NULL,
+          `override_date_fmt` tinyint(1) NOT NULL,
+          `override_time_fmt` tinyint(1) NOT NULL
       ) ENGINE=$engine DEFAULT CHARSET=$charset",
-    "INSERT INTO `{$prefix}settings` (`id`, `site_name`, `site_url`,
+    "INSERT INTO `{$prefix}settings` (`id`, `user_id`, `group_id`, `site_name`, `site_url`,
             `install_location`, `copyright_message`, `version`, `site_language`,
             `site_offline`, `debug_mode`, `query_count`, `track_guest`,
             `recaptcha`, `force_ssl`, `css_sample`, `css1`, `css2`, `css3`,
@@ -387,8 +405,8 @@ $init_commands = [
             `tinymce_toolbar`,
             `date_fmt`, `time_fmt`, `min_pw_score`,
             `upload_dir`, `upload_max_size`, `upload_allowed_ext`) VALUES
-        (1, 'UserSpice5', 'http://localhost/UserSpice5-Dev/', -- id, site_name, site_url
-            '', 'US', '5.0.0a', 'english.php', -- install_location, copyright_message, version, site_language
+        (1, -1, -1, 'UserSpice5', 'http://localhost{US_URL_ROOT}', -- id, user_id, group_id, site_name, site_url
+            '', 'US', '5.0.0a', 'en', -- install_location, copyright_message, version, site_language
             0, 1, 1, 1, -- site_offline, debug_mode, query_count, track_guest
             0, 0, 1, -- recaptcha, force_ssl, css_sample, (next line: css1, css2, css3)
             'core/css/color_schemes/standard.css', 'core/css/blank.css', 'core/css/blank.css',
@@ -409,8 +427,8 @@ $init_commands = [
             'https://us.raysee.net/users/helpers/gcallback.php', -- gcallback
             'https://us.raysee.net/users/helpers/fbcallback.php', -- fbcallback
             1, -- allow_username_change
-            '{US_URL_ROOT}resources/js/tinymce/tinymce.min.js', --tinymce_url
-            '', 'table', 200, --tinymce_(apikey,plugins,height)
+            '{US_URL_ROOT}resources/js/tinymce/tinymce.min.js', -- tinymce_url
+            '', 'table', 200, -- tinymce_(apikey,plugins,height)
             'lightgray', 'modern', 'false', -- tinymce_(skin,theme,menubar,<next line>toolbar)
             'undo redo | cut copy paste | formatselect | fontselect fontsizeselect | table | bold italic | bullist numlist | outdent indent | alignleft aligncenter alignright | image | removeformat',
             'd-M-Y', 'h:i:sa', 2, -- date_fmt, time_fmt, min_pw_score
@@ -466,7 +484,46 @@ $init_commands = [
     #"DROP VIEW IF EXISTS `{$prefix}groups_groups`",
     #"CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `{$prefix}groups_groups`  AS  select ((`groups`.`id` * 10000) + `groups`.`id`) AS `id`,`groups`.`id` AS `parent_id`,`groups`.`id` AS `child_id` from `{$prefix}groups` `groups` union select ((`ug1`.`group_id` * 10000) + `ug1`.`user_id`) AS `id`,`ug1`.`group_id` AS `parent_id`,`ug1`.`user_id` AS `child_id` from `{$prefix}groups_users_raw` `ug1` where (`ug1`.`user_is_group` = 1) union select ((`ug1`.`group_id` * 10000) + `ug2`.`user_id`) AS `id`,`ug1`.`group_id` AS `parent_id`,`ug2`.`user_id` AS `child_id` from (`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`user_id` = `ug2`.`group_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) union select ((`ug1`.`group_id` * 10000) + `ug3`.`user_id`) AS `id`,`ug1`.`group_id` AS `group_id`,`ug3`.`user_id` AS `user_id` from ((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1)) union select ((`ug1`.`group_id` * 10000) + `ug4`.`user_id`) AS `id`,`ug1`.`group_id` AS `group_id`,`ug4`.`user_id` AS `user_id` from (((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `{$prefix}groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 1))",
     "DROP VIEW IF EXISTS `{$prefix}groups_users`",
-    "CREATE VIEW `{$prefix}groups_users`  AS  select `{$prefix}groups_users_raw`.`id` AS `id`,`{$prefix}groups_users_raw`.`user_id` AS `user_id`,`{$prefix}groups_users_raw`.`group_id` AS `group_id`,0 AS `nested` from `{$prefix}groups_users_raw` where (`{$prefix}groups_users_raw`.`user_is_group` = 0) union select (`ug1`.`user_id` + (`ug2`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug2`.`group_id` AS `group_id`,1 AS `nested` from (`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) where ((`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug3`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug3`.`group_id` AS `group_id`,1 AS `nested` from ((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) where ((`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug4`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug4`.`group_id` AS `group_id`,1 AS `nested` from (((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `{$prefix}groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) where ((`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) union select (`ug1`.`user_id` + (`ug5`.`group_id` * 10000)) AS `id`,`ug1`.`user_id` AS `user_id`,`ug5`.`group_id` AS `group_id`,1 AS `nested` from ((((`{$prefix}groups_users_raw` `ug1` join `{$prefix}groups_users_raw` `ug2` on((`ug1`.`group_id` = `ug2`.`user_id`))) join `{$prefix}groups_users_raw` `ug3` on((`ug2`.`group_id` = `ug3`.`user_id`))) join `{$prefix}groups_users_raw` `ug4` on((`ug3`.`group_id` = `ug4`.`user_id`))) join `{$prefix}groups_users_raw` `ug5` on((`ug4`.`group_id` = `ug5`.`user_id`))) where ((`ug5`.`user_is_group` = 1) and (`ug4`.`user_is_group` = 1) and (`ug3`.`user_is_group` = 1) and (`ug2`.`user_is_group` = 1) and (`ug1`.`user_is_group` = 0)) ",
+    "CREATE VIEW `{$prefix}groups_users`  AS
+        SELECT `id`, `user_id`, `group_id`, 0 AS `nested`
+          FROM `{$prefix}groups_users_raw`
+         WHERE `user_is_group` = 0)
+        UNION
+        SELECT (`ug1`.`user_id` + (`ug2`.`group_id` * 10000)) AS `id`, `ug1`.`user_id` AS `user_id`, `ug2`.`group_id` AS `group_id`, 1 AS `nested`
+          FROM (`{$prefix}groups_users_raw` `ug1`
+          JOIN `{$prefix}groups_users_raw` `ug2` ON (`ug1`.`group_id` = `ug2`.`user_id`))
+         WHERE ((`ug2`.`user_is_group` = 1)
+           AND (`ug1`.`user_is_group` = 0))
+        UNION
+        SELECT (`ug1`.`user_id` + (`ug3`.`group_id` * 10000)) AS `id`,`ug1`.`user_id`, `ug3`.`group_id`, 1 AS `nested`
+          FROM ((`{$prefix}groups_users_raw` `ug1`
+          JOIN `{$prefix}groups_users_raw` `ug2` on ((`ug1`.`group_id` = `ug2`.`user_id`)))
+          JOIN `{$prefix}groups_users_raw` `ug3` on ((`ug2`.`group_id` = `ug3`.`user_id`)))
+         WHERE ((`ug3`.`user_is_group` = 1)
+           AND (`ug2`.`user_is_group` = 1)
+           AND (`ug1`.`user_is_group` = 0))
+        UNION
+        SELECT (`ug1`.`user_id` + (`ug4`.`group_id` * 10000)) AS `id`, `ug1`.`user_id`, `ug4`.`group_id`, 1 AS `nested`
+          FROM (((`{$prefix}groups_users_raw` `ug1`
+          JOIN `{$prefix}groups_users_raw` `ug2` on ((`ug1`.`group_id` = `ug2`.`user_id`)))
+          JOIN `{$prefix}groups_users_raw` `ug3` on ((`ug2`.`group_id` = `ug3`.`user_id`)))
+          JOIN `{$prefix}groups_users_raw` `ug4` on ((`ug3`.`group_id` = `ug4`.`user_id`)))
+         WHERE ((`ug4`.`user_is_group` = 1)
+           AND (`ug3`.`user_is_group` = 1)
+           AND (`ug2`.`user_is_group` = 1)
+           AND (`ug1`.`user_is_group` = 0))
+        UNION
+        SELECT (`ug1`.`user_id` + (`ug5`.`group_id` * 10000)) AS `id`, `ug1`.`user_id`, `ug5`.`group_id`, 1 AS `nested`
+          FROM ((((`{$prefix}groups_users_raw` `ug1`
+          JOIN `{$prefix}groups_users_raw` `ug2` on ((`ug1`.`group_id` = `ug2`.`user_id`)))
+          JOIN `{$prefix}groups_users_raw` `ug3` on ((`ug2`.`group_id` = `ug3`.`user_id`)))
+          JOIN `{$prefix}groups_users_raw` `ug4` on ((`ug3`.`group_id` = `ug4`.`user_id`)))
+          JOIN `{$prefix}groups_users_raw` `ug5` on ((`ug4`.`group_id` = `ug5`.`user_id`)))
+         WHERE ((`ug5`.`user_is_group` = 1)
+           AND (`ug4`.`user_is_group` = 1)
+           AND (`ug3`.`user_is_group` = 1)
+           AND (`ug2`.`user_is_group` = 1)
+           AND (`ug1`.`user_is_group` = 0)) ",
     "ALTER TABLE `{$prefix}field_defs`
           ADD PRIMARY KEY (`id`),
           ADD UNIQUE KEY `name` (`name`)",
@@ -481,7 +538,6 @@ $init_commands = [
           ADD UNIQUE KEY `group_id_2` (`group_id`,`page_id`),
           ADD KEY `group_id` (`group_id`),
           ADD KEY `page_id` (`page_id`),
-          ADD KEY `page_id_2` (`page_id`),
           ADD KEY `auth` (`auth`)",
     "ALTER TABLE `{$prefix}groups_roles_users`
           ADD PRIMARY KEY (`id`),
@@ -496,6 +552,10 @@ $init_commands = [
           ADD KEY `user_is_group` (`user_is_group`)",
     "ALTER TABLE `{$prefix}grouptypes`
           ADD PRIMARY KEY (`id`)",
+    "ALTER TABLE `{$prefix}lang`
+          ADD PRIMARY KEY (`id`),
+          ADD UNIQUE KEY `token` (`token`, `lang`),
+          ADD KEY `lang` (`lang`)",
     "ALTER TABLE `{$prefix}menus`
           ADD PRIMARY KEY (`id`)",
     "ALTER TABLE `{$prefix}pages`
@@ -541,10 +601,11 @@ $init_commands = [
           MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3",
 ];
 
+
 # If you update this, please be sure to update $us_tables initialization in
 # users/core/includes/init.php as well.
-$us_tables=['field_defs', 'groups', 'groups_menus', 'groups_pages', 'groups_roles_users',
-    'groups_users', 'groups_users_raw', 'grouptypes', 'menus', 'pages', 'profiles',
+$us_tables=['addressees', 'audit', 'field_defs', 'groups', 'groups_menus', 'groups_pages', 'groups_roles_users',
+    'groups_users', 'groups_users_raw', 'grouptypes', 'lang', 'menus', 'messages', 'pages', 'profiles',
     'settings', 'users', 'users_online', 'users_session', ];
 
 $db = DB::getInstance();
@@ -569,7 +630,7 @@ if (@$_POST['save']) {
         $db->query($sql);
         if ($e = $db->error()) {
             var_dump($e);
-            echo "SQL PROBLEM: $sql<br />\n";
+            echo "SQL PROBLEM: <pre>$sql</pre><br />\n";
             $errcount++;
         }
     }
