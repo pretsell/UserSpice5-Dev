@@ -20,7 +20,7 @@ $myForm = new Form([
         'new_valid' => [ ], // accept all defaults
         'extra'     => 'autocomplete="off"',
     ]),
-    'recaptcha' => new FormField_Recaptcha([
+    'recaptcha' => new FormField_ReCaptcha([
         'dbfield' => 'recaptcha',
         'display' => lang('COMPLETE_RECAPTCHA'),
         'keep_if' => configGet('recaptcha'),
