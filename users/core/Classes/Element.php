@@ -72,7 +72,8 @@ abstract class US_Element {
     public $repData = [];
     public $repMacroAliases = [];
     public $repEmptyAlternateReplacesAll = false;
-    public $HTML_RepEmptyAlternate = '';
+    public $HTML_RepEmptyAlternate = '',
+        $HTML_Scripts = [];
     # public $HTML_x = '<input type="{TYPE}" name="{NAME}"' ... />';
     # public $MACRO_type = 'hidden';
     public function __construct($opts=[], $handleOpts=true) {
@@ -200,7 +201,9 @@ abstract class US_Element {
                 #echo "\n\n===$e (".get_class($this).")===\n\n$html\n\n";
             }
         }
+        $this->debug(3, htmlentities($html));
         $macros = $this->getMacros($html, $opts);
+        #pre_r($macros);
         return $this->processMacros($macros, $html, $opts);
     }
     public function getElementList($opts=[]) {
@@ -211,6 +214,12 @@ abstract class US_Element {
         } else {
             return $this->elementList;
         }
+    }
+    public function getHTMLScripts($opts=[]) {
+        #dbg("::getHTMLScripts - ".$this->HTML_Scripts);
+        $html = $this->HTML_Scripts;
+        $macros = $this->getMacros($html, $opts);
+        return $this->processMacros($macros, $html, $opts);
     }
     public function deleteElements($elems) {
         $this->elementList = array_diff($this->elementList, (array)$elems);
@@ -308,6 +317,9 @@ abstract class US_Element {
     }
     public function setDefaults(&$k, $mainFormObj) {
         $this->_mainFormObj = $mainFormObj;
+    }
+    public function getMainForm() {
+        return $this->_mainFormObj;
     }
     public function setDBTable($table) {
         $this->_dbTable = $table;
