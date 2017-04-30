@@ -32,23 +32,71 @@ class US_Config {
 		$this->setSiteSettings();
         #var_dump($this->_site_settings);
 	}
-	private function setSiteSettings() {
+	public function setSiteSettings() {
         # Note that $T is not yet defined in init.php when this script
         # is included (and cannot be - we end up with circular requirements)
         # Thus we manually sort out the $prefix below rather than using $T.
-        $host   = $this->simpleGet('mysql/host');
-        $dbName = $this->simpleGet('mysql/db');
-        $user   = $this->simpleGet('mysql/username');
-        $passwd = $this->simpleGet('mysql/password');
-        $opts   = $this->simpleGet('mysql/opts');
-        $prefix = $this->simpleGet('mysql/prefix');
+        $mysql_host   = $this->simpleGet('mysql/host');
+        $mysql_dbName = $this->simpleGet('mysql/db');
+        $mysql_user   = $this->simpleGet('mysql/username');
+        $mysql_passwd = $this->simpleGet('mysql/password');
+        $mysql_opts   = $this->simpleGet('mysql/opts');
+        $mysql_prefix = $this->simpleGet('mysql/prefix');
         # we cannot use normal DB class because that class relies on this class
         # to get dbHost, dbName, etc. So, instead, we use PDO() directly.
-		$dbConx = new PDO('mysql:host='.$host.';dbname='.$dbName, $user, $passwd, $opts);
-		if ($stmt = $dbConx->query("SELECT * FROM {$prefix}settings")) {
+        if (isset($T['settings'])) {
+            $settings = $T['settings'];
+        } else {
+            $settings = $mysql_prefix.'settings';
+        }
+		$dbConx = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_dbName, $mysql_user, $mysql_passwd, $mysql_opts);
+		if ($stmt = $dbConx->query("SELECT * FROM {$settings} WHERE (user_id IS NULL OR user_id <= 0) AND (group_id IS NULL OR group_id <= 0)")) {
     		$this->_site_settings = $stmt->fetch(PDO::FETCH_OBJ);
         } else {
             $this->_site_settings = new stdClass;
+        }
+    }
+    public function overrideSiteSettings() {
+        global $user, $T;
+        $db = DB::getInstance();
+        if (isset($user) && $userId = $user->id()) {
+            $overridable = [
+                'site_language' => 'override_site_language',
+                'debug_mode' => 'override_debug_mode',
+                'enable_messages' => 'override_enable_messages',
+                'multi_row_after_delete' => 'override_after_actions',
+                'multi_row_after_create' => 'override_after_actions',
+                'multi_row_after_edit' => 'override_after_actions',
+                'single_row_after_delete' => 'override_after_actions',
+                'single_row_after_create' => 'override_after_actions',
+                'single_row_after_edit' => 'override_after_actions',
+                'tinymce_plugins' => 'override_tinymce',
+                'tinymce_height' => 'override_tinymce',
+                'tinymce_menubar' => 'override_tinymce',
+                'tinymce_skin' => 'override_tinymce',
+                'tinymce_theme' => 'override_tinymce',
+                'tinymce_toolbar' => 'override_tinymce',
+                'date_fmt' => 'override_date_fmt',
+                'time_fmt' => 'override_time_fmt',
+            ];
+            $sql = "SELECT *, 10 AS priority
+                    FROM $T[settings] settings
+                    WHERE (user_id = ?)
+                    UNION
+                    SELECT settings.*, 0 AS priority
+                    FROM $T[settings] settings
+                    JOIN $T[groups_users] ug ON (settings.group_id = ug.group_id)
+                    WHERE ug.user_id = ?
+                    ORDER BY priority, group_id";
+    		if ($db->query($sql, [$userId, $userId])->count()) {
+        		foreach ($db->results() as $setting) {
+                    foreach ($overridable as $k=>$v) {
+                        if ($setting->$v) {
+                            $this->_site_settings->$k = $setting->$k;
+                        }
+                    }
+                }
+            }
         }
 	}
 	public function get($path=null, $default=null) {
