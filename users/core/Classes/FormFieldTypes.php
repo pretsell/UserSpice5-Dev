@@ -269,6 +269,9 @@ abstract class US_FormField_Hidden extends FormField {
 abstract class US_FormField_HTML extends FormField {
     public $_isDBField = false,
         $HTML_Input = '{VALUE}';
+    public function getHTML($opts=[]) {
+        return html_entity_decode(parent::getHTML($opts));
+    }
 } /* HTML */
 
 abstract class US_FormField_MultiHidden extends FormField {
@@ -305,7 +308,7 @@ abstract class US_FormField_MultiHidden extends FormField {
 
 abstract class US_FormField_Password extends FormField {
     protected $_fieldType = "password";
-    public $HTML_Script = [
+    public $HTML_Scripts = [
         '<script type="text/javascript" src="'.US_URL_ROOT.'resources/js/zxcvbn.js"></script>',
         '<script type="text/javascript" src="'.US_URL_ROOT.'resources/js/zxcvbn-bootstrap-strength-meter.js"></script>',
     ];
@@ -315,7 +318,7 @@ abstract class US_FormField_Password extends FormField {
             case 'strengthmeter':
             case 'pwmeter':
                 if ($val) {
-                    $this->HTML_Script[] =
+                    $this->HTML_Scripts[] =
                         '<script type="text/javascript">
                         	$(document).ready(function () {
                         		$("#{FIELD_ID}-StrengthProgressBar").zxcvbnProgressBar({ passwordInput: "#{FIELD_ID}" });
@@ -354,7 +357,7 @@ abstract class US_FormField_Radio extends FormField {
         $repElement = 'HTML_Input';
 } /* Radio */
 
-abstract class US_FormField_Recaptcha extends FormField {
+abstract class US_FormField_ReCaptcha extends FormField {
     protected $_fieldType = "recaptcha"; // not used
     protected $_validateErrors = [];
     public $MACRO_Recaptcha_Class = 'g-recaptcha',
@@ -369,7 +372,7 @@ abstract class US_FormField_Recaptcha extends FormField {
         $HTML_Post = '
             </div> <!-- {DIV_CLASS} recaptcha -->
             ',
-        $HTML_Script = '<script type="text/javascript" src="https://www.google.com/recaptcha/api.js" async defer></script>';
+        $HTML_Scripts = '<script type="text/javascript" src="https://www.google.com/recaptcha/api.js" async defer></script>';
     public function dataIsValid($data) {
 		$remoteIp=$_SERVER["REMOTE_ADDR"];
 		$gRecaptchaResponse=Input::sanitize($data['g-recaptcha-response']);
@@ -421,7 +424,7 @@ abstract class US_FormField_SearchQ extends FormField {
         $HTML_Post = '
             </div> <!-- SearchQ -->
             ',
-        $HTML_Script = '<script type="text/javascript" src="'.US_URL_ROOT.'resources/js/search.js" charset="utf-8"></script>';
+        $HTML_Scripts = '<script type="text/javascript" src="'.US_URL_ROOT.'resources/js/search.js" charset="utf-8"></script>';
     public $MACRO_Field_Id = 'system-search',
         $MACRO_Field_Name = 'q',
         $MACRO_Placeholder = 'Search Text...';
@@ -439,7 +442,7 @@ abstract class US_FormField_Select extends FormField {
             <label class="{LABEL_CLASS}" for="{FIELD_ID}">{LABEL_TEXT}
             <span class="{HINT_CLASS}" title="{HINT_TEXT}"></span></label>
             <br />
-            <select class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}" {DISABLED}>
+            <select class="{INPUT_CLASS}" id="{FIELD_ID}" name="{FIELD_NAME}" {DISABLED} {READONLY}>
             ',
         $HTML_Input = '
             <option value="{OPTION_VALUE}" {SELECTED}>{OPTION_LABEL}</option>
@@ -518,6 +521,8 @@ abstract class US_FormField_Table extends FormField {
     protected $_fieldType = "table",
         $_dataFields = [],
         $_dataFieldLabels = [],
+        $_td_row=false,
+        $_th_row=false,
         $selectOptions = [],
         $multiCheckboxes = [];
     public $repMacroAliases = ['ID', 'NAME'];
@@ -530,8 +535,8 @@ abstract class US_FormField_Table extends FormField {
         $MACRO_Checkbox_Label = "";
     public
         $HTML_Pre = '
-            <div class="{DIV_CLASS}"> <!-- Table (name={FIELD_NAME}) -->
-            <table class="table {TABLE_CLASS}">
+            <div id="div-{FIELD_ID}" class="{DIV_CLASS}"> <!-- Table (name={FIELD_NAME}) -->
+            <table id="{FIELD_ID}" class="table {TABLE_CLASS}">
             <thead>
             <tr class="{TH_ROW_CLASS}">{TABLE_HEAD_CELLS}</tr>
             </thead>
@@ -571,6 +576,7 @@ abstract class US_FormField_Table extends FormField {
         switch ($simpleName) {
             case 'tabledatacells':
             case 'tdrow':
+                $this->_td_row=true;
                 #dbg('setting table_data_cells');
                 if (is_array($val)) {
                     $val = '<td>'.implode('</td><td>', $val).'</td>';
@@ -604,6 +610,7 @@ abstract class US_FormField_Table extends FormField {
                 return true;
             case 'tableheadcells':
             case 'throw': // th_row
+                $this->_th_row=true;
                 #dbg('setting table_head_cells');
                 if (is_array($val)) {
                     $val = '<th>'.implode('</th><th>', $val).'</th>';
@@ -611,8 +618,8 @@ abstract class US_FormField_Table extends FormField {
                 if (preg_match('/{([^{}]*)\(checkallbox\)}/i', $val, $m)) {
                     $newHTML = str_replace('{LABEL_TEXT}', $m[1], $this->HTML_Checkallbox);
                     $val = str_replace($m[0], $newHTML, $val);
-                    $this->HTML_Script[] = $this->HTML_Checkall_Script;
-                    $this->HTML_Script[] = $this->HTML_Checkall_Init;
+                    $this->HTML_Scripts[] = $this->HTML_Checkall_Script;
+                    $this->HTML_Scripts[] = $this->HTML_Checkall_Init;
                 }
                 $this->HTML_Pre = $this->processMacros(
                     ['{TABLE_HEAD_CELLS}'=>$val], $this->HTML_Pre);
@@ -626,6 +633,24 @@ abstract class US_FormField_Table extends FormField {
                     $this->MACRO_Table_Class .= ' table-list-search';
                 } else {
                     dbg("Turning searchable OFF is not implemented");
+                }
+                return true;
+            case 'datatables':
+                if ($val) {
+                    $this->HTML_Scripts = array_merge($this->HTML_Scripts, [
+                        '<script type="text/javascript" src="'.US_URL_ROOT.'resources/DataTables-1.10.15/js/jquery.dataTables.min.js"></script>',
+                        '<script type="text/javascript" src="'.US_URL_ROOT.'resources/DataTables-1.10.15/js/dataTables.bootstrap.min.js"></script>',
+                        '<script type="text/javascript" src="'.US_URL_ROOT.'resources/FixedHeader-3.1.2/js/dataTables.fixedHeader.min.js"></script>',
+                        '<script type="text/javascript" src="'.US_URL_ROOT.'resources/Responsive-2.1.1/js/dataTables.responsive.min.js"></script>',
+                        '<script type="text/javascript" src="'.US_URL_ROOT.'resources/Responsive-2.1.1/js/responsive.bootstrap.min.js"></script>',
+                        '<script type="text/javascript">$(document).ready(function() { $("#{FIELD_ID}").DataTable('.$val.'); })</script>',
+                    ]);
+                    $mainForm = $this->getMainForm();
+                    $mainForm->setHeaderSnippets([
+                        '<link rel="stylesheet" type="text/css" href="DataTables-1.10.15/css/dataTables.bootstrap.min.css"/>',
+                        '<link rel="stylesheet" type="text/css" href="FixedHeader-3.1.2/css/fixedHeader.bootstrap.min.css"/>',
+                        '<link rel="stylesheet" type="text/css" href="Responsive-2.1.1/css/responsive.bootstrap.min.css"/>',
+                    ]);
                 }
                 return true;
             case 'label':
@@ -662,6 +687,15 @@ abstract class US_FormField_Table extends FormField {
         #dbg("FormField_Table::specialRowMacros(): macros=");
         #pre_r($macros);
     }
+    public function getHTML($opts=[]) {
+        if (!$this->_th_row) {
+            $this->errors[] = "DEVELOPMENT ERROR: th_row was not set";
+        }
+        if (!$this->_td_row) {
+            $this->errors[] = "DEVELOPMENT ERROR: td_row was not set";
+        }
+        return parent::getHTML($opts);
+    }
 } /* Table */
 
 # Tab Table-of-Contents
@@ -679,7 +713,26 @@ abstract class US_FormField_TabToC extends FormField {
              ',
         $HTML_Post = '
              </ul> <!-- ToC -->
-             ';
+             ',
+        $HTML_Scripts = '<script type="text/javascript" >
+            $(document).ready(function() {
+                var activeTab = location.hash || sessionStorage.getItem("active_tab");
+                if (activeTab) {
+                    $("a[href=\'" + activeTab + "\']").tab("show");
+                }
+                $(document.body).on("click", "a[data-toggle]", function(event) {
+                    if (sessionStorage) {
+                        sessionStorage.setItem("active_tab", this.getAttribute("href"));
+                    } else {
+                        location.hash = this.getAttribute("href");
+                    }
+                });
+            });
+            $(window).on("popstate", function() {
+                var anchor = location.hash || $("a[data-toggle=\'tab\']").first().attr("href");
+                $("a[href=\'" + anchor + "\']").tab("show");
+            });
+        </script>';
     public function getTocType() {
         return $this->tocType;
     }
@@ -734,8 +787,8 @@ abstract class US_FormField_Textarea extends FormField {
         $MACRO_Tinymce_Theme = null,
         $MACRO_Tinymce_Readonly = 'false',
         /* Note that TINYMCE_MENUBAR and TINYMCE_TOOLBAR have the quotes added separately */
-        $HTML_Script = ['<script src="{TINYMCE_URL}"></script>',
-            '<script>
+        $HTML_Scripts = ['<script type="text/javascript" src="{TINYMCE_URL}"></script>',
+            '<script type="text/javascript" >
                 tinymce.init({
                     selector: \'#{FIELD_ID}\',
                     plugins: \'{TINYMCE_PLUGINS}\',
