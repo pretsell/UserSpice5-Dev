@@ -77,7 +77,7 @@ include_once US_ROOT_DIR.'local/Classes/Config.php';
 include_once US_ROOT_DIR.'local/config.php';
 
 /*
- * require_once classes from users/classes/*.php
+ * require_once Classes from users/Classes/*.php
  * using PHP autoloader conflicts with Google and Facebook autoloader
  */
 spl_autoload_register('us_classloader');
@@ -94,8 +94,8 @@ function us_classloader($class_name) {
             break;
         }
     }
-    include_once US_ROOT_DIR.'core/classes/'.$class_name . '.php';
-    include_once US_ROOT_DIR.'local/classes/'.$class_name . '.php';
+    include_once US_ROOT_DIR.'core/Classes/'.$class_name . '.php';
+    include_once US_ROOT_DIR.'local/Classes/'.$class_name . '.php';
 }
 
 /*
@@ -118,8 +118,8 @@ require_once US_ROOT_DIR.'local/config.php';
  * (if you update this, be sure to update $us_tables in install/initdb.php and
  * the corresponding $init_commands there.)
  */
-$us_tables=['audit', 'field_defs', 'groups', 'groups_menus', 'groups_pages', 'groups_roles_users',
-    'groups_users', 'groups_users_raw', 'grouptypes', 'lang', 'menus', 'pages', 'profiles',
+$us_tables=['addressees', 'audit', 'field_defs', 'groups', 'groups_menus', 'groups_pages', 'groups_roles_users',
+    'groups_users', 'groups_users_raw', 'grouptypes', 'lang', 'menus', 'messages', 'pages', 'profiles',
     'settings', 'users', 'users_online', 'users_session', ];
 
 # Prepare $T[] for prefix operations (T=tableArray)
@@ -129,7 +129,7 @@ foreach ($us_tables as $t) {
 }
 
 # Include other class definitions as late loaders
-require_once US_ROOT_DIR.'core/classes/phpmailer/PHPMailerAutoload.php';
+require_once US_ROOT_DIR.'core/Classes/phpmailer/PHPMailerAutoload.php';
 
 # Bring in the rest of the helpers, checking for localized versions where appropriate
 require_once US_ROOT_DIR.'core/helpers/helpers.php';
@@ -144,7 +144,7 @@ require_once US_ROOT_DIR.'core/helpers/us_helpers.php';
 #dbg("url=".$us_url_root."<br />\n");
 require_once pathFinder('helpers/users_online.php');
 require_once pathFinder('helpers/menus.php');
-require_once pathFinder('helpers/menus.php');
+#require_once pathFinder('helpers/menus.php');
 require_once pathFinder('helpers/class.treeManager.php');
 require_once pathFinder('helpers/Shuttle_Dumper.php');
 require_once pathFinder('helpers/utilities.php');
@@ -190,9 +190,19 @@ if ($user->isLoggedIn()) {
 		date_default_timezone_set($user->data()->timezone_string);
 	}
 	$user_id=$user->data()->id;
+    $cfg->overrideSiteSettings(); // take care of any per-user or per-group overrides
 } else {
     #dbg("User is NOT logged in<br />\n");
 	$user_id=0;
+}
+
+if (configGet('enable_messages') && $user->isLoggedIn()) {
+    $m = $db->query("SELECT count(*) as c from $T[addressees] WHERE user_id = ? AND is_read = 0", [$user->id()])->first();
+    if ($m->c > 0) {
+        $lang['MENU_MAIN_MESSAGE_ITEM'] = lang('MENU_MAIN_MESSAGE_WITH_UNREAD', $m->c);
+    } else {
+        $lang['MENU_MAIN_MESSAGE_ITEM'] = lang('MENU_MAIN_MESSAGE_WITHOUT_UNREAD', $m->c);
+    }
 }
 
 # Track guests
