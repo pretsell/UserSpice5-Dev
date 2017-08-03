@@ -161,8 +161,8 @@ class User {
 		$sql = 'SELECT group_id
 			FROM groups_users
 			JOIN groups ON (groups_users.group_id = groups.id)
-			WHERE groups_users.user_id = ?
-			AND groups.admin';
+			WHERE groups_users.user_id = ?;
+			// AND groups.admin'; // admin dashboard was moaning about this. 'Unkown Column'
 		$this->_db->query($sql, array($this->_data->id));
 		if ($this->_db->count() > 0) {
 			return true;
