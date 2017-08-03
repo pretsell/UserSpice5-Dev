@@ -36,7 +36,7 @@ CREATE TABLE `validate_rules` (
   `is_numeric` tinyint(1) DEFAULT NULL,
   `valid_email` tinyint(1) DEFAULT NULL,
   `regex` varchar(500) COLLATE utf8_bin DEFAULT NULL,
-  `regex_display` varchar(500) COLLATE utf8_bin DEFAULT NULL COMMENT AS `This will enable a non-tech human readable display if someone asks for a regex match validation`
+  `regex_display` varchar(500) COLLATE utf8_bin DEFAULT NULL -- This will enable a non-tech human readable display if someone asks for a regex match validation
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 --
@@ -458,7 +458,7 @@ CREATE TABLE `users_session` (
 CREATE TABLE `groups_users_raw` (
   `id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL
+  `user_id` int(11) NOT NULL,
   `user_is_group` BOOLEAN NOT NULL DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -498,8 +498,8 @@ ALTER TABLE `groups`
 --
 ALTER TABLE `groups_pages`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `group_id` (`group_id`),
-  ADD KEY `menu_id` (`menu_id`);
+  ADD KEY `group_id` (`group_id`);
+--  ADD KEY `menu_id` (`menu_id`); -- no column in `groups_pages`
 
 --
 -- Indexes for table `groups_menus`
